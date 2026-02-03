@@ -1,0 +1,261 @@
+/* ===========================
+  AAYWA & PARTNER Premium Homepage Styles
+   =========================== */
+
+/* Color Palette */
+:root {
+    --color-bg-primary: #0A0A0A;
+    --color-text-primary: #FFFFFF;
+    --color-accent-gold: #FFD700;
+    --color-accent-blue: #00A1DE;
+    --color-overlay: rgba(10, 10, 10, 0.7);
+}
+
+/* Typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+/* Clash Grotesk - fallback to system if unavailable */
+@font-face {
+    font-family: 'Clash Grotesk';
+    font-weight: 700;
+    font-display: swap;
+    /* Will use system fallback: -apple-system, BlinkMacSystemFont, "Segoe UI" */
+}
+
+/* === ANIMATIONS === */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 15px var(--color-accent-blue);
+    }
+
+    50% {
+        box-shadow: 0 0 25px var(--color-accent-blue), 0 0 35px var(--color-accent-blue);
+    }
+}
+
+@keyframes underlineSlide {
+    from {
+        transform: scaleX(0);
+    }
+
+    to {
+        transform: scaleX(1);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+/* === UTILITY CLASSES === */
+
+.fadeIn {
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+.slideUp {
+    animation: slideUp 0.8s ease-out forwards;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+.glow {
+    animation: glow 2s infinite;
+}
+
+/* Delay variants */
+.delay-100 {
+    animation-delay: 0.1s;
+}
+
+.delay-200 {
+    animation-delay: 0.2s;
+}
+
+.delay-300 {
+    animation-delay: 0.3s;
+}
+
+.delay-400 {
+    animation-delay: 0.4s;
+}
+
+.delay-500 {
+    animation-delay: 0.5s;
+}
+
+/* === RESPONSIVE GRID === */
+
+.container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+@media (min-width: 768px) {
+    .container {
+        padding: 0 48px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        padding: 0 80px;
+    }
+}
+
+/* === REDUCED MOTION === */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* === SMOOTH SCROLL === */
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* === SECTION SPACING === */
+
+.section {
+    padding: 80px 0;
+}
+
+@media (min-width: 768px) {
+    .section {
+        padding: 120px 0;
+    }
+}
+
+@media (min-width: 1024px) {
+    .section {
+        padding: 160px 0;
+    }
+}
+
+/* === BUTTON STYLES === */
+
+.btn-primary {
+    background: var(--color-accent-gold);
+    color: var(--color-bg-primary);
+    padding: 16px 48px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--color-text-primary);
+    padding: 16px 48px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 2px solid var(--color-text-primary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--color-accent-gold);
+    color: var(--color-accent-gold);
+}
+
+/* === GLOBAL OVERRIDES === */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Clash Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1.2;
+}

@@ -1,0 +1,170 @@
+const Sale = require('../models/Sale');
+const InputInvoice = require('../models/InputInvoice');
+const ProfitShareCalculator = require('../services/profitShareCalculator');
+
+const saleController = {
+  // Create new sale with auto profit-sharing
+  createSale: async (req, res) => {
+    try {
+      const { 
+        farmer_id, 
+        input_invoice_id, 
+        crop_type, 
+        quantity, 
+        unit_price,
+        buyer_id 
+      } = req.body;
+
+      // Calculate profit shares
+      const inputCost = input_invoice_id ? 
+        await InputInvoice.getOutstandingBalance(farmer_id) : 0;
+      
+      const calculation = ProfitShareCalculator.calculate(quantity, unit_price, inputCost);
+
+      // Create sale record
+      const sale = await Sale.create({
+        farmer_id,
+        input_invoice_id,
+        crop_type,
+        quantity,
+        unit_price,
+        gross_revenue: calculation.grossRevenue,
+        input_cost: calculation.inputCost,
+        net_revenue: calculation.netRevenue,
+        farmer_share: calculation.farmerShare,
+        sanza_share: calculation.sanzaShare,
+        buyer_id
+      });
+
+      // Update input invoice status if fully repaid
+      if (input_invoice_id && calculation.inputCost > 0) {
+        await InputInvoice.updateStatus(input_invoice_id, 'repaid');
+      }
+
+      res.status(201).json({
+        message: 'Sale recorded successfully',
+        sale,
+        profit_sharing: calculation
+      });
+    } catch (error) {
+      console.error('Create sale error:', error);
+      res.status(500).json({ error: 'Failed to record sale' });
+    }
+  },
+
+  // Get all sales
+  getAllSales: async (req, res) => {
+    try {
+      const sales = await Sale.findAll();
+      res.json(sales);
+    } catch (error) {
+      console.error('Get sales error:', error);
+      res.status(500).json({ error: 'Failed to fetch sales' });
+    }
+  },
+
+  // Get sale by ID
+  getSaleById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const sale = await Sale.findById(id);
+      
+      if (!sale) {
+        return res.status(404).json({ error: 'Sale not found' });
+      }
+
+      res.json(sale);
+    } catch (error) {
+      console.error('Get sale error:', error);
+      res.status(500).json({ error: 'Failed to fetch sale' });
+    }
+  },
+
+  // Get sales by farmer
+  getSalesByFarmer: async (req, res) => {
+    try {
+      const { farmerId } = req.params;
+      const sales = await Sale.findByFarmer(farmerId);
+      res.json(sales);
+    } catch (error) {
+      console.error('Get sales by farmer error:', error);
+      res.status(500).json({ error: 'Failed to fetch sales' });
+    }
+  },
+
+  // Get farmer sales summary
+  getFarmerSummary: async (req, res) => {
+    try {
+      const { farmerId } = req.params;
+      const summary = await Sale.getSalesSummary(farmerId);
+      res.json(summary);
+    } catch (error) {
+      console.error('Get farmer summary error:', error);
+      res.status(500).json({ error: 'Failed to fetch summary' });
+    }
+  },
+
+  // Get KPIs
+  getKPIs: async (req, res) => {
+    try {
+      const kpis = await Sale.getKPIs();
+      res.json(kpis);
+    } catch (error) {
+      console.error('Get KPIs error:', error);
+      res.status(500).json({ error: 'Failed to fetch KPIs' });
+    }
+  },
+
+  // Generate settlement statement
+  generateStatement: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const sale = await Sale.findById(id);
+      
+      if (!sale) {
+        return res.status(404).json({ error: 'Sale not found' });
+      }
+
+      const Farmer = require('../models/Farmer');
+      const farmer = await Farmer.findById(sale.farmer_id);
+
+      const statement = ProfitShareCalculator.generateSettlementStatement(
+        { 
+          crop_type: sale.crop_type, 
+          quantity: sale.quantity, 
+          unitPrice: sale.unit_price,
+          inputCost: sale.input_cost 
+        },
+        { 
+          id: farmer.id, 
+          full_name: farmer.full_name, 
+          phone: farmer.phone 
+        }
+      );
+
+      res.json(statement);
+    } catch (error) {
+      console.error('Generate statement error:', error);
+      res.status(500).json({ error: 'Failed to generate statement' });
+    }
+  },
+
+  // Delete sale
+  deleteSale: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const sale = await Sale.delete(id);
+      
+      if (!sale) {
+        return res.status(404).json({ error: 'Sale not found' });
+      }
+
+      res.json({ message: 'Sale deleted successfully' });
+    } catch (error) {
+      console.error('Delete sale error:', error);
+      res.status(500).json({ error: 'Failed to delete sale' });
+    }
+  }
+};
+
+module.exports = saleController;

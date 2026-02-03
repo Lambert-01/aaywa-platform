@@ -1,0 +1,65 @@
+/* Contact Page Styles */
+
+/* Input Fields */
+.inputGroup {
+    position: relative;
+    margin-bottom: 2.5rem;
+}
+
+.inputField {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    padding: 1.25rem 0;
+    color: #FFFFFF;
+    font-size: 1.25rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.inputField:focus {
+    outline: none;
+    border-bottom-color: #FFD700;
+}
+
+.inputLabel {
+    position: absolute;
+    top: 1.25rem;
+    left: 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.25rem;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.inputField:focus+.inputLabel,
+.inputField:not(:placeholder-shown)+.inputLabel {
+    top: -1.5rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    color: #FFD700;
+}
+
+/* Map Container */
+.mapContainer {
+    filter: grayscale(100%) invert(90%);
+    transition: all 0.5s ease;
+}
+
+.mapContainer:hover {
+    filter: grayscale(0%) invert(0%);
+}
+
+/* Contact Method Cards */
+.methodCard {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.methodCard:hover {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-color: #00A1DE;
+    transform: translateY(-5px);
+}
