@@ -40,7 +40,7 @@ const compostController = {
     try {
       const { id } = req.params;
       const batch = await Compost.findBatchById(id);
-      
+
       if (!batch) {
         return res.status(404).json({ error: 'Batch not found' });
       }
@@ -65,7 +65,7 @@ const compostController = {
       const updateData = req.body;
 
       const batch = await Compost.updateBatch(id, updateData);
-      
+
       if (!batch) {
         return res.status(404).json({ error: 'Batch not found' });
       }
@@ -134,7 +134,7 @@ const compostController = {
       const { payment_status, payment_reference } = req.body;
 
       const workday = await Compost.updateWorkdayPayment(id, payment_status, payment_reference);
-      
+
       if (!workday) {
         return res.status(404).json({ error: 'Workday not found' });
       }
@@ -168,6 +168,120 @@ const compostController = {
     } catch (error) {
       console.error('Get stipend summary error:', error);
       res.status(500).json({ error: 'Failed to fetch summary' });
+    }
+  },
+
+  // Feedstock Management
+  addFeedstockItem: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const feedstockData = req.body;
+
+      const item = await Compost.addFeedstockItem(id, feedstockData);
+
+      res.status(201).json({
+        message: 'Feedstock item added successfully',
+        item
+      });
+    } catch (error) {
+      console.error('Add feedstock error:', error);
+      res.status(500).json({ error: 'Failed to add feedstock item' });
+    }
+  },
+
+  getFeedstockItems: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const items = await Compost.getFeedstockItems(id);
+      res.json(items);
+    } catch (error) {
+      console.error('Get feedstock error:', error);
+      res.status(500).json({ error: 'Failed to fetch feedstock items' });
+    }
+  },
+
+  // Quality Metrics
+  updateQualityMetrics: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const metricsData = req.body;
+
+      const batch = await Compost.updateQualityMetrics(id, metricsData);
+
+      if (!batch) {
+        return res.status(404).json({ error: 'Batch not found or no metrics to update' });
+      }
+
+      res.json({
+        message: 'Quality metrics updated successfully',
+        batch
+      });
+    } catch (error) {
+      console.error('Update quality metrics error:', error);
+      res.status(500).json({ error: 'Failed to update quality metrics' });
+    }
+  },
+
+  // Sales Management
+  createSale: async (req, res) => {
+    try {
+      const saleData = {
+        ...req.body,
+        created_by: req.user.id
+      };
+
+      const sale = await Compost.createSale(saleData);
+
+      res.status(201).json({
+        message: 'Sale recorded successfully',
+        sale
+      });
+    } catch (error) {
+      console.error('Create sale error:', error);
+      res.status(500).json({ error: 'Failed to record sale' });
+    }
+  },
+
+  getSalesByBatch: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const sales = await Compost.getSalesByBatch(id);
+      res.json(sales);
+    } catch (error) {
+      console.error('Get sales error:', error);
+      res.status(500).json({ error: 'Failed to fetch sales' });
+    }
+  },
+
+  getAllSales: async (req, res) => {
+    try {
+      const sales = await Compost.getAllSales();
+      res.json(sales);
+    } catch (error) {
+      console.error('Get all sales error:', error);
+      res.status(500).json({ error: 'Failed to fetch sales' });
+    }
+  },
+
+  // Dashboard Summary
+  getSummary: async (req, res) => {
+    try {
+      const summary = await Compost.getSummaryStats();
+      res.json(summary);
+    } catch (error) {
+      console.error('Get summary error:', error);
+      res.status(500).json({ error: 'Failed to fetch summary statistics' });
+    }
+  },
+
+  // Get all batches with full details (using view)
+  getAllBatchesWithDetails: async (req, res) => {
+    try {
+      const batches = await Compost.findAllBatchesWithDetails();
+      res.json(batches);
+    } catch (error) {
+      console.error('Get batches with details error:', error);
+      res.status(500).json({ error: 'Failed to fetch batches' });
     }
   }
 };

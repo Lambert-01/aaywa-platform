@@ -1,0 +1,10 @@
+Verifying tables and views...
+✅ training_sessions: Exists
+✅ training_attendance: Exists
+✅ quizzes: Exists
+✅ quiz_questions: Exists
+✅ quiz_results: Exists
+✅ learning_materials: Exists
+✅ champions: Exists
+✅ training_session_summary: Exists
+✅ participant_training_stats: Exists

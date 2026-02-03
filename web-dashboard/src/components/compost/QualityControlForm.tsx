@@ -18,6 +18,7 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({
     onSuccess,
 }) => {
     const [moisture, setMoisture] = useState<number>(45);
+    const [temperature, setTemperature] = useState<number>(55);
     const [maturityScore, setMaturityScore] = useState<number>(7);
     const [particleSize, setParticleSize] = useState<'Fine' | 'Medium' | 'Coarse'>('Medium');
     const [notes, setNotes] = useState<string>('');
@@ -33,14 +34,12 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({
         setError(null);
 
         try {
-            const qualityData: Partial<QualityMetrics> = {
-                batchId: batch.id,
+            const qualityData = {
                 moisture,
-                maturityScore,
-                particleSize,
+                temperature,
+                maturity_score: maturityScore,
+                particle_size: particleSize,
                 notes,
-                testedBy: 'Current User', // This should come from auth context
-                testedAt: new Date().toISOString(),
             };
 
             await apiPatch(`/compost/batches/${batch.id}/quality`, qualityData);

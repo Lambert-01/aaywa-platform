@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Initialize auth state from localStorage
     useEffect(() => {
-        const initializeAuth = () => {
+        const initializeAuth = async () => {
             try {
                 const storedToken = localStorage.getItem('aaywa_token');
 
@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     } else {
                         // Token valid, set state and fetch full profile
                         setToken(storedToken);
-                        fetchUserProfile(storedToken);
+                        await fetchUserProfile(storedToken);
                     }
                 }
             } catch (error) {

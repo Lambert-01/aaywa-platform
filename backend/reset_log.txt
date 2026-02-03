@@ -1,0 +1,14 @@
+Connecting to database...
+Dropping existing training objects...
+Executing: DROP VIEW IF EXISTS training_session_summary CASCADE
+Executing: DROP VIEW IF EXISTS participant_training_stats CASCADE
+Executing: DROP TABLE IF EXISTS training_attendance CASCADE
+Executing: DROP TABLE IF EXISTS quiz_results CASCADE
+Executing: DROP TABLE IF EXISTS quiz_questions CASCADE
+Executing: DROP TABLE IF EXISTS quizzes CASCADE
+Executing: DROP TABLE IF EXISTS learning_materials CASCADE
+Executing: DROP TABLE IF EXISTS champions CASCADE
+Executing: DROP TABLE IF EXISTS training_sessions CASCADE
+Reading schema from: C:\Users\educa\OneDrive\Desktop\aaywa platform\database\training_schema.sql
+Applying fresh schema...
+✅ Schema applied successfully!

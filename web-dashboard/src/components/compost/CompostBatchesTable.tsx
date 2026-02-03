@@ -30,8 +30,9 @@ const CompostBatchesTable: React.FC<CompostBatchesTableProps> = ({
             key: 'feedstockMix',
             label: 'Feedstock',
             render: (value: any[]) => {
-                const primary = value[0];
-                const othersCount = value.length - 1;
+                const items = value || [];
+                const primary = items[0];
+                const othersCount = items.length - 1;
                 return (
                     <div className="text-sm">
                         <span className="text-gray-900">{primary?.type || 'Mixed'}</span>
