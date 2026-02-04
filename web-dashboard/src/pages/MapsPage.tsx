@@ -1,429 +1,467 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle } from 'react-leaflet';
-import { Icon } from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { FarmerLocation, Warehouse } from '../types/dashboard.types';
-import { formatCurrency } from '../utils/formatters';
+import {
+    MapIcon,
+    FunnelIcon,
+    MagnifyingGlassIcon,
+    ArrowDownTrayIcon,
+    PlusIcon
+} from '@heroicons/react/24/outline';
+import MapBaseComponent from '../components/maps/MapBaseComponent';
+import { apiGet } from '../utils/api';
+import { calculateCenter, RWANDA_DEFAULTS, Coordinates } from '../utils/geospatial';
 
-// Fix for default marker icons in Leaflet
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+interface FarmerPlot {
+    id: number;
+    name: string;
+    household_type: string;
+    plot_boundary_coordinates: Coordinates[];
+    cohort_name: string;
+    cohort_id: number;
+}
 
-let DefaultIcon = new Icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-});
+interface Cohort {
+    id: number;
+    name: string;
+    cropping_system: string;
+    boundary_coordinates: Coordinates[];
+    boundary_color: string;
+    farmer_count: number;
+    total_area_hectares: number;
+}
+
+interface Warehouse {
+    id: number;
+    name: string;
+    type: string;
+    location_lat: number;
+    location_lng: number;
+    location_name: string;
+    capacity_kg: number;
+    current_usage_kg: number;
+    temperature_celsius: number | null;
+    status: string;
+    usage_percentage: number;
+}
+
+interface AggregationCenter {
+    id: number;
+    name: string;
+    location_lat: number;
+    location_lng: number;
+    buyer_partners: string[];
+    operating_hours: string;
+    contact_info: string;
+    status: string;
+}
+
+interface MapStats {
+    total_cohorts: number;
+    total_farmers: number;
+    total_warehouses: number;
+    total_aggregation_centers: number;
+    total_area_hectares: number;
+}
 
 const MapsPage: React.FC = () => {
-    const [farmers, setFarmers] = useState<FarmerLocation[]>([]);
+    // Data state
+    const [farmers, setFarmers] = useState<FarmerPlot[]>([]);
+    const [cohorts, setCohorts] = useState<Cohort[]>([]);
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+    const [aggregationCenters, setAggregationCenters] = useState<AggregationCenter[]>([]);
+    const [stats, setStats] = useState<MapStats | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // Layer visibility state
+    const [showCohorts, setShowCohorts] = useState(true);
     const [showFarmers, setShowFarmers] = useState(true);
     const [showWarehouses, setShowWarehouses] = useState(true);
-    const [showCohorts, setShowCohorts] = useState(true);
+    const [showAggregationCenters, setShowAggregationCenters] = useState(true);
+
+    // Filter state
     const [selectedCohort, setSelectedCohort] = useState<number | null>(null);
+    const [selectedHouseholdType, setSelectedHouseholdType] = useState<string>('');
+    const [searchQuery, setSearchQuery] = useState('');
 
-    // Rwanda center coordinates
-    const center: [number, number] = [-1.9403, 29.8739];
+    // Map state
+    const [mapCenter, setMapCenter] = useState<Coordinates>(RWANDA_DEFAULTS.center);
+    const [mapZoom, setMapZoom] = useState(RWANDA_DEFAULTS.zoom);
 
+    // Modal state
+    const [selectedFarmer, setSelectedFarmer] = useState<FarmerPlot | null>(null);
+    const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
+
+    // Fetch all data
     useEffect(() => {
-        fetchMapData();
+        fetchAllData();
     }, []);
 
-    const fetchMapData = async () => {
-        setLoading(true);
-
+    const fetchAllData = async () => {
         try {
-            // Mock farmer locations - replace with API call
-            const mockFarmers: FarmerLocation[] = [
-                {
-                    farmerId: 'f1',
-                    farmerName: 'Marie Uwase',
-                    cohortId: 1,
-                    plotSize: 0.5,
-                    croppingSystem: 'Avocado',
-                    latitude: -1.9350,
-                    longitude: 29.8650,
-                    lastYield: 450,
-                    lastSaleAmount: 125000,
-                    attendanceRate: 92,
-                },
-                {
-                    farmerId: 'f2',
-                    farmerName: 'Jean-Paul Habimana',
-                    cohortId: 1,
-                    plotSize: 0.6,
-                    croppingSystem: 'Avocado',
-                    latitude: -1.9380,
-                    longitude: 29.8700,
-                    lastYield: 520,
-                    lastSaleAmount: 142000,
-                    attendanceRate: 88,
-                },
-                {
-                    farmerId: 'f3',
-                    farmerName: 'Grace Mukeshimana',
-                    cohortId: 2,
-                    plotSize: 0.4,
-                    croppingSystem: 'Avocado',
-                    latitude: -1.9420,
-                    longitude: 29.8780,
-                    lastYield: 380,
-                    lastSaleAmount: 98000,
-                    attendanceRate: 95,
-                },
-                {
-                    farmerId: 'f4',
-                    farmerName: 'Patrick Niyonzima',
-                    cohortId: 3,
-                    plotSize: 0.7,
-                    croppingSystem: 'Macadamia',
-                    latitude: -1.9480,
-                    longitude: 29.8820,
-                    lastYield: 620,
-                    lastSaleAmount: 185000,
-                    attendanceRate: 90,
-                },
-                {
-                    farmerId: 'f5',
-                    farmerName: 'Alice Mukamana',
-                    cohortId: 4,
-                    plotSize: 0.5,
-                    croppingSystem: 'Macadamia',
-                    latitude: -1.9520,
-                    longitude: 29.8900,
-                    lastYield: 480,
-                    lastSaleAmount: 145000,
-                    attendanceRate: 87,
-                },
-            ];
+            setLoading(true);
+            const [farmersData, cohortsData, warehousesData, centersData, statsData] = await Promise.all([
+                apiGet('/maps/farmers'),
+                apiGet('/maps/cohorts'),
+                apiGet('/maps/warehouses'),
+                apiGet('/maps/aggregation-centers'),
+                apiGet('/maps/stats')
+            ]);
 
-            const mockWarehouses: Warehouse[] = [
-                {
-                    id: 'w1',
-                    name: 'Huye Central Warehouse',
-                    type: 'Storage',
-                    latitude: -1.9400,
-                    longitude: 29.8750,
-                    capacity: 5000,
-                    currentStock: 3200,
-                    cohortIds: [1, 2],
-                },
-                {
-                    id: 'w2',
-                    name: 'Ruhango Aggregation Center',
-                    type: 'Aggregation Center',
-                    latitude: -1.9500,
-                    longitude: 29.8850,
-                    capacity: 3000,
-                    currentStock: 1800,
-                    cohortIds: [3, 4],
-                },
-            ];
+            setFarmers((farmersData as any[]).map(f => ({
+                ...f,
+                plot_boundary_coordinates: f.plot_boundary_coordinates?.map((c: any) => ({
+                    lat: Number(c.lat),
+                    lng: Number(c.lng)
+                })) || []
+            })));
 
-            setFarmers(mockFarmers);
-            setWarehouses(mockWarehouses);
+            setCohorts((cohortsData as any[]).map(c => ({
+                ...c,
+                boundary_coordinates: c.boundary_coordinates?.map((coord: any) => ({
+                    lat: Number(coord.lat),
+                    lng: Number(coord.lng)
+                })) || []
+            })));
 
-            // In production:
-            // const farmersData = await apiGet<FarmerLocation[]>('/farmers?includeLocation=true');
-            // const warehousesData = await apiGet<Warehouse[]>('/warehouses');
-        } catch (err: any) {
-            console.error('Failed to load map data:', err);
+            setWarehouses((warehousesData as any[]).map(w => ({
+                ...w,
+                location_lat: Number(w.location_lat),
+                location_lng: Number(w.location_lng),
+                capacity_kg: Number(w.capacity_kg),
+                current_usage_kg: Number(w.current_usage_kg),
+                usage_percentage: Number(w.usage_percentage)
+            })).filter(w => !isNaN(w.location_lat) && !isNaN(w.location_lng)));
+
+            setAggregationCenters((centersData as any[]).map(c => ({
+                ...c,
+                location_lat: Number(c.location_lat),
+                location_lng: Number(c.location_lng)
+            })).filter(c => !isNaN(c.location_lat) && !isNaN(c.location_lng)));
+
+            setStats(statsData as MapStats);
+
+            // Calculate map center from all data
+            const farmersArray = farmersData as FarmerPlot[];
+            const warehousesArray = warehousesData as Warehouse[];
+            const allCoords: Coordinates[] = [];
+
+            // Safely extract farmer coordinates
+            farmersArray.forEach(f => {
+                if (f.plot_boundary_coordinates && f.plot_boundary_coordinates.length > 0) {
+                    const coord = f.plot_boundary_coordinates[0];
+                    if (coord && !isNaN(Number(coord.lat)) && !isNaN(Number(coord.lng))) {
+                        allCoords.push({ lat: Number(coord.lat), lng: Number(coord.lng) });
+                    }
+                }
+            });
+
+            // Safely extract warehouse coordinates
+            warehousesArray.forEach(w => {
+                if (w.location_lat != null && w.location_lng != null) {
+                    if (!isNaN(Number(w.location_lat)) && !isNaN(Number(w.location_lng))) {
+                        allCoords.push({ lat: Number(w.location_lat), lng: Number(w.location_lng) });
+                    }
+                }
+            });
+
+            if (allCoords.length > 0) {
+                setMapCenter(calculateCenter(allCoords));
+            }
+        } catch (error) {
+            console.error('Error fetching map data:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    // Mock cohort boundaries (simplified polygons)
-    const cohortBoundaries = {
-        type: 'FeatureCollection',
-        features: [
-            {
-                type: 'Feature',
-                properties: { cohortId: 1, name: 'Cohort 1 - Avocado', color: '#10b981' },
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [
-                        [
-                            [29.860, -1.930],
-                            [29.875, -1.930],
-                            [29.875, -1.945],
-                            [29.860, -1.945],
-                            [29.860, -1.930],
-                        ],
-                    ],
-                },
-            },
-            {
-                type: 'Feature',
-                properties: { cohortId: 2, name: 'Cohort 2 - Avocado', color: '#3b82f6' },
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [
-                        [
-                            [29.875, -1.935],
-                            [29.885, -1.935],
-                            [29.885, -1.950],
-                            [29.875, -1.950],
-                            [29.875, -1.935],
-                        ],
-                    ],
-                },
-            },
-        ],
+    // Filter farmers based on search and filters
+    const filteredFarmers = farmers.filter(farmer => {
+        if (selectedCohort && farmer.cohort_id !== selectedCohort) return false;
+        if (selectedHouseholdType && farmer.household_type !== selectedHouseholdType) return false;
+        if (searchQuery && !farmer.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+        return true;
+    });
+
+    const handleExportMap = () => {
+        alert('Map export feature coming soon!');
     };
 
-    const filteredFarmers = selectedCohort
-        ? farmers.filter((f) => f.cohortId === selectedCohort)
-        : farmers;
+    const handleGenerateReport = () => {
+        alert('Impact report generation coming soon!');
+    };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="flex items-center justify-center h-screen bg-gray-50">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading map data...</p>
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#00A1DE] mx-auto mb-4"></div>
+                    <p className="text-gray-600 font-medium">Loading Geospatial Command Center...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900">Geospatial Map</h1>
-                    <p className="mt-2 text-sm text-gray-600">
-                        Visualize farm plots, cohorts, and storage facilities
-                    </p>
+        <div className="h-screen flex flex-col bg-gray-50">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#00A1DE] to-[#0077B6] text-white px-6 py-4 shadow-lg">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center space-x-3">
+                            <MapIcon className="h-8 w-8" />
+                            <h1 className="text-2xl font-bold">Geospatial Command Center</h1>
+                        </div>
+                        <p className="text-sm text-white text-opacity-90 mt-1">
+                            {stats?.total_cohorts || 0} Cohorts • {stats?.total_farmers || 0} Farmers • {stats?.total_warehouses || 0} Warehouses • {stats?.total_aggregation_centers || 0} Aggregation Centers
+                        </p>
+                    </div>
+                    <div className="flex space-x-3">
+                        <button
+                            onClick={handleExportMap}
+                            className="flex items-center space-x-2 px-4 py-2 bg-white text-[#00A1DE] rounded-lg hover:bg-gray-100 transition font-medium shadow"
+                        >
+                            <ArrowDownTrayIcon className="h-5 w-5" />
+                            <span>Export Map</span>
+                        </button>
+                        <button
+                            onClick={handleGenerateReport}
+                            className="flex items-center space-x-2 px-4 py-2 bg-[#FFD700] text-gray-900 rounded-lg hover:bg-[#FFC700] transition font-medium shadow"
+                        >
+                            <PlusIcon className="h-5 w-5" />
+                            <span>Generate Report</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-1 flex overflow-hidden">
+                {/* Map Container */}
+                <div className="flex-1 p-4">
+                    <div className="h-full w-full relative rounded-xl shadow-xl overflow-hidden">
+                        <MapBaseComponent
+                            farmers={showFarmers ? filteredFarmers : []}
+                            cohorts={showCohorts ? cohorts : []}
+                            warehouses={showWarehouses ? warehouses : []}
+                            center={mapCenter}
+                            zoom={mapZoom}
+                            onFarmerClick={setSelectedFarmer}
+                            onWarehouseClick={setSelectedWarehouse}
+                        />
+                    </div>
                 </div>
 
-                {/* Controls Panel */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-6">
-                            <h3 className="text-sm font-semibold text-gray-900">Map Layers</h3>
+                {/* Right Sidebar - Layer Controls */}
+                <div className="w-80 bg-white shadow-xl p-4 overflow-y-auto">
+                    <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <FunnelIcon className="h-5 w-5 mr-2 text-[#00A1DE]" />
+                        Layer Controls
+                    </h2>
 
+                    {/* Search */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Search Farmers
+                        </label>
+                        <div className="relative">
+                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by name..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00A1DE] focus:border-[#00A1DE]"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Layer Toggles */}
+                    <div className="mb-4 pb-4 border-b border-gray-200">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-3">Visible Layers</h3>
+                        <div className="space-y-2">
                             <label className="flex items-center space-x-2 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={showCohorts}
-                                    onChange={() => setShowCohorts(!showCohorts)}
-                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                    onChange={(e) => setShowCohorts(e.target.checked)}
+                                    className="w-4 h-4 text-[#00A1DE] rounded focus:ring-[#00A1DE]"
                                 />
-                                <span className="text-sm text-gray-700">Cohort Boundaries</span>
+                                <span className="text-sm">Cohort Boundaries</span>
                             </label>
-
                             <label className="flex items-center space-x-2 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={showFarmers}
-                                    onChange={() => setShowFarmers(!showFarmers)}
-                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                    onChange={(e) => setShowFarmers(e.target.checked)}
+                                    className="w-4 h-4 text-[#00A1DE] rounded focus:ring-[#00A1DE]"
                                 />
-                                <span className="text-sm text-gray-700">Farm Plots</span>
+                                <span className="text-sm">Farmer Plots ({filteredFarmers.length})</span>
                             </label>
-
                             <label className="flex items-center space-x-2 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={showWarehouses}
-                                    onChange={() => setShowWarehouses(!showWarehouses)}
-                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                    onChange={(e) => setShowWarehouses(e.target.checked)}
+                                    className="w-4 h-4 text-[#00A1DE] rounded focus:ring-[#00A1DE]"
                                 />
-                                <span className="text-sm text-gray-700">Warehouses</span>
+                                <span className="text-sm">Warehouses ({warehouses.length})</span>
+                            </label>
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={showAggregationCenters}
+                                    onChange={(e) => setShowAggregationCenters(e.target.checked)}
+                                    className="w-4 h-4 text-[#00A1DE] rounded focus:ring-[#00A1DE]"
+                                />
+                                <span className="text-sm">Aggregation Centers ({aggregationCenters.length})</span>
                             </label>
                         </div>
-
-                        <div className="flex items-center space-x-3">
-                            <label className="text-sm font-medium text-gray-700">Filter by Cohort:</label>
-                            <select
-                                value={selectedCohort || ''}
-                                onChange={(e) => setSelectedCohort(e.target.value ? Number(e.target.value) : null)}
-                                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            >
-                                <option value="">All Cohorts</option>
-                                <option value="1">Cohort 1</option>
-                                <option value="2">Cohort 2</option>
-                                <option value="3">Cohort 3</option>
-                                <option value="4">Cohort 4</option>
-                            </select>
-                        </div>
                     </div>
-                </div>
 
-                {/* Map Container */}
-                <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200" style={{ height: '600px' }}>
-                    <MapContainer
-                        center={center}
-                        zoom={13}
-                        style={{ height: '100%', width: '100%' }}
-                        scrollWheelZoom={true}
-                    >
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-
-                        {/* Cohort Boundaries */}
-                        {showCohorts && (
-                            <GeoJSON
-                                data={cohortBoundaries as any}
-                                style={(feature: any) => ({
-                                    color: feature.properties.color,
-                                    weight: 2,
-                                    fillOpacity: 0.15,
-                                })}
-                                onEachFeature={(feature: any, layer: any) => {
-                                    layer.bindPopup(`
-                    <div class="p-2">
-                      <h4 class="font-semibold text-gray-900">${feature.properties.name}</h4>
-                      <p class="text-sm text-gray-600 mt-1">Cohort ID: ${feature.properties.cohortId}</p>
-                    </div>
-                  `);
-                                }}
-                            />
-                        )}
-
-                        {/* Farmer Locations */}
-                        {showFarmers &&
-                            filteredFarmers.map((farmer) => (
-                                <Marker
-                                    key={farmer.farmerId}
-                                    position={[farmer.latitude, farmer.longitude]}
-                                    icon={DefaultIcon}
-                                >
-                                    <Popup>
-                                        <div className="p-2">
-                                            <h4 className="text-base font-semibold text-gray-900">{farmer.farmerName}</h4>
-                                            <div className="mt-2 space-y-1 text-sm">
-                                                <p className="text-gray-600">
-                                                    <span className="font-medium">Cohort:</span> Cohort {farmer.cohortId}
-                                                </p>
-                                                <p className="text-gray-600">
-                                                    <span className="font-medium">Crop:</span> {farmer.croppingSystem}
-                                                </p>
-                                                <p className="text-gray-600">
-                                                    <span className="font-medium">Plot Size:</span> {farmer.plotSize} ha
-                                                </p>
-                                                {farmer.lastYield && (
-                                                    <p className="text-gray-600">
-                                                        <span className="font-medium">Last Yield:</span> {farmer.lastYield} kg/ha
-                                                    </p>
-                                                )}
-                                                {farmer.lastSaleAmount && (
-                                                    <p className="text-emerald-600 font-medium">
-                                                        Last Sale: {formatCurrency(farmer.lastSaleAmount)}
-                                                    </p>
-                                                )}
-                                                {farmer.attendanceRate && (
-                                                    <p className="text-blue-600">
-                                                        <span className="font-medium">Attendance:</span> {farmer.attendanceRate}%
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </Popup>
-                                </Marker>
+                    {/* Cohort Filter */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Filter by Cohort
+                        </label>
+                        <select
+                            value={selectedCohort || ''}
+                            onChange={(e) => setSelectedCohort(e.target.value ? Number(e.target.value) : null)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00A1DE] focus:border-[#00A1DE]"
+                        >
+                            <option value="">All Cohorts</option>
+                            {cohorts.map(cohort => (
+                                <option key={cohort.id} value={cohort.id}>
+                                    {cohort.name} ({cohort.farmer_count} farmers)
+                                </option>
                             ))}
+                        </select>
+                    </div>
 
-                        {/* Warehouse Locations */}
-                        {showWarehouses &&
-                            warehouses.map((warehouse) => (
-                                <Circle
-                                    key={warehouse.id}
-                                    center={[warehouse.latitude, warehouse.longitude]}
-                                    radius={200}
-                                    pathOptions={{
-                                        color: warehouse.type === 'Storage' ? '#8b5cf6' : '#f59e0b',
-                                        fillColor: warehouse.type === 'Storage' ? '#8b5cf6' : '#f59e0b',
-                                        fillOpacity: 0.4,
-                                    }}
-                                >
-                                    <Popup>
-                                        <div className="p-2">
-                                            <h4 className="text-base font-semibold text-gray-900">{warehouse.name}</h4>
-                                            <div className="mt-2 space-y-1 text-sm">
-                                                <p className="text-gray-600">
-                                                    <span className="font-medium">Type:</span> {warehouse.type}
-                                                </p>
-                                                {warehouse.capacity && (
-                                                    <>
-                                                        <p className="text-gray-600">
-                                                            <span className="font-medium">Capacity:</span> {warehouse.capacity} kg
-                                                        </p>
-                                                        <p className="text-gray-600">
-                                                            <span className="font-medium">Current Stock:</span> {warehouse.currentStock} kg
-                                                        </p>
-                                                        <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                                                            <div
-                                                                className="bg-emerald-600 h-2 rounded-full"
-                                                                style={{
-                                                                    width: `${((warehouse.currentStock || 0) / warehouse.capacity) * 100}%`,
-                                                                }}
-                                                            ></div>
-                                                        </div>
-                                                    </>
-                                                )}
-                                                <p className="text-gray-600 mt-2">
-                                                    <span className="font-medium">Serves Cohorts:</span> {warehouse.cohortIds.join(', ')}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </Popup>
-                                </Circle>
-                            ))}
-                    </MapContainer>
-                </div>
+                    {/* Household Type Filter */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Household Type
+                        </label>
+                        <select
+                            value={selectedHouseholdType}
+                            onChange={(e) => setSelectedHouseholdType(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00A1DE] focus:border-[#00A1DE]"
+                        >
+                            <option value="">All Types</option>
+                            <option value="teen_mother">👶 Teen Mothers</option>
+                            <option value="female_headed">👩 Female Headed</option>
+                            <option value="land_poor">👨 Land Poor</option>
+                        </select>
+                    </div>
 
-                {/* Legend */}
-                <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Map Legend</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-emerald-500 bg-opacity-30 border-2 border-emerald-500 rounded"></div>
-                            <span className="text-gray-700">Cohort 1</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-blue-500 bg-opacity-30 border-2 border-blue-500 rounded"></div>
-                            <span className="text-gray-700">Cohort 2</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <img src={icon} alt="marker" className="w-6 h-6" />
-                            <span className="text-gray-700">Farm Plot</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-purple-500 rounded-full"></div>
-                            <span className="text-gray-700">Storage Warehouse</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-amber-500 rounded-full"></div>
-                            <span className="text-gray-700">Aggregation Center</span>
+                    {/* Stats Summary */}
+                    <div className="mt-6 p-4 bg-gradient-to-br from-[#00A1DE] to-[#0077B6] rounded-xl text-white">
+                        <h3 className="font-semibold mb-3">Geographic Summary</h3>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-white text-opacity-90">Total Area:</span>
+                                <span className="font-bold">{Number(stats?.total_area_hectares || 0).toFixed(2)} ha</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-white text-opacity-90">Active Farmers:</span>
+                                <span className="font-bold">{filteredFarmers.length}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-white text-opacity-90">Facilities:</span>
+                                <span className="font-bold">{warehouses.length}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Statistics */}
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                        <p className="text-sm text-gray-600">Total Farmers on Map</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">{filteredFarmers.length}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                        <p className="text-sm text-gray-600">Total Plot Area</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">
-                            {filteredFarmers.reduce((sum, f) => sum + f.plotSize, 0).toFixed(1)} ha
-                        </p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                        <p className="text-sm text-gray-600">Storage Facilities</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">{warehouses.length}</p>
+                    {/* Legend */}
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Household Types</h3>
+                        <div className="space-y-1 text-xs">
+                            <div className="flex items-center space-x-2">
+                                <div className="w-3 h-3 rounded-full bg-[#E91E63]"></div>
+                                <span>Teen Mother</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <div className="w-3 h-3 rounded-full bg-[#9C27B0]"></div>
+                                <span>Female Headed</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <div className="w-3 h-3 rounded-full bg-[#2196F3]"></div>
+                                <span>Land Poor</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Farmer Detail Modal */}
+            {selectedFarmer && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000] p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">{selectedFarmer.name}</h2>
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Cohort:</span>
+                                <span className="font-medium">{selectedFarmer.cohort_name}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Household Type:</span>
+                                <span className="font-medium capitalize">{selectedFarmer.household_type.replace('_', ' ')}</span>
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setSelectedFarmer(null)}
+                                className="px-6 py-2 bg-[#00A1DE] text-white rounded-lg hover:bg-[#0077B6] transition"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Warehouse Detail Modal */}
+            {selectedWarehouse && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000] p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">{selectedWarehouse.name}</h2>
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Type:</span>
+                                <span className="font-medium capitalize">{selectedWarehouse.type.replace('_', ' ')}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Capacity:</span>
+                                <span className="font-medium">{selectedWarehouse.capacity_kg} kg</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Usage:</span>
+                                <span className="font-medium">{selectedWarehouse.usage_percentage}%</span>
+                            </div>
+                            {selectedWarehouse.temperature_celsius && (
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Temperature:</span>
+                                    <span className="font-medium">{selectedWarehouse.temperature_celsius}°C</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Status:</span>
+                                <span className={`font-medium ${selectedWarehouse.status === 'operational' ? 'text-green-600' : 'text-yellow-600'}`}>
+                                    {selectedWarehouse.status.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setSelectedWarehouse(null)}
+                                className="px-6 py-2 bg-[#00A1DE] text-white rounded-lg hover:bg-[#0077B6] transition"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

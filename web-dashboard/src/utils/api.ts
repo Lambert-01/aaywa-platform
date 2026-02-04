@@ -48,7 +48,7 @@ export async function apiRequest<T>(
             }));
 
             throw new Error(
-                errorData.message || `API Error: ${response.status} ${response.statusText}`
+                errorData.error || errorData.message || `API Error: ${response.status} ${response.statusText}`
             );
         }
 
@@ -157,6 +157,9 @@ export async function apiUpload<T>(
 export function handleApiError(error: any): string {
     if (error.message) {
         return error.message;
+    }
+    if (error.error) {
+        return error.error;
     }
     if (typeof error === 'string') {
         return error;

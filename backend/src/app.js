@@ -15,6 +15,7 @@ const saleRoutes = require('./routes/sales.routes');
 const compostRoutes = require('./routes/compost.routes');
 const trainingRoutes = require('./routes/training.routes');
 const warehouseRoutes = require('./routes/warehouses.routes');
+const mapsRoutes = require('./routes/maps.routes');
 
 const app = express();
 
@@ -90,6 +91,7 @@ app.use('/api/sales', saleRoutes);
 app.use('/api/compost', compostRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/warehouses', warehouseRoutes);
+app.use('/api/maps', mapsRoutes);
 
 // Static file serving for uploads
 // Static file serving for uploads

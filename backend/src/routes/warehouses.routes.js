@@ -6,29 +6,38 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 // All routes require authentication
 router.use(authenticateToken);
 
-// Facilities
-router.post('/', authorizeRoles('manager', 'agronomist'), warehouseController.createFacility);
-router.get('/', warehouseController.getAllFacilities);
-router.get('/inventory/summary', authorizeRoles('manager', 'agronomist'), warehouseController.getInventorySummary);
-router.get('/:id', warehouseController.getFacilityById);
-router.put('/:id', authorizeRoles('manager', 'agronomist'), warehouseController.updateFacility);
-router.delete('/:id', authorizeRoles('manager'), warehouseController.deleteFacility);
+// =============================================
+// FACILITY MANAGEMENT
+// =============================================
+router.get('/facilities', warehouseController.getAllFacilities);
+router.post('/facilities', authorizeRoles('agronomist', 'project_manager'), warehouseController.createFacility);
+router.get('/facilities/:id', warehouseController.getFacilityById);
+router.put('/facilities/:id', authorizeRoles('agronomist', 'project_manager'), warehouseController.updateFacility);
 
-// Stored Produce
-router.post('/produce', authorizeRoles('manager', 'agronomist'), warehouseController.storeProduce);
-router.get('/produce/farmer/:farmerId', warehouseController.getProduceByFarmer);
-router.get('/produce/:id', warehouseController.getProduceById);
-router.post('/produce/:id/retrieve', authorizeRoles('manager', 'agronomist'), warehouseController.retrieveProduce);
 
-// Storage Fees
-router.post('/fees/calculate', warehouseController.calculateFee);
+// =============================================
+// INVENTORY TRANSACTIONS
+// =============================================
+router.post('/incoming', authorizeRoles('agronomist', 'project_manager'), warehouseController.recordIncoming);
+router.post('/outgoing', authorizeRoles('agronomist', 'project_manager'), warehouseController.recordOutgoing);
+router.get('/transactions', warehouseController.getTransactions);
 
-// Temperature Logs
-router.post('/temperature', authorizeRoles('manager', 'agronomist'), warehouseController.logTemperature);
-router.get('/:warehouseId/temperature', warehouseController.getTemperatureLogs);
+// =============================================
+// DASHBOARD STATS
+// =============================================
+router.get('/stats', warehouseController.getStats);
 
-// Maintenance
-router.post('/maintenance', authorizeRoles('manager', 'agronomist'), warehouseController.createMaintenanceLog);
-router.get('/:warehouseId/maintenance', warehouseController.getMaintenanceLogs);
+// =============================================
+// TEMPERATURE MONITORING
+// =============================================
+router.get('/temperature', warehouseController.getTemperatureLogs);
+router.post('/temperature', authorizeRoles('agronomist', 'project_manager'), warehouseController.logTemperature);
+
+// =============================================
+// MAINTENANCE MANAGEMENT
+// =============================================
+router.get('/maintenance', warehouseController.getMaintenance);
+router.post('/maintenance', authorizeRoles('agronomist', 'project_manager'), warehouseController.scheduleMaintenance);
+router.put('/maintenance/:id/complete', authorizeRoles('agronomist', 'project_manager'), warehouseController.completeMaintenance);
 
 module.exports = router;
