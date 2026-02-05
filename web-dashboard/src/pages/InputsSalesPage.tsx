@@ -39,7 +39,7 @@ const InputsSalesPage: React.FC = () => {
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const data = await apiGet<any>('/products');
+            const data = await apiGet<any>('/api/products');
             setProducts(data.products || []);
         } catch (error) {
             console.error('Failed to fetch products:', error);
@@ -50,7 +50,7 @@ const InputsSalesPage: React.FC = () => {
 
     const fetchOrders = async () => {
         try {
-            const data = await apiGet<any>('/marketplace/orders');
+            const data = await apiGet<any>('/api/marketplace/orders');
             const mappedOrders = (data.orders || []).map((o: any) => ({
                 id: o.id.toString(),
                 orderNumber: o.order_number,
@@ -81,9 +81,9 @@ const InputsSalesPage: React.FC = () => {
     const handleCreateProduct = async (productData: any) => {
         try {
             if (editingProduct) {
-                await apiPatch(`/products/${editingProduct.id}`, productData);
+                await apiPatch(`/api/products/${editingProduct.id}`, productData);
             } else {
-                await apiPost('/products', productData);
+                await apiPost('/api/products', productData);
             }
             setIsProductModalOpen(false);
             setEditingProduct(null);
@@ -96,7 +96,7 @@ const InputsSalesPage: React.FC = () => {
 
     const handleToggleProductStatus = async (productId: number, newStatus: string) => {
         try {
-            await apiPatch(`/products/${productId}/status`, { status: newStatus });
+            await apiPatch(`/api/products/${productId}/status`, { status: newStatus });
             fetchProducts();
         } catch (error) {
             console.error('Failed to update product status:', error);
@@ -105,7 +105,7 @@ const InputsSalesPage: React.FC = () => {
 
     const handleDeleteProduct = async (productId: number) => {
         try {
-            await apiDelete(`/products/${productId}`);
+            await apiDelete(`/api/products/${productId}`);
             fetchProducts();
         } catch (error: any) {
             console.error('Failed to delete product:', error);
@@ -116,7 +116,7 @@ const InputsSalesPage: React.FC = () => {
 
     const handleUpdateOrderStatus = async (orderId: string, status: string) => {
         try {
-            await apiPatch(`/marketplace/orders/${orderId}/status`, { status });
+            await apiPatch(`/api/marketplace/orders/${orderId}/status`, { status });
             fetchOrders();
             // Since we re-fetch all orders, we can update selectedOrder if it's open
             // But to be immediate, let's just update the local state if needed or close it
@@ -133,7 +133,7 @@ const InputsSalesPage: React.FC = () => {
 
     const handleUpdatePaymentStatus = async (orderId: string, status: string) => {
         try {
-            await apiPatch(`/marketplace/orders/${orderId}/payment-status`, { status });
+            await apiPatch(`/api/marketplace/orders/${orderId}/payment-status`, { status });
             fetchOrders();
             if (selectedOrder && selectedOrder.id === orderId) {
                 setSelectedOrder({ ...selectedOrder, paymentStatus: status });

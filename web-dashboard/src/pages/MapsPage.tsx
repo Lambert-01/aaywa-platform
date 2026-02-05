@@ -99,11 +99,11 @@ const MapsPage: React.FC = () => {
         try {
             setLoading(true);
             const [farmersData, cohortsData, warehousesData, centersData, statsData] = await Promise.all([
-                apiGet('/maps/farmers'),
-                apiGet('/maps/cohorts'),
-                apiGet('/maps/warehouses'),
-                apiGet('/maps/aggregation-centers'),
-                apiGet('/maps/stats')
+                apiGet('/api/maps/farmers'),
+                apiGet('/api/maps/cohorts'),
+                apiGet('/api/maps/warehouses'),
+                apiGet('/api/maps/aggregation-centers'),
+                apiGet('/api/maps/stats')
             ]);
 
             setFarmers((farmersData as any[]).map(f => ({

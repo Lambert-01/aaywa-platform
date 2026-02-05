@@ -32,7 +32,7 @@ const NotificationCenter: React.FC = () => {
     const fetchAlerts = async () => {
         setLoading(true);
         try {
-            const data = await apiGet<{ alerts: Alert[] }>('/alerts');
+            const data = await apiGet<{ alerts: Alert[] }>('/api/alerts');
             setAlerts(data.alerts || []);
         } catch (error) {
             console.error('Failed to fetch alerts:', error);
@@ -43,7 +43,7 @@ const NotificationCenter: React.FC = () => {
 
     const handleDismiss = async (id: number) => {
         try {
-            await apiPatch(`/alerts/${id}/dismiss`, {});
+            await apiPatch(`/api/alerts/${id}/dismiss`, {});
             setAlerts(prev => prev.filter(alert => alert.id !== id));
         } catch (error) {
             console.error('Failed to dismiss alert:', error);

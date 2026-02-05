@@ -16,6 +16,7 @@ import { CardSkeleton } from '../components/skeletons';
 import AlertBanner from '../components/alerts/AlertBanner';
 import TrendIndicator from '../components/alerts/TrendIndicator';
 import { apiGet, apiPatch } from '../utils/api';
+import { API_URL } from '../api/config';
 
 interface DashboardKPIData {
     farmers: number;
@@ -55,7 +56,7 @@ const Dashboard = () => {
 
     const fetchAlerts = async () => {
         try {
-            const data = await apiGet<{ alerts: Alert[] }>('/alerts');
+            const data = await apiGet<{ alerts: Alert[] }>('/api/alerts');
             setAlerts(data.alerts || []);
         } catch (err) {
             console.error('Failed to fetch alerts:', err);
@@ -65,7 +66,7 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
         try {
             const token = localStorage.getItem('aaywa_token');
-            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/dashboard/kpi`, {
+            const response = await fetch(`${API_URL}/api/dashboard/kpi`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -87,7 +88,7 @@ const Dashboard = () => {
 
     const handleDismissAlert = async (id: number) => {
         try {
-            await apiPatch(`/alerts/${id}/dismiss`, {});
+            await apiPatch(`/api/alerts/${id}/dismiss`, {});
             setAlerts(prev => prev.filter(alert => alert.id !== id));
         } catch (error) {
             console.error('Failed to dismiss alert:', error);

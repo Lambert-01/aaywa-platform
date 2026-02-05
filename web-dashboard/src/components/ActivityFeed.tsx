@@ -6,6 +6,7 @@ import {
     ArchiveBoxIcon,
     AcademicCapIcon
 } from '@heroicons/react/24/outline';
+import { API_URL } from '../api/config';
 
 interface Activity {
     type: string;
@@ -25,7 +26,7 @@ const ActivityFeed: React.FC = () => {
     const fetchActivities = async () => {
         try {
             const token = localStorage.getItem('aaywa_token');
-            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/dashboard/activity`, {
+            const response = await fetch(`${API_URL}/api/dashboard/activity`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

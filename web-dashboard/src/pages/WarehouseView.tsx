@@ -50,7 +50,7 @@ const WarehouseView: React.FC = () => {
 
     const fetchFacilities = async () => {
         try {
-            const data = await apiGet('/warehouses/facilities') as any[];
+            const data = await apiGet('/api/warehouses/facilities') as any[];
             console.log('Fetched facilities:', data);
             setFacilities(data);
         } catch (error) {
@@ -61,7 +61,7 @@ const WarehouseView: React.FC = () => {
 
     const fetchStats = async () => {
         try {
-            const data = await apiGet('/warehouses/stats') as any;
+            const data = await apiGet('/api/warehouses/stats') as any;
             setStats(data);
         } catch (error) {
             console.error('Error fetching stats:', error);
@@ -71,7 +71,7 @@ const WarehouseView: React.FC = () => {
 
     const fetchTransactions = async () => {
         try {
-            const data = await apiGet('/warehouses/transactions?limit=50') as any[];
+            const data = await apiGet('/api/warehouses/transactions?limit=50') as any[];
             setTransactions(data);
         } catch (error) {
             console.error('Error fetching transactions:', error);
@@ -83,7 +83,7 @@ const WarehouseView: React.FC = () => {
     const handleRecordIncoming = async (data: any) => {
         try {
             console.log('Recording incoming produce:', data);
-            const response = await apiPost('/warehouses/incoming', data);
+            const response = await apiPost('/api/warehouses/incoming', data);
             console.log('Incoming produce recorded successfully:', response);
             await fetchAllData(); // Refresh all data
         } catch (error) {
@@ -109,7 +109,7 @@ const WarehouseView: React.FC = () => {
     const handleRecordOutgoing = async (data: any) => {
         try {
             console.log('Recording outgoing shipment:', data);
-            const response = await apiPost('/warehouses/outgoing', data);
+            const response = await apiPost('/api/warehouses/outgoing', data);
             console.log('Outgoing shipment recorded successfully:', response);
             await fetchAllData(); // Refresh all data
         } catch (error) {
@@ -135,7 +135,7 @@ const WarehouseView: React.FC = () => {
     const handleCreateFacility = async (data: any) => {
         try {
             console.log('Creating facility with data:', data);
-            const response = await apiPost('/warehouses/facilities', data);
+            const response = await apiPost('/api/warehouses/facilities', data);
             console.log('Facility created successfully:', response);
             await fetchAllData(); // Refresh all data
             setFacilityModalOpen(false);
@@ -163,7 +163,7 @@ const WarehouseView: React.FC = () => {
         try {
             if (!selectedFacility?.id) return;
             console.log('Updating facility with data:', data);
-            const response = await apiPut(`/warehouses/facilities/${selectedFacility.id}`, data);
+            const response = await apiPut(`/api/warehouses/facilities/${selectedFacility.id}`, data);
             console.log('Facility updated successfully:', response);
             await fetchAllData(); // Refresh all data
             setFacilityModalOpen(false);

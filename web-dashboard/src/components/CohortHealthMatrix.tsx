@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import StatusBadge from './StatusBadge';
+import { API_URL } from '../api/config';
 
 interface CohortStat {
     id: number;
@@ -21,7 +22,7 @@ const CohortHealthMatrix: React.FC = () => {
     const fetchCohortStats = async () => {
         try {
             const token = localStorage.getItem('aaywa_token');
-            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/dashboard/cohort-stats`, {
+            const response = await fetch(`${API_URL}/api/dashboard/cohort-stats`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

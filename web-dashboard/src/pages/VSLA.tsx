@@ -62,7 +62,7 @@ const VSLA: React.FC = () => {
 
   const fetchVSLAGroups = async () => {
     try {
-      const data = await apiGet<VSLAGroup[]>('/vsla');
+      const data = await apiGet<VSLAGroup[]>('/api/vsla');
       setVslaGroups(data);
       if (data.length > 0 && !selectedGroupId) {
         setSelectedGroupId(data[0].id);
@@ -77,9 +77,9 @@ const VSLA: React.FC = () => {
   const refreshGroupData = async (id: number) => {
     try {
       const [grp, txns, offs] = await Promise.all([
-        apiGet<VSLAGroup>(`/vsla/${id}`),
-        apiGet<Transaction[]>(`/vsla/${id}/transactions`),
-        apiGet<any[]>(`/vsla/${id}/officers`)
+        apiGet<VSLAGroup>(`/api/vsla/${id}`),
+        apiGet<Transaction[]>(`/api/vsla/${id}/transactions`),
+        apiGet<any[]>(`/api/vsla/${id}/officers`)
       ]);
       setVslaGroups(prev => prev.map(g => g.id === id ? grp : g));
       setTransactions(txns);
@@ -93,7 +93,7 @@ const VSLA: React.FC = () => {
 
   const handleCreateTransaction = async (data: any) => {
     if (!selectedGroupId) return;
-    await apiPost(`/vsla/${selectedGroupId}/transactions`, data);
+    await apiPost(`/api/vsla/${selectedGroupId}/transactions`, data);
     await refreshGroupData(selectedGroupId);
   };
 
