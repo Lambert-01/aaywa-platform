@@ -1,0 +1,105 @@
+
+> web-dashboard@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+
+Treating warnings as errors because process.env.CI = true.
+Most CI servers set it automatically.
+
+Failed to compile.
+
+[eslint] 
+src\components\compost\BatchDetailModal.tsx
+  Line 4:26:   'formatCurrency' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+  Line 20:12:  'loading' is assigned a value but never used                                                                          @typescript-eslint/no-unused-vars
+  Line 26:8:   React Hook useEffect has a missing dependency: 'fetchBatchDetails'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\components\compost\LaborAssignmentModal.tsx
+  Line 30:12:  'tasks' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src\components\compost\QualityControlForm.tsx
+  Line 3:24:   'QualityMetrics' is defined but never used           @typescript-eslint/no-unused-vars
+  Line 21:25:  'setTemperature' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src\components\maps\MapBaseComponent.tsx
+  Line 4:33:  'getWarehouseColor' is defined but never used  @typescript-eslint/no-unused-vars
+  Line 4:52:  'getCohortColor' is defined but never used     @typescript-eslint/no-unused-vars
+
+src\components\marketplace\OrderManagementTable.tsx
+  Line 3:26:  'safeFormatDate' is defined but never used  @typescript-eslint/no-unused-vars
+
+src\components\orders\OrderDetailModal.tsx
+  Line 5:10:  'formatCurrency' is defined but never used  @typescript-eslint/no-unused-vars
+  Line 14:5:  'UserIcon' is defined but never used        @typescript-eslint/no-unused-vars
+  Line 15:5:  'PhoneIcon' is defined but never used       @typescript-eslint/no-unused-vars
+  Line 16:5:  'EnvelopeIcon' is defined but never used    @typescript-eslint/no-unused-vars
+  Line 17:5:  'MapPinIcon' is defined but never used      @typescript-eslint/no-unused-vars
+
+src\components\vsla\MemberStatementsModal.tsx
+  Line 2:44:  'PrinterIcon' is defined but never used  @typescript-eslint/no-unused-vars
+
+src\components\vsla\TransactionFormModal.tsx
+  Line 29:27:  'setSaleReference' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src\components\vsla\VSLASettingsModal.tsx
+  Line 2:51:  'CurrencyDollarIcon' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+  Line 3:18:  'apiPost' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+  Line 30:8:  React Hook useEffect has a missing dependency: 'fetchSettings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\components\vsla\useVSLAData.ts
+  Line 21:25:  'setActiveLoans' is assigned a value but never used                                                               @typescript-eslint/no-unused-vars
+  Line 55:8:   React Hook useCallback has an unnecessary dependency: 'vslaId'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\components\warehouse\FacilityDetailsModal.tsx
+  Line 2:53:  'CheckCircleIcon' is defined but never used  @typescript-eslint/no-unused-vars
+
+src\pages\CohortsPage.tsx
+  Line 7:5:    'PencilIcon' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+  Line 8:5:    'ArrowTopRightOnSquareIcon' is defined but never used                                                                  @typescript-eslint/no-unused-vars
+  Line 11:5:   'BeakerIcon' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+  Line 17:5:   'BarChart' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+  Line 17:15:  'Bar' is defined but never used                                                                                        @typescript-eslint/no-unused-vars
+  Line 17:20:  'XAxis' is defined but never used                                                                                      @typescript-eslint/no-unused-vars
+  Line 17:27:  'YAxis' is defined but never used                                                                                      @typescript-eslint/no-unused-vars
+  Line 17:34:  'CartesianGrid' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  Line 17:49:  'Tooltip' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+  Line 17:58:  'Legend' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+  Line 17:66:  'ResponsiveContainer' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+  Line 18:5:   'LineChart' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+  Line 18:16:  'Line' is defined but never used                                                                                       @typescript-eslint/no-unused-vars
+  Line 18:22:  'Polygon' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+  Line 21:8:   'KPICard' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+  Line 33:84:  'Popup' is defined but never used                                                                                      @typescript-eslint/no-unused-vars
+  Line 103:8:  React Hook useEffect has a missing dependency: 'fetchCohorts'. Either include it or remove the dependency array        react-hooks/exhaustive-deps
+  Line 110:8:  React Hook useEffect has a missing dependency: 'fetchCohortDetails'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\pages\CompostPage.tsx
+  Line 24:12:  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src\pages\Dashboard.tsx
+  Line 17:8:  'TrendIndicator' is defined but never used  @typescript-eslint/no-unused-vars
+
+src\pages\InputsSalesPage.tsx
+  Line 23:12:  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src\pages\MapsPage.tsx
+  Line 87:21:  'setMapZoom' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src\pages\OrdersPage.tsx
+  Line 102:11:  'completedOrders' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src\pages\TrainingPage.tsx
+  Line 32:21:  'setModules' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 33:12:  'quizzes' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  Line 33:21:  'setQuizzes' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src\pages\VSLA.tsx
+  Line 55:6:  React Hook useEffect has a missing dependency: 'fetchVSLAGroups'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\pages\WarehouseView.tsx
+  Line 2:39:   'WrenchScrewdriverIcon' is defined but never used                                                                @typescript-eslint/no-unused-vars
+  Line 28:33:  'setSelectedTransaction' is assigned a value but never used                                                      @typescript-eslint/no-unused-vars
+  Line 34:8:   React Hook useEffect has a missing dependency: 'fetchAllData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+

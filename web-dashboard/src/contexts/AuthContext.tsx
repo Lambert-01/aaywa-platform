@@ -72,7 +72,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Fetch user profile from API
     const fetchUserProfile = async (authToken: string) => {
         try {
-            const response = await fetch(`${API_URL}/auth/me`, {
+            const response = await fetch(`${API_URL}/api/auth/me`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Login with Email/Password
     const login = async (email: string, password: string) => {
         try {
-            const response = await fetch(`${API_URL}/auth/login`, {
+            const response = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -128,7 +128,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!token) throw new Error('Not authenticated');
 
         try {
-            const response = await fetch(`${API_URL}/auth/profile`, {
+            const response = await fetch(`${API_URL}/api/auth/profile`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const logout = () => {
         // Call logout endpoint (optional, for logging)
         if (token) {
-            fetch(`${API_URL}/auth/logout`, {
+            fetch(`${API_URL}/api/auth/logout`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
