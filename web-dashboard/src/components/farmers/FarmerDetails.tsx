@@ -32,15 +32,33 @@ const FarmerDetails: React.FC<FarmerDetailsProps> = ({ farmer, onEdit, onClose }
     const getCoordinates = () => {
         if (!farmer.location_coordinates) return [-1.9441, 30.0619]; // Kigali default
 
-        try {
-            // Basic parsing logic for 'POINT(30.123 -1.987)'
-            const matches = farmer.location_coordinates.match(/POINT\(([^ ]+) ([^ ]+)\)/);
-            if (matches) {
-                return [parseFloat(matches[2]), parseFloat(matches[1])];
-            }
-        } catch (e) {
-            console.error('Failed to parse coordinates', e);
+        // 1. If it's already an object (from JSONB column)
+        if (typeof farmer.location_coordinates === 'object') {
+            const { lat, lng } = farmer.location_coordinates;
+            if (lat && lng) return [parseFloat(lat), parseFloat(lng)];
         }
+
+        // 2. If it's a string, try parsing as JSON or PostGIS
+        if (typeof farmer.location_coordinates === 'string') {
+            try {
+                // Try JSON parse first
+                const coords = JSON.parse(farmer.location_coordinates);
+                if (coords.lat && coords.lng) {
+                    return [parseFloat(coords.lat), parseFloat(coords.lng)];
+                }
+            } catch (e) {
+                // Not JSON, try match Point regex
+                try {
+                    const matches = farmer.location_coordinates.match(/POINT\(([^ ]+) ([^ ]+)\)/);
+                    if (matches) {
+                        return [parseFloat(matches[2]), parseFloat(matches[1])];
+                    }
+                } catch (err) {
+                    console.error('Failed to parse coordinates string', err);
+                }
+            }
+        }
+
         return [-1.9441, 30.0619];
     };
 
@@ -112,12 +130,15 @@ const FarmerDetails: React.FC<FarmerDetailsProps> = ({ farmer, onEdit, onClose }
                                 <div className="flex items-start">
                                     <span className="w-24 text-gray-500 text-sm">Crops:</span>
                                     <div className="flex flex-wrap gap-2">
-                                        {farmer.crops && farmer.crops.map((crop: string) => (
-                                            <span key={crop} className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full border border-green-100">
-                                                {crop}
-                                            </span>
-                                        ))}
-                                        {(!farmer.crops || farmer.crops.length === 0) && <span className="text-gray-400 italic">None listed</span>}
+                                        {farmer.crops && typeof farmer.crops === 'string' ? (
+                                            farmer.crops.split(',').map((crop: string, idx: number) => (
+                                                <span key={idx} className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full border border-green-100">
+                                                    {crop.trim()}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-gray-400 italic">None listed</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>

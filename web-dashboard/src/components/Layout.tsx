@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import GlobalSearch from './GlobalSearch';
-import NotificationsDropdown from './NotificationsDropdown';
+import NotificationCenter from './alerts/NotificationCenter';
 import {
   HomeIcon,
   UsersIcon,
@@ -36,11 +36,12 @@ const Layout: React.FC = () => {
     { name: 'Cohorts', href: '/dashboard/cohorts', icon: MapIcon, roles: ['project_manager', 'agronomist'] },
     { name: 'VSLA Groups', href: '/dashboard/vsla', icon: UserGroupIcon, roles: ['project_manager', 'field_facilitator'] },
     { name: 'Inputs & Sales', href: '/dashboard/inputs-sales', icon: TruckIcon, roles: ['project_manager', 'agronomist'] },
-    { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCartIcon, roles: ['project_manager', 'agronomist'] },
+    { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCartIcon, roles: ['all'] },
     { name: 'Compost', href: '/dashboard/compost', icon: RecycleIcon, roles: ['project_manager', 'agronomist'] },
-    { name: 'Training', href: '/dashboard/training', icon: AcademicCapIcon, roles: ['project_manager', 'agronomist', 'field_facilitator'] },
-    { name: 'Warehouse', href: '/dashboard/warehouse', icon: BuildingStorefrontIcon, roles: ['project_manager'] },
-    { name: 'Geospatial Map', href: '/dashboard/maps', icon: GlobeAltIcon, roles: ['all'] },
+    { name: 'Training', href: '/dashboard/training', icon: AcademicCapIcon, roles: ['project_manager', 'field_facilitator'] },
+    { name: 'Warehouse', href: '/dashboard/warehouse', icon: BuildingStorefrontIcon, roles: ['project_manager', 'agronomist'] },
+    { name: 'Geospatial Map', href: '/dashboard/maps', icon: GlobeAltIcon, roles: ['project_manager', 'agronomist'] },
+    { name: 'Learning Materials', href: '/dashboard/learning', icon: AcademicCapIcon, roles: ['all'] },
   ];
 
   const filteredNavigation = navigation.filter(item =>
@@ -154,7 +155,7 @@ const Layout: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-3 lg:space-x-6 ml-auto">
-            <NotificationsDropdown />
+            <NotificationCenter />
             <div className="h-6 w-px bg-gray-200"></div>
             <button className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
               Help & Support

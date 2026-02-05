@@ -1,4 +1,4 @@
--- Training Management System Schema
+ -- Training Management System Schema
 -- Project AAYWA - Training & Capacity Building Tables
 
 -- Training Sessions Table

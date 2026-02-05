@@ -11,6 +11,7 @@ interface KPICardProps {
         isPositive: boolean;
     };
     color?: 'blue' | 'green' | 'orange' | 'purple' | 'red';
+    children?: React.ReactNode;
 }
 
 const KPICard: React.FC<KPICardProps> = ({
@@ -19,7 +20,8 @@ const KPICard: React.FC<KPICardProps> = ({
     icon,
     subtitle,
     trend,
-    color = 'blue'
+    color = 'blue',
+    children
 }) => {
 
     const colorMap = {
@@ -76,6 +78,18 @@ const KPICard: React.FC<KPICardProps> = ({
 
             {/* Decorative background blob */}
             <div className={`absolute -bottom-4 -right-4 w-24 h-24 rounded-full ${theme.bg} opacity-50 blur-2xl transition-opacity group-hover:opacity-70`} />
+
+
+            {/* Trend or Children */}
+            {(trend || children) && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                    {children || (
+                        <div className="flex items-center text-sm text-gray-600">
+                            <span className="text-green-600">↑ {trend?.value}%</span>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

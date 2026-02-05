@@ -16,6 +16,9 @@ const compostRoutes = require('./routes/compost.routes');
 const trainingRoutes = require('./routes/training.routes');
 const warehouseRoutes = require('./routes/warehouses.routes');
 const mapsRoutes = require('./routes/maps.routes');
+const alertRoutes = require('./routes/alerts.routes');
+const unifiedRoutes = require('./routes/unified.routes');
+const searchRoutes = require('./routes/search.routes');
 
 const app = express();
 
@@ -27,7 +30,7 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:8000',
-    process.env.FRONTEND_URL
+    ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [])
   ].filter(Boolean),
   credentials: true
 }));
@@ -92,6 +95,9 @@ app.use('/api/compost', compostRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/maps', mapsRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/unified', unifiedRoutes);
+app.use('/api/search', searchRoutes);
 
 // Static file serving for uploads
 // Static file serving for uploads

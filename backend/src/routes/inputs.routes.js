@@ -7,12 +7,12 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 router.use(authenticateToken);
 
 // CRUD operations
-router.post('/', authorizeRoles('manager', 'agronomist'), inputController.createInvoice);
-router.get('/', authorizeRoles('manager', 'agronomist', 'buyer'), inputController.getAllInvoices);
+router.post('/', authorizeRoles('agronomist'), inputController.createInvoice);
+router.get('/', authorizeRoles('agronomist'), inputController.getAllInvoices);
 router.get('/farmer/:farmerId', inputController.getInvoicesByFarmer);
 router.get('/:id', inputController.getInvoiceById);
-router.put('/:id/status', authorizeRoles('manager', 'agronomist'), inputController.updateStatus);
+router.put('/:id/status', authorizeRoles('agronomist'), inputController.updateStatus);
 router.get('/farmer/:farmerId/balance', inputController.getOutstandingBalance);
-router.delete('/:id', authorizeRoles('manager'), inputController.deleteInvoice);
+router.delete('/:id', authorizeRoles('project_manager'), inputController.deleteInvoice);
 
 module.exports = router;

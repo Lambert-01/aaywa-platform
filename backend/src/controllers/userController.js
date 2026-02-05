@@ -205,6 +205,202 @@ const userController = {
       console.error('Error deleting user:', error);
       res.status(500).json({ error: 'Failed to delete user' });
     }
+  },
+
+  // ========================================
+  // REGISTRATION APPROVAL WORKFLOW
+  // ========================================
+
+  // POST /api/users/register - Public registration request
+  registerRequest: async (req, res) => {
+    try {
+      const { full_name, email, phone, requested_role, message } = req.body;
+
+      // Validate inputs
+      if (!full_name || !email) {
+        return res.status(400).json({ error: 'Full name and email are required' });
+      }
+
+      // Validate requested role
+      const allowedRoles = ['field_facilitator', 'agronomist'];
+      if (requested_role && !allowedRoles.includes(requested_role)) {
+        return res.status(400).json({ error: 'Invalid role requested' });
+      }
+
+      const db = require('../config/database');
+
+      // Check if email already exists
+      const existing = await db.query('SELECT id, registration_status FROM users WHERE email = $1', [email]);
+      if (existing.rows.length > 0) {
+        const existingUser = existing.rows[0];
+        if (existingUser.registration_status === 'pending') {
+          return res.status(409).json({ error: 'A registration request with this email is already pending' });
+        }
+        return res.status(409).json({ error: 'This email is already registered' });
+      }
+
+      // Create pending user (no password yet)
+      const result = await db.query(`
+        INSERT INTO users (
+          full_name, 
+          email, 
+          phone, 
+          requested_role, 
+          registration_status, 
+          registration_notes,
+          registration_date,
+          is_active
+        ) VALUES ($1, $2, $3, $4, 'pending', $5, NOW(), false)
+        RETURNING id, full_name, email, requested_role, registration_date
+      `, [full_name, email, phone || null, requested_role || 'field_facilitator', message || null]);
+
+      console.log(`[REGISTRATION] New registration request: ${email} - ${requested_role}`);
+
+      res.status(201).json({
+        success: true,
+        message: 'Registration request submitted successfully. An administrator will review your request.',
+        registration: result.rows[0]
+      });
+    } catch (error) {
+      console.error('Error in registration request:', error);
+      res.status(500).json({ error: 'Failed to submit registration request' });
+    }
+  },
+
+  // GET /api/users/pending - Get pending registration requests (Admin only)
+  getPendingUsers: async (req, res) => {
+    try {
+      const db = require('../config/database');
+      const result = await db.query(`
+        SELECT 
+          id, 
+          full_name, 
+          email, 
+          phone, 
+          requested_role, 
+          registration_notes,
+          registration_date,
+          created_at
+        FROM users
+        WHERE registration_status = 'pending'
+        ORDER BY registration_date DESC
+      `);
+
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error fetching pending users:', error);
+      res.status(500).json({ error: 'Failed to fetch pending users' });
+    }
+  },
+
+  // POST /api/users/:id/approve - Approve registration (Admin only)
+  approveUser: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { password, role } = req.body;
+
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required to approve user' });
+      }
+
+      // Validate role
+      const allowedRoles = ['project_manager', 'agronomist', 'field_facilitator'];
+      if (role && !allowedRoles.includes(role)) {
+        return res.status(400).json({ error: 'Invalid role specified' });
+      }
+
+      const db = require('../config/database');
+
+      // Check if user exists and is pending
+      const userCheck = await db.query(
+        'SELECT id, registration_status, requested_role FROM users WHERE id = $1',
+        [id]
+      );
+
+      if (userCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const user = userCheck.rows[0];
+      if (user.registration_status !== 'pending') {
+        return res.status(400).json({ error: 'User is not pending approval' });
+      }
+
+      // Hash password
+      const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
+      const passwordHash = await bcrypt.hash(password, saltRounds);
+
+      // Approve user
+      const finalRole = role || user.requested_role || 'field_facilitator';
+      await db.query(`
+        UPDATE users 
+        SET 
+          password_hash = $1,
+          role = $2,
+          registration_status = 'approved',
+          is_active = true,
+          approved_by = $3,
+          approved_at = NOW()
+        WHERE id = $4
+      `, [passwordHash, finalRole, req.user.id, id]);
+
+      console.log(`[SECURITY] User approved: ID ${id} by admin ${req.user.id}`);
+
+      res.json({
+        success: true,
+        message: 'User approved successfully',
+        user: { id, role: finalRole }
+      });
+    } catch (error) {
+      console.error('Error approving user:', error);
+      res.status(500).json({ error: 'Failed to approve user' });
+    }
+  },
+
+  // POST /api/users/:id/reject - Reject registration (Admin only)
+  rejectUser: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      const db = require('../config/database');
+
+      // Check if user exists and is pending
+      const userCheck = await db.query(
+        'SELECT id, registration_status FROM users WHERE id = $1',
+        [id]
+      );
+
+      if (userCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const user = userCheck.rows[0];
+      if (user.registration_status !== 'pending') {
+        return res.status(400).json({ error: 'User is not pending approval' });
+      }
+
+      // Reject user (update status, don't delete)
+      await db.query(`
+        UPDATE users 
+        SET 
+          registration_status = 'rejected',
+          registration_notes = $1,
+          approved_by = $2,
+          approved_at = NOW()
+        WHERE id = $3
+      `, [reason || 'Rejected by administrator', req.user.id, id]);
+
+      console.log(`[SECURITY] User rejected: ID ${id} by admin ${req.user.id}`);
+
+      res.json({
+        success: true,
+        message: 'Registration request rejected'
+      });
+    } catch (error) {
+      console.error('Error rejecting user:', error);
+      res.status(500).json({ error: 'Failed to reject user' });
+    }
   }
 };
 

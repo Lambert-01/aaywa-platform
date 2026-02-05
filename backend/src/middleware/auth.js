@@ -24,7 +24,7 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    // Verify token (wrapped in promise for async/await)
+    // Verify token
     const decoded = await new Promise((resolve, reject) => {
       jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) reject(err);
@@ -32,12 +32,31 @@ const authenticateToken = async (req, res, next) => {
       });
     });
 
-    // Attach user data to request
-    req.user = decoded;
+    // 🔒 SECURTY: Fetch latest role from DB to ensure immediate revocation/role change
+    // Do not rely solely on the token payload which might be stale
+    const { rows } = await require('../config/database').query(
+      'SELECT id, role, full_name, email FROM users WHERE id = $1',
+      [decoded.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({
+        error: 'User not found',
+        message: 'User account no longer exists'
+      });
+    }
+
+    const user = rows[0];
+
+    // Check if account is active (optional but recommended)
+    // if (!user.is_active) ...
+
+    // Attach user data to request (merging token data with live DB data)
+    req.user = { ...decoded, ...user };
+
     next();
 
   } catch (error) {
-    // Log error for debugging (but don't expose details to client)
     console.error('JWT verification failed:', error.message);
 
     if (error.name === 'TokenExpiredError') {
@@ -47,14 +66,6 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(403).json({
-        error: 'Invalid token',
-        message: 'Authentication token is invalid'
-      });
-    }
-
-    // Generic error
     return res.status(403).json({
       error: 'Authentication failed',
       message: 'Could not verify authentication token'

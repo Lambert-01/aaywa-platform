@@ -12,6 +12,10 @@ import KPICard from '../components/KPICard';
 import ActivityFeed from '../components/ActivityFeed';
 import CohortHealthMatrix from '../components/CohortHealthMatrix';
 import { useAuth } from '../contexts/AuthContext';
+import { CardSkeleton } from '../components/skeletons';
+import AlertBanner from '../components/alerts/AlertBanner';
+import TrendIndicator from '../components/alerts/TrendIndicator';
+import { apiGet, apiPatch } from '../utils/api';
 
 interface DashboardKPIData {
     farmers: number;
@@ -22,15 +26,41 @@ interface DashboardKPIData {
     trainingSessions: number;
 }
 
+interface Alert {
+    id: number;
+    alert_type: string;
+    severity: 'critical' | 'warning' | 'info' | 'success';
+    title: string;
+    message: string;
+    action_url?: string;
+    entity_name?: string;
+    threshold_value?: number;
+    actual_value?: number;
+    created_at: string;
+}
+
 const Dashboard = () => {
     const { user } = useAuth();
     const [kpiData, setKpiData] = useState<DashboardKPIData | null>(null);
+    const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchDashboardData();
+        Promise.all([
+            fetchDashboardData(),
+            fetchAlerts()
+        ]);
     }, []);
+
+    const fetchAlerts = async () => {
+        try {
+            const data = await apiGet<{ alerts: Alert[] }>('/alerts');
+            setAlerts(data.alerts || []);
+        } catch (err) {
+            console.error('Failed to fetch alerts:', err);
+        }
+    };
 
     const fetchDashboardData = async () => {
         try {
@@ -55,13 +85,26 @@ const Dashboard = () => {
         }
     };
 
+    const handleDismissAlert = async (id: number) => {
+        try {
+            await apiPatch(`/alerts/${id}/dismiss`, {});
+            setAlerts(prev => prev.filter(alert => alert.id !== id));
+        } catch (error) {
+            console.error('Failed to dismiss alert:', error);
+        }
+    };
+
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-96">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading dashboard...</p>
+            <div className="space-y-6">
+                {/* Header Skeleton */}
+                <div className="bg-gray-100 rounded-2xl p-8 animate-pulse">
+                    <div className="h-8 w-64 bg-gray-200 rounded mb-3" />
+                    <div className="h-4 w-96 bg-gray-200 rounded" />
                 </div>
+
+                {/* KPI Cards Skeleton */}
+                <CardSkeleton count={6} />
             </div>
         );
     }
@@ -102,6 +145,19 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Alert Banners */}
+            {alerts.length > 0 && (
+                <div className="space-y-3">
+                    {alerts.slice(0, 3).map(alert => (
+                        <AlertBanner
+                            key={alert.id}
+                            alert={alert}
+                            onDismiss={handleDismissAlert}
+                        />
+                    ))}
+                </div>
+            )}
 
             {/* Main 3-Column Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -167,10 +223,6 @@ const Dashboard = () => {
                         <div className="text-3xl font-bold text-brand-blue-700 mb-1">
                             {((kpiData?.compostProduced || 0) / 1000).toFixed(1)} <span className="text-lg font-medium text-brand-blue-500">tonnes</span>
                         </div>
-                        <div className="w-full bg-brand-blue-200 rounded-full h-2.5 mt-2">
-                            <div className="bg-brand-blue-500 h-2.5 rounded-full" style={{ width: '70%' }}></div>
-                        </div>
-                        <p className="text-sm text-brand-blue-600 mt-2">70% of seasonal target</p>
                     </div>
                 </div>
 
@@ -199,20 +251,29 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* Quick Access / Notifications Placeholder */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h3 className="font-semibold text-slate-800 mb-4">Priority Alerts</h3>
-                        <div className="space-y-3">
-                            <div className="flex items-start p-3 bg-red-50 rounded-lg border border-red-100">
-                                <span className="w-2 h-2 mt-2 rounded-full bg-red-500 mr-3"></span>
-                                <p className="text-sm text-red-800">2 VSLA groups missed weekly meeting report.</p>
-                            </div>
-                            <div className="flex items-start p-3 bg-brand-gold-50 rounded-lg border border-brand-gold-100">
-                                <span className="w-2 h-2 mt-2 rounded-full bg-brand-gold-500 mr-3"></span>
-                                <p className="text-sm text-yellow-800">Low rainfall warning for Northern Province cohorts.</p>
+                    {/* Priority Alerts Widget - Only show if there are more alerts */}
+                    {alerts.length > 3 && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="font-semibold text-slate-800 mb-4">Other Alerts</h3>
+                            <div className="space-y-3">
+                                {alerts.slice(3, 8).map(alert => (
+                                    <div key={alert.id} className={`flex items-start p-3 rounded-lg border ${alert.severity === 'critical' ? 'bg-red-50 border-red-100' :
+                                        alert.severity === 'warning' ? 'bg-amber-50 border-amber-100' :
+                                            'bg-blue-50 border-blue-100'
+                                        }`}>
+                                        <span className={`w-2 h-2 mt-2 rounded-full mr-3 ${alert.severity === 'critical' ? 'bg-red-500' :
+                                            alert.severity === 'warning' ? 'bg-amber-500' :
+                                                'bg-blue-500'
+                                            }`}></span>
+                                        <p className={`text-sm ${alert.severity === 'critical' ? 'text-red-800' :
+                                            alert.severity === 'warning' ? 'text-amber-800' :
+                                                'text-blue-800'
+                                            }`}>{alert.title}</p>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

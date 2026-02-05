@@ -27,27 +27,30 @@ const GlobalSearch: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Mock search logic - in production this would call an API
+    // Real search logic - calls backend API
     useEffect(() => {
         if (query.length < 2) {
             setResults([]);
             return;
         }
 
-        const mockData: SearchResult[] = [
-            { id: 'p1', title: 'Dashboard', type: 'page', url: '/dashboard' },
-            { id: 'p2', title: 'Farmers List', type: 'page', url: '/dashboard/farmers' },
-            { id: 'p3', title: 'Cohorts Map', type: 'page', url: '/dashboard/map' },
-            { id: 'f1', title: 'Jean Baptiste (Farmer)', type: 'farmer', url: '/dashboard/farmers/1' },
-            { id: 'f2', title: 'Marie Claire (Farmer)', type: 'farmer', url: '/dashboard/farmers/2' },
-            { id: 'c1', title: 'Avocado North (Cohort)', type: 'cohort', url: '/dashboard/cohorts/1' },
-        ];
+        const debounceTimer = setTimeout(async () => {
+            try {
+                setIsOpen(true);
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const data = await response.json();
+                setResults(data.results || []);
+            } catch (error) {
+                console.error('Search failed:', error);
+                setResults([]);
+            }
+        }, 300); // 300ms debounce
 
-        const filtered = mockData.filter(item =>
-            item.title.toLowerCase().includes(query.toLowerCase())
-        );
-        setResults(filtered);
-        setIsOpen(true);
+        return () => clearTimeout(debounceTimer);
     }, [query]);
 
     const handleSelect = (url: string) => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { PhotoIcon, MapPinIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface FarmerFormProps {
     initialData?: any;
@@ -25,13 +26,16 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ initialData, onSubmit, onCancel
     const [formData, setFormData] = useState({
         full_name: '',
         phone: '',
-        cohort_id: '1', // Default
+        date_of_birth: '',
+        gender: 'female',
+        cohort_id: '1',
+        vsla_id: '',
         household_type: 'female_headed',
-        location_address: '',
-        plot_size: '',
-        crops: [] as string[],
-        photo_url: '',
-        status: true
+        crops: '',  // Changed to string for text input
+        co_crops: '',  // New field for co-crops
+        plot_size_hectares: '',
+        photo: null as File | null,
+        photo_preview: ''
     });
 
     const [position, setPosition] = useState<[number, number]>([-1.9441, 30.0619]); // Default to Kigali
@@ -41,21 +45,28 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ initialData, onSubmit, onCancel
             setFormData({
                 full_name: initialData.full_name || '',
                 phone: initialData.phone || '',
+                date_of_birth: initialData.date_of_birth || '',
+                gender: initialData.gender || 'female',
                 cohort_id: initialData.cohort_id || '1',
+                vsla_id: initialData.vsla_id || '',
                 household_type: initialData.household_type || 'female_headed',
-                location_address: initialData.location_address || '',
-                plot_size: initialData.plot_size || '',
-                crops: initialData.crops || [],
-                photo_url: initialData.photo_url || '',
-                status: initialData.status ?? true
+                crops: initialData.crops || '',
+                co_crops: initialData.co_crops || '',
+                plot_size_hectares: initialData.plot_size_hectares || '',
+                photo: null,
+                photo_preview: initialData.photo_url || ''
             });
 
             // Parse coordinates if they exist
             if (initialData.location_coordinates) {
                 try {
-                    const matches = initialData.location_coordinates.match(/POINT\(([^ ]+) ([^ ]+)\)/);
-                    if (matches) {
-                        setPosition([parseFloat(matches[2]), parseFloat(matches[1])]);
+                    let coords = initialData.location_coordinates;
+                    if (typeof coords === 'string') {
+                        coords = JSON.parse(coords);
+                    }
+
+                    if (coords && coords.lat && coords.lng) {
+                        setPosition([coords.lat, coords.lng]);
                     }
                 } catch (e) {
                     console.error("Coordinate parse error", e);
@@ -69,169 +80,287 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ initialData, onSubmit, onCancel
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleCropChange = (crop: string) => {
-        setFormData(prev => {
-            const crops = prev.crops.includes(crop)
-                ? prev.crops.filter(c => c !== crop)
-                : [...prev.crops, crop];
-            return { ...prev, crops };
-        });
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFormData(prev => ({
+                ...prev,
+                photo: file,
+                photo_preview: URL.createObjectURL(file)
+            }));
+        }
+    };
+
+    const removeImage = () => {
+        setFormData(prev => ({ ...prev, photo: null, photo_preview: '' }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Convert position to POINT string for backend
-        const location_coordinates = `POINT(${position[1]} ${position[0]})`;
 
-        onSubmit({
-            ...formData,
-            location_coordinates,
-            plot_size: parseFloat(formData.plot_size)
-        });
+        // Prepare submission data - EXCLUDE photo and photo_preview, then add photo_url
+        const { photo, photo_preview, ...rest } = formData;
+
+        const submissionData = {
+            ...rest,
+            latitude: position[0],
+            longitude: position[1],
+            plot_size_hectares: parseFloat(formData.plot_size_hectares) || null,
+            cohort_id: parseInt(formData.cohort_id) || null,
+            vsla_id: formData.vsla_id && formData.vsla_id.trim() ? parseInt(formData.vsla_id) : null,
+            photo_url: photo_preview || null  // Rename to photo_url
+        };
+
+        onSubmit(submissionData);
     };
 
-    const cropOptions = ['Avocado', 'Macadamia', 'Amaranth', 'Tomatoes', 'Green Beans', 'Legumes'];
     const householdOptions = [
-        { value: 'teen_mother', label: 'Teen Mother' },
-        { value: 'female_headed', label: 'Female Headed' },
-        { value: 'land_poor', label: 'Land Poor' },
-        { value: 'champion', label: 'Champion' }
+        { value: 'teen_mother', label: 'Teen Mother', icon: '👶' },
+        { value: 'female_headed', label: 'Female Headed', icon: '👩' },
+        { value: 'land_poor', label: 'Land Poor', icon: '🌾' },
+        { value: 'champion', label: 'Champion', icon: '⭐' },
+        { value: 'standard', label: 'Standard', icon: '👨‍🌾' }
     ];
 
     return (
-        <form onSubmit={handleSubmit} className="h-full flex flex-col bg-white rounded-lg shadow-xl">
-            <div className="p-6 border-b border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900">{initialData ? 'Edit Farmer Profile' : 'Add New Farmer'}</h2>
+        <form onSubmit={handleSubmit} className="h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
+                <h2 className="text-2xl font-bold">{initialData ? '✏️ Edit Farmer Profile' : '➕ Register New Farmer'}</h2>
+                <p className="text-green-100 mt-1 text-sm">Complete the form below with accurate farmer information</p>
             </div>
 
-            <div className="p-6 flex-1 overflow-y-auto space-y-6">
-                {/* Basic Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                        <input
-                            type="text"
-                            name="full_name"
-                            required
-                            value={formData.full_name}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand-blue-500 focus:border-brand-blue-500"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-                        <input
-                            type="tel"
-                            name="phone"
-                            required
-                            placeholder="+250..."
-                            value={formData.phone}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand-blue-500 focus:border-brand-blue-500"
-                        />
-                    </div>
+            <div className="p-8 flex-1 overflow-y-auto space-y-8">
+                {/* Profile Photo Upload */}
+                <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border-2 border-dashed border-gray-300">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                        <PhotoIcon className="w-5 h-5 mr-2 text-green-600" />
+                        Farmer Photo
+                    </label>
+
+                    {formData.photo_preview ? (
+                        <div className="relative inline-block">
+                            <img
+                                src={formData.photo_preview}
+                                alt="Farmer preview"
+                                className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                            />
+                            <button
+                                type="button"
+                                onClick={removeImage}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-lg"
+                            >
+                                <XMarkIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ) : (
+                        <label className="cursor-pointer flex flex-col items-center justify-center w-40 h-40 bg-gray-100 rounded-full border-2 border-gray-300 hover:bg-gray-200 transition-all">
+                            <PhotoIcon className="w-12 h-12 text-gray-400" />
+                            <span className="text-xs text-gray-500 mt-2 font-medium">Upload Photo</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="hidden"
+                            />
+                        </label>
+                    )}
+                    <p className="text-xs text-gray-500 mt-3">Upload a clear photo of the farmer (JPG, PNG, max 5MB)</p>
                 </div>
 
-                {/* Photo URL */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Photo URL (Optional)</label>
-                    <input
-                        type="text"
-                        name="photo_url"
-                        placeholder="https://..."
-                        value={formData.photo_url}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand-blue-500 focus:border-brand-blue-500"
-                    />
-                </div>
+                {/* Personal Information */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-gray-800 border-b-2 border-green-500 pb-2 inline-block">
+                        👤 Personal Information
+                    </h3>
 
-                {/* Demographics */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Cohort *</label>
-                        <select
-                            name="cohort_id"
-                            value={formData.cohort_id}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand-blue-500 focus:border-brand-blue-500"
-                        >
-                            <option value="1">Cohort 1 (Avocado)</option>
-                            <option value="2">Cohort 2 (Avocado)</option>
-                            <option value="3">Cohort 3 (Macadamia)</option>
-                            <option value="4">Cohort 4 (Macadamia)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Household Type *</label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {householdOptions.map(opt => (
-                                <label key={opt.value} className="flex items-center space-x-2 text-sm">
-                                    <input
-                                        type="radio"
-                                        name="household_type"
-                                        value={opt.value}
-                                        checked={formData.household_type === opt.value}
-                                        onChange={handleChange}
-                                        className="text-brand-blue-600 focus:ring-brand-blue-500"
-                                    />
-                                    <span>{opt.label}</span>
-                                </label>
-                            ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                            <input
+                                type="text"
+                                name="full_name"
+                                required
+                                value={formData.full_name}
+                                onChange={handleChange}
+                                placeholder="e.g., Mukamana Grace"
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
+                            <input
+                                type="tel"
+                                name="phone"
+                                required
+                                placeholder="+250 788 123 456"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
+                            <input
+                                type="date"
+                                name="date_of_birth"
+                                value={formData.date_of_birth}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Gender *</label>
+                            <select
+                                name="gender"
+                                value={formData.gender}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                            >
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                                <option value="other">Other</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
-                {/* Farming Details */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Current Crops *</label>
-                    <div className="grid grid-cols-3 gap-3">
-                        {cropOptions.map(crop => (
-                            <label key={crop} className="flex items-center space-x-2 text-sm p-2 border border-gray-100 rounded bg-gray-50 hover:bg-gray-100 cursor-pointer">
+                {/* Household Classification */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-gray-800 border-b-2 border-green-500 pb-2 inline-block">
+                        🏠 Household Classification
+                    </h3>
+
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        {householdOptions.map(opt => (
+                            <label
+                                key={opt.value}
+                                className={`relative flex flex-col items-center p-4 border-2 rounded-xl cursor-pointer transition-all ${formData.household_type === opt.value
+                                    ? 'border-green-500 bg-green-50 shadow-md'
+                                    : 'border-gray-200 hover:border-green-300 hover:bg-gray-50'
+                                    }`}
+                            >
+                                <span className="text-3xl mb-2">{opt.icon}</span>
                                 <input
-                                    type="checkbox"
-                                    checked={formData.crops.includes(crop)}
-                                    onChange={() => handleCropChange(crop)}
-                                    className="rounded text-brand-blue-600 focus:ring-brand-blue-500"
+                                    type="radio"
+                                    name="household_type"
+                                    value={opt.value}
+                                    checked={formData.household_type === opt.value}
+                                    onChange={handleChange}
+                                    className="sr-only"
                                 />
-                                <span>{crop}</span>
+                                <span className="text-xs font-semibold text-center">{opt.label}</span>
+                                {formData.household_type === opt.value && (
+                                    <div className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1">
+                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                )}
                             </label>
                         ))}
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Plot Size (Hectares) *</label>
-                    <input
-                        type="number"
-                        name="plot_size"
-                        step="0.1"
-                        min="0.1"
-                        max="20"
-                        required
-                        value={formData.plot_size}
-                        onChange={handleChange}
-                        className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand-blue-500 focus:border-brand-blue-500"
-                    />
+                {/* Farming Details */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-gray-800 border-b-2 border-green-500 pb-2 inline-block">
+                        🌱 Farming Information
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Main Crops *</label>
+                            <input
+                                type="text"
+                                name="crops"
+                                required
+                                value={formData.crops}
+                                onChange={handleChange}
+                                placeholder="e.g., Avocado, Macadamia"
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Enter primary crops separated by commas</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Co-Crops / Intercrops</label>
+                            <input
+                                type="text"
+                                name="co_crops"
+                                value={formData.co_crops}
+                                onChange={handleChange}
+                                placeholder="e.g., Beans, Maize, Vegetables"
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Enter companion crops if any</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Plot Size (Hectares) *</label>
+                            <input
+                                type="number"
+                                name="plot_size_hectares"
+                                step="0.01"
+                                min="0.01"
+                                max="100"
+                                required
+                                value={formData.plot_size_hectares}
+                                onChange={handleChange}
+                                placeholder="e.g., 0.5"
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Cohort *</label>
+                            <select
+                                name="cohort_id"
+                                value={formData.cohort_id}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                            >
+                                <option value="1">Cohort 1 (Avocado)</option>
+                                <option value="2">Cohort 2 (Avocado)</option>
+                                <option value="3">Cohort 3 (Macadamia)</option>
+                                <option value="4">Cohort 4 (Macadamia)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">VSLA Group (Optional)</label>
+                            <input
+                                type="text"
+                                name="vsla_id"
+                                value={formData.vsla_id}
+                                onChange={handleChange}
+                                placeholder="Leave empty if not in VSLA"
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Only fill if farmer belongs to a VSLA group</p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Location */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
-                    <textarea
-                        name="location_address"
-                        rows={2}
-                        required
-                        value={formData.location_address}
-                        onChange={handleChange}
-                        placeholder="Village, Cell, Sector, District"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand-blue-500 focus:border-brand-blue-500"
-                    />
-                </div>
+                {/* Farm Location */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-gray-800 border-b-2 border-green-500 pb-2 inline-block flex items-center">
+                        <MapPinIcon className="w-5 h-5 mr-2" />
+                        Farm Location
+                    </h3>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Farm Location Pin (Click map to set)</label>
-                    <div className="h-64 rounded-lg overflow-hidden border border-gray-300">
-                        <MapContainer center={position} zoom={13} style={{ height: '100%', width: '100%' }}>
+                    <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-4">
+                        <p className="text-sm text-blue-800">
+                            <strong>📍 Instructions:</strong> Click anywhere on the map below to pin the exact farm location.
+                            The coordinates will be saved automatically.
+                        </p>
+                    </div>
+
+                    <div className="rounded-xl overflow-hidden border-4 border-gray-200 shadow-lg">
+                        <MapContainer center={position} zoom={13} style={{ height: '400px', width: '100%' }}>
                             <TileLayer
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -239,28 +368,35 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ initialData, onSubmit, onCancel
                             <LocationMarker position={position} setPosition={setPosition} />
                         </MapContainer>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Lat: {position[0].toFixed(5)}, Lng: {position[1].toFixed(5)}</p>
-                </div>
 
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-gray-600">Selected Coordinates:</span>
+                            <span className="text-sm font-mono bg-white px-3 py-1 rounded border border-gray-300">
+                                {position[0].toFixed(6)}, {position[1].toFixed(6)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* Actions */}
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+            {/* Footer Actions */}
+            <div className="p-6 border-t-2 border-gray-100 flex justify-end gap-4 bg-gray-50">
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-white transition-colors"
+                    className="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-white hover:border-gray-400 transition-all"
                     disabled={isLoading}
                 >
                     Cancel
                 </button>
                 <button
                     type="submit"
-                    className="px-6 py-2 bg-brand-blue-600 text-white rounded-lg hover:bg-brand-blue-700 shadow-md transition-colors flex items-center"
+                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isLoading}
                 >
-                    {isLoading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />}
-                    {initialData ? 'Update Farmer' : 'Save Farmer'}
+                    {isLoading && <span className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin mr-2" />}
+                    {initialData ? '✓ Update Farmer Profile' : '✓ Register Farmer'}
                 </button>
             </div>
         </form>

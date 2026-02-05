@@ -711,4 +711,6 @@ const CohortsPage: React.FC = () => {
     );
 };
 
+
+
 export default CohortsPage;

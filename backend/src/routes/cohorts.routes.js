@@ -8,11 +8,11 @@ router.use(authenticateToken);
 
 // CRUD operations
 // CRUD operations
-router.post('/', authorizeRoles('project_manager', 'manager', 'agronomist'), cohortController.createCohort);
-router.get('/', authorizeRoles('project_manager', 'manager', 'agronomist', 'buyer', 'field_facilitator'), cohortController.getAllCohorts);
-router.get('/:id', cohortController.getCohortById);
-router.put('/:id', authorizeRoles('project_manager', 'manager', 'agronomist'), cohortController.updateCohort);
-router.delete('/:id', authorizeRoles('project_manager', 'manager'), cohortController.deleteCohort);
+router.post('/', authorizeRoles('project_manager', 'agronomist'), cohortController.createCohort);
+router.get('/', authorizeRoles('project_manager', 'agronomist'), cohortController.getAllCohorts);
+router.get('/:id', authorizeRoles('project_manager', 'agronomist'), cohortController.getCohortById);
+router.put('/:id', authorizeRoles('project_manager', 'agronomist'), cohortController.updateCohort);
+router.delete('/:id', authorizeRoles('project_manager'), cohortController.deleteCohort);
 
 // [NEW] Enhanced Dashboard Endpoints
 router.get('/:id/metrics', cohortController.getCohortMetrics);

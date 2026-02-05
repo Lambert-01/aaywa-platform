@@ -6,29 +6,39 @@ const farmerController = {
   createFarmer: async (req, res) => {
     try {
       const {
-        full_name, phone, cohort_id, vsla_id, date_of_birth,
-        household_type, location_coordinates, location_address,
-        plot_size, crops, photo_url
-      } = req.body;
-
-      // Check if phone already exists
-      const existingFarmer = await require('../config/database').query('SELECT id FROM farmers WHERE phone = $1', [phone]);
-      if (existingFarmer.rows.length > 0) {
-        return res.status(400).json({ error: 'Farmer with this phone number already exists' });
-      }
-
-      // Create farmer profile directly
-      const farmer = await Farmer.create({
-        full_name,
-        phone,
         cohort_id,
         vsla_id,
+        full_name,
+        phone,
         date_of_birth,
+        gender,
         household_type,
-        location_coordinates, // Expected 'POINT(lng lat)'
-        location_address,
-        plot_size,
+        latitude,  // Will convert to location_coordinates JSON
+        longitude,
+        plot_size_hectares,
         crops,
+        co_crops
+      } = req.body;
+
+      // Create location_coordinates as JSON if lat/lng provided
+      let location_coordinates = null;
+      if (latitude && longitude) {
+        location_coordinates = JSON.stringify({ lat: parseFloat(latitude), lng: parseFloat(longitude) });
+      }
+
+      // Create farmer profile
+      const farmer = await Farmer.create({
+        cohort_id,
+        vsla_id,
+        full_name,
+        phone,
+        date_of_birth,
+        gender,
+        household_type,
+        location_coordinates,
+        plot_size_hectares,
+        crops,
+        co_crops,
         photo_url
       });
 
@@ -102,7 +112,18 @@ const farmerController = {
   updateFarmer: async (req, res) => {
     try {
       const { id } = req.params;
-      const updateData = req.body;
+      const {
+        latitude,
+        longitude,
+        ...rest
+      } = req.body;
+
+      const updateData = { ...rest };
+
+      // Handle location coordinates update
+      if (latitude !== undefined && longitude !== undefined) {
+        updateData.location_coordinates = JSON.stringify({ lat: parseFloat(latitude), lng: parseFloat(longitude) });
+      }
 
       const farmer = await Farmer.update(id, updateData);
 

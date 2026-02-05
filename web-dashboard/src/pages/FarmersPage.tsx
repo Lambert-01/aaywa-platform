@@ -23,7 +23,7 @@ interface Farmer {
     household_type: string;
     photo_url?: string;
     status: boolean;
-    crops?: string[];
+    crops?: string;  // Changed from string[] to string (comma-separated)
     location_coordinates?: string;
     plot_size?: number;
     vsla_balance?: number;
@@ -45,6 +45,7 @@ const FarmersPage: React.FC = () => {
     const [householdFilter, setHouseholdFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState<'all' | 'champion' | 'teen_mother'>('all');
 
     useEffect(() => {
         fetchFarmers();
@@ -124,7 +125,12 @@ const FarmersPage: React.FC = () => {
         const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? farmer.status : !farmer.status);
         const matchesSearch = farmer.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             farmer.phone.includes(searchQuery);
-        return matchesCohort && matchesHousehold && matchesStatus && matchesSearch;
+
+        const matchesTab = activeTab === 'all' ||
+            (activeTab === 'champion' && farmer.household_type === 'champion') ||
+            (activeTab === 'teen_mother' && farmer.household_type === 'teen_mother');
+
+        return matchesCohort && matchesHousehold && matchesStatus && matchesSearch && matchesTab;
     });
 
     // KPIs
@@ -158,6 +164,46 @@ const FarmersPage: React.FC = () => {
 
             {/* Column 2: Filters & Table (Flexible) */}
             <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {/* Tabs Header */}
+                <div className="flex items-center gap-6 px-6 pt-4 border-b border-gray-200 bg-white">
+                    <button
+                        onClick={() => setActiveTab('all')}
+                        className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'all'
+                                ? 'border-brand-blue-600 text-brand-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        All Farmers
+                        <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
+                            {farmers.length}
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('champion')}
+                        className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'champion'
+                                ? 'border-brand-blue-600 text-brand-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        🏆 Champions
+                        <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
+                            {champions}
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('teen_mother')}
+                        className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'teen_mother'
+                                ? 'border-brand-blue-600 text-brand-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        ❤️ Teen Mothers
+                        <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
+                            {teenMothers}
+                        </span>
+                    </button>
+                </div>
+
                 {/* Toolbar */}
                 <div className="p-4 border-b border-gray-100 flex flex-wrap gap-4 items-center justify-between bg-gray-50/50">
                     <div className="flex items-center gap-2 flex-1 min-w-[200px]">
@@ -253,10 +299,10 @@ const FarmersPage: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div className="flex gap-1">
-                                                {farmer.crops?.slice(0, 2).map(c => (
-                                                    <span key={c} className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{c}</span>
+                                                {farmer.crops?.split(',').slice(0, 2).map((c, idx) => (
+                                                    <span key={idx} className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{c.trim()}</span>
                                                 ))}
-                                                {(farmer.crops?.length || 0) > 2 && <span className="text-xs text-gray-400">+{farmer.crops!.length - 2}</span>}
+                                                {(farmer.crops?.split(',').length || 0) > 2 && <span className="text-xs text-gray-400">+{farmer.crops!.split(',').length - 2}</span>}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

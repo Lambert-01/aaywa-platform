@@ -59,7 +59,7 @@ const getRecentActivity = async (req, res) => {
         const activities = await db.query(`
       SELECT 'training' as type, 
              title as description, 
-             scheduled_date as timestamp,
+             date as timestamp,
              cohort_id as related_id
       FROM training_sessions
       WHERE status = 'completed'
