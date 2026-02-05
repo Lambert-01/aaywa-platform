@@ -125,7 +125,7 @@ const UsersPage: React.FC = () => {
         try {
             const token = localStorage.getItem('aaywa_token');
             const response = await fetch(
-                `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/users/${selectedPendingUser.id}/approve`,
+                `${API_URL}/api/users/${selectedPendingUser.id}/approve`,
                 {
                     method: 'POST',
                     headers: {
@@ -233,7 +233,7 @@ const UsersPage: React.FC = () => {
 
         try {
             const token = localStorage.getItem('aaywa_token');
-            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/users/${userId}`, {
+            const response = await fetch(`${API_URL}/api/users/${userId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
