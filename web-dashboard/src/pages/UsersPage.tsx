@@ -14,6 +14,7 @@ import {
     PhoneIcon,
     BriefcaseIcon
 } from '@heroicons/react/24/outline';
+import { API_URL } from '../api/config';
 
 interface User {
     id: number;
@@ -85,20 +86,19 @@ const UsersPage: React.FC = () => {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem('aaywa_token');
-            const response = await fetch(`${ process.env.REACT_APP_API_URL || 'http://localhost:5000/api' }/users`, {
-headers: { 'Authorization': `Bearer ${token}` }
+            const response = await fetch(`${API_URL}/api/users`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
-if (response.ok) {
-    const data = await response.json();
-    setUsers(data);
-}
+        }
         } catch (error) {
-    console.error('Error fetching users:', error);
-} finally {
-    setLoading(false);
-}
-    };
+        console.error('Error fetching users:', error);
+    } finally {
+        setLoading(false);
+    }
+};
 
 const fetchPendingUsers = async () => {
     try {
@@ -156,7 +156,7 @@ const handleReject = async () => {
     try {
         const token = localStorage.getItem('aaywa_token');
         const response = await fetch(
-            `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/users/${selectedPendingUser.id}/reject`,
+            `${API_URL}/api/users/${selectedPendingUser.id}/reject`,
             {
                 method: 'POST',
                 headers: {
@@ -189,8 +189,8 @@ const handleSubmit = async (e: React.FormEvent) => {
     try {
         const token = localStorage.getItem('aaywa_token');
         const url = editingUser
-            ? `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/users/${editingUser.id}`
-            : `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/users`;
+            ? `${API_URL}/api/users/${editingUser.id}`
+            : `${API_URL}/api/users`;
 
         const method = editingUser ? 'PATCH' : 'POST';
         const payload = editingUser

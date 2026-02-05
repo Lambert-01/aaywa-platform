@@ -1,6 +1,8 @@
 // API utility functions for AAYWA & PARTNERS Dashboard
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import { API_URL } from '../api/config';
+
+const API_BASE_URL = API_URL;
 
 /**
  * Get authentication token from localStorage

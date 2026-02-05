@@ -7,6 +7,7 @@ import {
     HeartIcon,
     CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
+import { API_URL } from '../api/config';
 import KPICard from '../components/KPICard';
 import ModalLayout from '../components/ModalLayout';
 import StatusBadge from '../components/StatusBadge';
@@ -54,7 +55,7 @@ const FarmersPage: React.FC = () => {
     const fetchFarmers = async () => {
         try {
             const token = localStorage.getItem('aaywa_token');
-            const response = await fetch('/api/farmers', {
+            const response = await fetch(`${API_URL}/api/farmers`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
@@ -71,7 +72,7 @@ const FarmersPage: React.FC = () => {
     const handleCreate = async (data: any) => {
         try {
             const token = localStorage.getItem('aaywa_token');
-            const response = await fetch('/api/farmers', {
+            const response = await fetch(`${API_URL}/api/farmers`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -93,7 +94,7 @@ const FarmersPage: React.FC = () => {
         if (!editingFarmer) return;
         try {
             const token = localStorage.getItem('aaywa_token');
-            const response = await fetch(`/api/farmers/${editingFarmer.id}`, {
+            const response = await fetch(`${API_URL}/api/farmers/${editingFarmer.id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -169,8 +170,8 @@ const FarmersPage: React.FC = () => {
                     <button
                         onClick={() => setActiveTab('all')}
                         className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'all'
-                                ? 'border-brand-blue-600 text-brand-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-brand-blue-600 text-brand-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         All Farmers
@@ -181,8 +182,8 @@ const FarmersPage: React.FC = () => {
                     <button
                         onClick={() => setActiveTab('champion')}
                         className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'champion'
-                                ? 'border-brand-blue-600 text-brand-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-brand-blue-600 text-brand-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         🏆 Champions
@@ -193,8 +194,8 @@ const FarmersPage: React.FC = () => {
                     <button
                         onClick={() => setActiveTab('teen_mother')}
                         className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'teen_mother'
-                                ? 'border-brand-blue-600 text-brand-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-brand-blue-600 text-brand-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         ❤️ Teen Mothers
