@@ -30,6 +30,8 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:8000',
+    'https://aaywa-dashboard.vercel.app',
+    'https://aaywa-platform-2.onrender.com',
     ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [])
   ].filter(Boolean),
   credentials: true
