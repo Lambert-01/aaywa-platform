@@ -26,7 +26,7 @@ const OrdersPage: React.FC = () => {
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const data = await apiGet<any>('/marketplace/orders');
+            const data = await apiGet<any>('/api/marketplace/orders');
             const mappedOrders = (data.orders || []).map((o: any) => ({
                 id: o.id.toString(),
                 orderNumber: o.order_number,
@@ -58,10 +58,10 @@ const OrdersPage: React.FC = () => {
 
     const handleUpdateOrderStatus = async (orderId: string, status: string) => {
         try {
-            await apiPatch(`/marketplace/orders/${orderId}/status`, { status });
+            await apiPatch(`/api/marketplace/orders/${orderId}/status`, { status });
             fetchOrders();
             if (selectedOrder?.id === parseInt(orderId)) {
-                const updated = await apiGet<any>(`/marketplace/orders/${orderId}`);
+                const updated = await apiGet<any>(`/api/marketplace/orders/${orderId}`);
                 setSelectedOrder(updated.order);
             }
         } catch (error) {
@@ -71,10 +71,10 @@ const OrdersPage: React.FC = () => {
 
     const handleUpdatePaymentStatus = async (orderId: string, status: string) => {
         try {
-            await apiPatch(`/marketplace/orders/${orderId}/payment-status`, { status });
+            await apiPatch(`/api/marketplace/orders/${orderId}/payment-status`, { status });
             fetchOrders();
             if (selectedOrder?.id === parseInt(orderId)) {
-                const updated = await apiGet<any>(`/marketplace/orders/${orderId}`);
+                const updated = await apiGet<any>(`/api/marketplace/orders/${orderId}`);
                 setSelectedOrder(updated.order);
             }
         } catch (error) {
