@@ -27,7 +27,6 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
     onCheckout,
 }) => {
     const totalValue = items.reduce((sum, item) => sum + item.subtotal, 0);
-    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
     if (!isOpen) return null;
 
