@@ -13,6 +13,9 @@ interface Product {
     imageUrl?: string;
 }
 
+// Configuration
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 interface ProductCardProps {
     product: Product;
     onAddToCart: (product: Product, quantity: number) => void;
@@ -38,7 +41,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onViewD
             <div className="relative aspect-square bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-500">
                 {product.imageUrl ? (
                     <img
-                        src={`http://localhost:5000${product.imageUrl}`}
+                        src={product.imageUrl.startsWith('http') ? product.imageUrl : `${API_URL}${product.imageUrl}`}
                         alt={product.cropType}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
