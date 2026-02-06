@@ -10,10 +10,13 @@
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
+// Sanitize API_BASE_URL to remove trailing slash
+const sanitizedBaseUrl = API_BASE_URL.replace(/\/$/, '');
+
 export const getApiUrl = (endpoint: string): string => {
     // Ensure endpoint starts with /
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    return `${API_BASE_URL}${cleanEndpoint}`;
+    return `${sanitizedBaseUrl}${cleanEndpoint}`;
 };
 
 export const API_URL = API_BASE_URL;

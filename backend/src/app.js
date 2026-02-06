@@ -35,7 +35,8 @@ app.use(cors({
       'http://localhost:3000',
       'http://localhost:8000',
       'https://aaywa-dashboard.vercel.app',
-      'https://aaywa-platform-2.onrender.com'
+      'https://aaywa-platform-2.onrender.com',
+      'https://aaywa-platform-1.onrender.com'
     ];
 
     // Check if origin is in allowed list or matches Vercel preview domain
