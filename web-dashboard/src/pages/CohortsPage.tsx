@@ -131,7 +131,7 @@ const CohortsPage: React.FC = () => {
         }
 
         try {
-            const data = await apiGet<Cohort[]>('/cohorts');
+            const data = await apiGet<Cohort[]>('/api/cohorts');
             const formattedData = data.map((c: any) => ({
                 id: c.id,
                 name: c.name,

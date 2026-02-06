@@ -68,9 +68,8 @@ const authenticateToken = async (req, res, next) => {
     }
 
     return res.status(403).json({
-      error: 'Authentication failed',
-      message: 'Could not verify authentication token',
-      debug: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: `Authentication failed: ${error.message}`,
+      message: 'Could not verify authentication token'
     });
   }
 };

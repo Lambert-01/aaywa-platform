@@ -1,6 +1,7 @@
 import React from 'react';
 import { PencilIcon, EyeSlashIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { formatCurrency, safeFormatDate } from '../../utils/formatters';
+import { API_URL } from '../../api/config';
 // ...
 // usage:
 // {safeFormatDate(product.harvest_date)}
@@ -111,7 +112,7 @@ const ProductCatalogTable: React.FC<ProductCatalogTableProps> = ({
                                             {product.image_url ? (
                                                 <img
                                                     className="h-10 w-10 rounded-full object-cover"
-                                                    src={`http://localhost:5000${product.image_url}`}
+                                                    src={product.image_url.startsWith('http') && !product.image_url.includes('localhost') ? product.image_url : `${API_URL}${product.image_url.replace('http://localhost:5000', '')}`}
                                                     alt={product.product_type}
                                                 />
                                             ) : (

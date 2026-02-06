@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { apiGet } from '../../utils/api';
+import { API_URL } from '../../api/config';
 
 interface Cohort {
     id: number;
@@ -140,7 +141,14 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
                                 <div className="relative w-32 h-32 bg-gray-100 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center">
                                     {previewUrl || editingProduct?.image_url ? (
                                         <img
-                                            src={previewUrl || (editingProduct?.image_url ? `http://localhost:5000${editingProduct.image_url}` : '')}
+                                            src={
+                                                previewUrl ? (previewUrl.startsWith('blob') ? previewUrl : (previewUrl.startsWith('http') ? previewUrl : `${API_URL}${previewUrl}`)) :
+                                                    (editingProduct?.image_url
+                                                        ? (editingProduct.image_url.includes('localhost:5000')
+                                                            ? `${API_URL}${editingProduct.image_url.replace('http://localhost:5000', '')}`
+                                                            : (editingProduct.image_url.startsWith('http') ? editingProduct.image_url : `${API_URL}${editingProduct.image_url}`))
+                                                        : '')
+                                            }
                                             alt="Preview"
                                             className="w-full h-full object-cover"
                                         />
