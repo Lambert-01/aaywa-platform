@@ -19,6 +19,6 @@ export const getApiUrl = (endpoint: string): string => {
     return `${sanitizedBaseUrl}${cleanEndpoint}`;
 };
 
-export const API_URL = API_BASE_URL;
+export const API_URL = sanitizedBaseUrl;
 
-export default API_BASE_URL;
+export default sanitizedBaseUrl;
