@@ -57,7 +57,8 @@ const authenticateToken = async (req, res, next) => {
     next();
 
   } catch (error) {
-    console.error('JWT verification failed:', error.message);
+    console.error(`[AUTH-DEBUG] JWT Verification Error for token: ${req.headers['authorization'] ? 'Present' : 'Missing'}`);
+    console.error('[AUTH-DEBUG] Error Details:', error.message);
 
     if (error.name === 'TokenExpiredError') {
       return res.status(403).json({
@@ -68,7 +69,8 @@ const authenticateToken = async (req, res, next) => {
 
     return res.status(403).json({
       error: 'Authentication failed',
-      message: 'Could not verify authentication token'
+      message: 'Could not verify authentication token',
+      debug: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
