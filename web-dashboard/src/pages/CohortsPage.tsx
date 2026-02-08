@@ -56,10 +56,70 @@ interface Cohort {
     // Extended properties
     performance: {
         yieldIncrease: number;
+        yieldTrend?: number;
+        yieldTarget?: number;
         repaymentRate: number;
         attendanceRate: number;
         avgIncome: number;
+        postHarvestLoss?: number;
+        vslaScore?: number;
     };
+}
+
+interface AgronomyMetrics {
+    crops: string[];
+    recentHarvests: {
+        crop_name: string;
+        harvest_date: string;
+        quantity: number;
+        quality_grade: string;
+        farmer_name: string;
+    }[];
+}
+
+interface TrainingSession {
+    topic: string;
+    date: string;
+    attendees: number;
+    status: string;
+}
+
+interface Delivery {
+    id: number;
+    buyer: string;
+    quantity: number;
+    status: string;
+    date: string;
+}
+
+interface CohortMetricsData {
+    agronomy?: AgronomyMetrics;
+    financials?: {
+        revenue: number;
+        expenses: number;
+        net: number;
+        costs: number;
+    };
+    training?: {
+        sessions: TrainingSession[];
+    };
+    logistics?: {
+        deliveries: Delivery[];
+    };
+    // Include other existing metrics if needed, but we often access them loosely
+}
+
+interface Farmer {
+    id: number;
+    full_name: string;
+    household_type: string;
+    role: string;
+    phone_number: string;
+    plot_size_ha: number;
+    location_lat: number;
+    location_lng: number;
+    photo_url?: string;
+    date_of_birth?: string;
 }
 
 const CohortsPage: React.FC = () => {
@@ -256,6 +316,8 @@ const CohortsPage: React.FC = () => {
     const kpiStats = React.useMemo(() => {
         if (cohorts.length === 0) return {
             avgYield: 0,
+            yieldTrend: 0,
+            yieldTarget: 0,
             repaymentRate: 0,
             trainingAttendance: 0,
             postHarvestLoss: 8, // Default fallback
@@ -265,14 +327,16 @@ const CohortsPage: React.FC = () => {
         const total = cohorts.length;
         return {
             avgYield: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.yieldIncrease || 0), 0) / total),
+            yieldTrend: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.yieldTrend || 0), 0) / total),
+            yieldTarget: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.yieldTarget || 0), 0) / total),
             repaymentRate: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.repaymentRate || 0), 0) / total),
             trainingAttendance: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.attendanceRate || 0), 0) / total),
-            postHarvestLoss: 8, // Keep hardcoded until backend provides this
-            vslaScore: 94       // Keep hardcoded until backend provides this
+            postHarvestLoss: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.postHarvestLoss || 0), 0) / total),
+            vslaScore: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.vslaScore || 0), 0) / total)
         };
     }, [cohorts]);
 
-    const { avgYield, repaymentRate, trainingAttendance, postHarvestLoss, vslaScore } = kpiStats;
+    const { avgYield, yieldTrend, yieldTarget, repaymentRate, trainingAttendance, postHarvestLoss, vslaScore } = kpiStats;
 
     // --- Filtering ---
     const filteredCohorts = cohorts.filter(c => {
@@ -376,9 +440,9 @@ const CohortsPage: React.FC = () => {
                     <PerformanceTrendCard
                         title="Yield Performance"
                         value={`${avgYield}% ↑`}
-                        trend="up"
-                        trendValue="+2% vs last month"
-                        target="30% target"
+                        trend={yieldTrend >= 0 ? "up" : "down"}
+                        trendValue={`${yieldTrend > 0 ? '+' : ''}${yieldTrend}% vs last month`}
+                        target={`Target: ${yieldTarget} avg`}
                         color="green"
                         icon={<ScaleIcon />}
                     />
@@ -705,9 +769,30 @@ const CohortsPage: React.FC = () => {
                                         </div>
                                         <DataTable
                                             columns={[
-                                                { key: 'full_name', label: 'Name' },
-                                                { key: 'role', label: 'Role' },
-                                                { key: 'household_type', label: 'Household' },
+                                                {
+                                                    key: 'photo_url',
+                                                    label: '',
+                                                    render: (v: string, row: Farmer) => (
+                                                        <img
+                                                            src={v || 'https://via.placeholder.com/40'}
+                                                            alt={row.full_name}
+                                                            className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                                                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=User'; }}
+                                                        />
+                                                    )
+                                                },
+                                                { key: 'full_name', label: 'Name', sortable: true, render: (v: string) => <span className="font-medium text-gray-900">{v}</span> },
+                                                {
+                                                    key: 'household_type',
+                                                    label: 'Type',
+                                                    render: (v: string) => (
+                                                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
+                                                            {v?.replace('_', ' ')}
+                                                        </span>
+                                                    )
+                                                },
+                                                { key: 'phone_number', label: 'Phone' },
+                                                { key: 'plot_size_ha', label: 'Plot (ha)' }
                                             ]}
                                             data={cohortFarmers}
                                         />
@@ -717,28 +802,115 @@ const CohortsPage: React.FC = () => {
                                 {activeTab === 'financials' && cohortMetrics && (
                                     <div className="grid grid-cols-2 gap-6">
                                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                                            <h3 className="font-semibold text-lg mb-4">Revenue Flow</h3>
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-600">Total Sales</span>
-                                                    <span className="font-bold text-gray-900">{formatCurrency(cohortMetrics.financials.revenue)}</span>
+                                            <h3 className="font-semibold text-lg mb-4">Financial Overview</h3>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                                    <span className="text-gray-600">Total Revenue</span>
+                                                    <span className="font-bold text-green-700 text-lg">
+                                                        {formatCurrency((cohortMetrics as CohortMetricsData).financials?.revenue || 0)}
+                                                    </span>
                                                 </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-600">Input Costs</span>
-                                                    <span className="font-medium text-red-600">-{formatCurrency(cohortMetrics.financials.costs)}</span>
+                                                <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                                                    <span className="text-gray-600">Total Expenses</span>
+                                                    <span className="font-bold text-red-700 text-lg">
+                                                        {formatCurrency((cohortMetrics as CohortMetricsData).financials?.expenses || 0)}
+                                                    </span>
                                                 </div>
-                                                <div className="border-t pt-2 flex justify-between">
-                                                    <span className="font-bold">Net Revenue</span>
-                                                    <span className="font-bold text-green-600">{formatCurrency(cohortMetrics.financials.net)}</span>
+                                                <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
+                                                    <span className="font-bold text-gray-800">Net Income</span>
+                                                    <span className={`font-bold text-xl ${(cohortMetrics as CohortMetricsData).financials?.net! >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                                                        {formatCurrency((cohortMetrics as CohortMetricsData).financials?.net || 0)}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
-                                {(activeTab === 'agronomy' || activeTab === 'training' || activeTab === 'logistics') && (
-                                    <div className="p-10 text-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                                        <p>Module content loaded from backend...</p>
+                                {activeTab === 'agronomy' && cohortMetrics && (
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                                <h3 className="font-semibold text-lg mb-4 text-green-800">Crop Portfolio</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {(cohortMetrics as CohortMetricsData).agronomy?.crops?.length ? (
+                                                        (cohortMetrics as CohortMetricsData).agronomy?.crops.map((crop, idx) => (
+                                                            <span key={idx} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                                {crop}
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-gray-500 italic">No crops recorded</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                                <h3 className="font-semibold text-lg mb-4 text-green-800">Recent Harvests</h3>
+                                                <div className="overflow-x-auto">
+                                                    <table className="min-w-full text-sm text-left">
+                                                        <thead className="bg-gray-50 text-gray-500 font-medium">
+                                                            <tr>
+                                                                <th className="px-4 py-2">Date</th>
+                                                                <th className="px-4 py-2">Crop</th>
+                                                                <th className="px-4 py-2">Qty</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100">
+                                                            {(cohortMetrics as CohortMetricsData).agronomy?.recentHarvests?.map((h, idx) => (
+                                                                <tr key={idx}>
+                                                                    <td className="px-4 py-2">{new Date(h.harvest_date).toLocaleDateString()}</td>
+                                                                    <td className="px-4 py-2">{h.crop_name}</td>
+                                                                    <td className="px-4 py-2">{h.quantity} kg</td>
+                                                                </tr>
+                                                            ))}
+                                                            {!(cohortMetrics as CohortMetricsData).agronomy?.recentHarvests?.length && (
+                                                                <tr>
+                                                                    <td colSpan={3} className="px-4 py-4 text-center text-gray-400">No recent harvests</td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'training' && cohortMetrics && (
+                                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                        <h3 className="font-semibold text-lg mb-4 text-orange-600">Recent Training Sessions</h3>
+                                        <DataTable
+                                            columns={[
+                                                { key: 'date', label: 'Date', render: (v: string) => new Date(v).toLocaleDateString() },
+                                                { key: 'topic', label: 'Module/Topic', render: (v: string) => <span className="font-medium">{v}</span> },
+                                                { key: 'attendees', label: 'Attendees', render: (v: number) => <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">{v}</span> },
+                                                { key: 'status', label: 'Status' }
+                                            ]}
+                                            data={(cohortMetrics as CohortMetricsData).training?.sessions || []}
+                                        />
+                                    </div>
+                                )}
+
+                                {activeTab === 'logistics' && cohortMetrics && (
+                                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                        <h3 className="font-semibold text-lg mb-4 text-purple-600">Recent Deliveries & Sales</h3>
+                                        <DataTable
+                                            columns={[
+                                                { key: 'date', label: 'Date', render: (v: string) => new Date(v).toLocaleDateString() },
+                                                { key: 'buyer', label: 'Buyer' },
+                                                { key: 'quantity', label: 'Qty (kg)' },
+                                                {
+                                                    key: 'status',
+                                                    label: 'Status',
+                                                    render: (v: string) => (
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${v === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                                            {v}
+                                                        </span>
+                                                    )
+                                                }
+                                            ]}
+                                            data={(cohortMetrics as CohortMetricsData).logistics?.deliveries || []}
+                                        />
                                     </div>
                                 )}
                             </div>

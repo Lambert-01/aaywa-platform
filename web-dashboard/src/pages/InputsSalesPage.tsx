@@ -13,6 +13,7 @@ import ProductCatalogTable from '../components/marketplace/ProductCatalogTable';
 import ProductCreationModal from '../components/marketplace/ProductCreationModal';
 import OrderManagementTable from '../components/marketplace/OrderManagementTable';
 import OrderDetailModal from '../components/orders/OrderDetailModal';
+import IssueInputsModal from '../components/marketplace/IssueInputsModal';
 import { apiGet, apiPost, apiPatch, apiDelete } from '../utils/api';
 import { formatCurrency } from '../utils/formatters';
 
@@ -26,6 +27,7 @@ const InputsSalesPage: React.FC = () => {
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
+    const [isIssueInputModalOpen, setIsIssueInputModalOpen] = useState(false);
 
     // Filters
     const [productFilter, setProductFilter] = useState('all');
@@ -243,6 +245,13 @@ const InputsSalesPage: React.FC = () => {
                             />
                             <div className="flex gap-3">
                                 <button
+                                    onClick={() => setIsIssueInputModalOpen(true)}
+                                    className="px-4 py-2 bg-orange-600 text-white rounded-md text-sm font-medium shadow-md hover:bg-orange-700 inline-flex items-center"
+                                >
+                                    <PlusIcon className="w-4 h-4 mr-2" />
+                                    Issue Inputs
+                                </button>
+                                <button
                                     onClick={() => fetchProducts()}
                                     className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 inline-flex items-center"
                                 >
@@ -309,6 +318,15 @@ const InputsSalesPage: React.FC = () => {
                     onClose={() => setSelectedOrder(null)}
                     onUpdatePaymentStatus={handleUpdatePaymentStatus}
                     onUpdateStatus={handleUpdateOrderStatus}
+                />
+
+                <IssueInputsModal
+                    isOpen={isIssueInputModalOpen}
+                    onClose={() => setIsIssueInputModalOpen(false)}
+                    onSubmit={() => {
+                        // Ideally refresh kpis or recent activities if we had them
+                        alert('Inputs issued successfully!');
+                    }}
                 />
             </div>
         </div>

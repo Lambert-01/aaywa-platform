@@ -17,7 +17,8 @@ const farmerController = {
         longitude,
         plot_size_hectares,
         crops,
-        co_crops
+        co_crops,
+        photo_url
       } = req.body;
 
       // Create location_coordinates as JSON if lat/lng provided
