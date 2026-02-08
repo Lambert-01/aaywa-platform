@@ -143,9 +143,164 @@ const getVSLASummary = async (req, res) => {
     }
 };
 
+// GET /api/dashboard/charts - Get data for all dashboard charts
+const getDashboardCharts = async (req, res) => {
+    try {
+        // 1. Farmer Demographics
+        const demographics = await db.query(`
+            SELECT household_type, COUNT(*)::int as count 
+            FROM farmers 
+            WHERE is_active = true 
+            GROUP BY household_type
+        `);
+
+        // 2. Financial Overview (Last 6 Months) - Farmer Share vs SANZA Share
+        const financials = await db.query(`
+            SELECT 
+                TO_CHAR(sale_date, 'Mon') as name,
+                SUM(farmer_share)::float as "Farmer",
+                SUM(sanza_share)::float as "SANZA"
+            FROM sales 
+            WHERE sale_date >= NOW() - INTERVAL '6 months'
+            GROUP BY TO_CHAR(sale_date, 'Mon'), DATE_TRUNC('month', sale_date)
+            ORDER BY DATE_TRUNC('month', sale_date)
+        `);
+
+        // 3. Compost Pipeline
+        const compost = await db.query(`
+            SELECT status as name, COUNT(*)::int as value 
+            FROM compost_batches 
+            GROUP BY status
+        `);
+
+        // 4. Training Effectiveness (Last 5 Sessions)
+        // Note: Column attendance_count might be missing in some environments
+        // defaulting to zero/empty for now as requested
+        let training = { rows: [] };
+        try {
+            training = await db.query(`
+                SELECT 
+                    t.title || ' (' || c.name || ')' as name,
+                    COALESCE(t.attendance_count, 0) as "Attendance",
+                    (SELECT COUNT(*) FROM farmers f WHERE f.cohort_id = t.cohort_id AND f.is_active = true) as "Scheduled",
+                    CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END as "Completed"
+                FROM training_sessions t
+                JOIN cohorts c ON t.cohort_id = c.id
+                WHERE t.status = 'completed'
+                ORDER BY t.scheduled_date DESC
+                LIMIT 5
+            `);
+        } catch (err) {
+            console.warn('Training stats query failed, returning zeros:', err.message);
+            // Return dummy data with zeros
+            training = {
+                rows: [
+                    { name: 'Training Data Unavailable', Attendance: 0, Scheduled: 0, Completed: 0 }
+                ]
+            };
+        }
+
+        // 5. Warehouse Utilization
+        const warehouses = await db.query(`
+            SELECT 
+                name, 
+                (current_stock_kg / NULLIF(capacity_kg, 0) * 100)::int as uv,
+                '#8884d8' as fill
+            FROM warehouses 
+            WHERE is_active = true
+        `);
+
+        res.json({
+            demographics: demographics.rows,
+            financials: financials.rows,
+            compost: compost.rows,
+            training: training.rows,
+            warehouse: warehouses.rows
+        });
+    } catch (error) {
+        console.error('Error fetching chart data:', error);
+        res.status(500).json({ error: 'Failed to fetch chart data' });
+    }
+};
+
+// GET /api/dashboard/map - Get geospatial data
+const getDashboardMap = async (req, res) => {
+    try {
+        const cohorts = await db.query(`
+            SELECT id, name, boundary_coordinates as center, status 
+            FROM cohorts 
+            WHERE status = 'active'
+        `);
+
+        const warehouses = await db.query(`
+            SELECT id, name, coordinates as position, current_stock_kg, capacity_kg 
+            FROM warehouses 
+            WHERE is_active = true
+        `);
+
+        res.json({
+            cohorts: cohorts.rows,
+            warehouses: warehouses.rows
+        });
+    } catch (error) {
+        console.error('Error fetching map data:', error);
+        res.status(500).json({ error: 'Failed to fetch map data' });
+    }
+};
+
+// GET /api/dashboard/events - Get upcoming events
+const getUpcomingEvents = async (req, res) => {
+    try {
+        // Safe query excluding potentially missing training/scheduled_date columns if they cause errors
+        // We'll try to query them, if it fails, we fall back to other events
+
+        let trainingEvents = [];
+        try {
+            const tRes = await db.query(`
+                SELECT id, title, 'training' as type, scheduled_date as date, location 
+                FROM training_sessions 
+                WHERE scheduled_date > NOW() 
+                AND scheduled_date < NOW() + INTERVAL '7 days'
+            `);
+            trainingEvents = tRes.rows;
+        } catch (e) {
+            console.warn('Skipping training events due to missing column:', e.message);
+        }
+
+        const otherEvents = await db.query(`
+            SELECT id, CONCAT('Compost Batch ', batch_number, ' Maturity') as title, 'compost' as type, maturity_date as date, location
+            FROM compost_batches
+            WHERE maturity_date > NOW()
+            AND maturity_date < NOW() + INTERVAL '7 days'
+            
+            UNION ALL
+            
+            SELECT id, CONCAT('Order #', order_number, ' Delivery') as title, 'delivery' as type, delivery_date as date, delivery_address as location
+            FROM orders
+            WHERE delivery_date > NOW()
+            AND delivery_date < NOW() + INTERVAL '7 days'
+            
+            ORDER BY date ASC
+            LIMIT 10
+        `);
+
+        // Combine and sort
+        const allEvents = [...trainingEvents, ...otherEvents.rows].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 10);
+
+        res.json(allEvents);
+
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        res.status(500).json({ error: 'Failed to fetch upcoming events' });
+    }
+};
+
 module.exports = {
     getKPIs,
     getRecentActivity,
     getCohortStats,
-    getVSLASummary
+    getVSLASummary,
+    getDashboardCharts,
+    getDashboardMap,
+    getUpcomingEvents
 };

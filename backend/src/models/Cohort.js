@@ -3,28 +3,31 @@ const pool = require('../config/database');
 class Cohort {
   static async create(cohortData) {
     const {
-      name, cropping_system, location, intercrops, target_area,
-      start_date, childcare_support, repayment_threshold, seed_capital,
-      warehouse_assign, boundary_coordinates
+      name, cropping_system, boundary_coordinates, intercrops
     } = cohortData;
+
+    // Map cropping_system to lowercase to match check constraint
+    const systemLower = cropping_system ? cropping_system.toLowerCase() : 'avocado';
+
+    // Assign a random color if not provided (frontend usually handles this but good fallback)
+    const color = '#4CAF50';
 
     const query = `
       INSERT INTO cohorts (
-        name, cropping_system, location, intercrops, target_area, 
-        start_date, childcare_support, repayment_threshold, seed_capital, 
-        profit_sharing_ratio, warehouse_assign, boundary_coordinates, status
+        name, cropping_system, boundary_coordinates, status, boundary_color, intercrops
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, '50/50', $10, $11, 'Active')
+      VALUES ($1, $2, $3, 'active', $4, $5)
       RETURNING *
     `;
 
-    // Ensure intercrops is an array for Postgres text[]
-    const intercropsArray = Array.isArray(intercrops) ? intercrops : [];
+    // Handle jsonb field: pg converts arrays to '{...}' (PG array literal) but we need '[...]' (JSON string)
+    // So we must stringify it explicitly if it's an object/array
+    const boundaryJson = (typeof boundary_coordinates === 'object')
+      ? JSON.stringify(boundary_coordinates)
+      : boundary_coordinates;
 
     const values = [
-      name, cropping_system, location, intercropsArray, target_area,
-      start_date, childcare_support, repayment_threshold, seed_capital,
-      warehouse_assign, boundary_coordinates
+      name, systemLower, boundaryJson, color, intercrops || []
     ];
 
     const result = await pool.query(query, values);
@@ -45,18 +48,23 @@ class Cohort {
     const query = `
       SELECT c.*
       FROM cohorts c
+      WHERE c.status != 'suspended'
+      ORDER BY c.created_at DESC
     `;
     const result = await pool.query(query);
     return result.rows;
   }
 
   static async update(id, updateData) {
+    // Filter out undefined fields but also check against valid columns if needed
+    // For now we assume updateData only contains valid keys or we wrap loosely
+    const validColumns = ['name', 'cropping_system', 'boundary_coordinates', 'status', 'boundary_color', 'intercrops'];
     const fields = [];
     const values = [];
     let paramIndex = 1;
 
     Object.keys(updateData).forEach(key => {
-      if (updateData[key] !== undefined) {
+      if (updateData[key] !== undefined && validColumns.includes(key)) {
         fields.push(`${key} = $${paramIndex}`);
         values.push(updateData[key]);
         paramIndex++;
@@ -73,7 +81,8 @@ class Cohort {
   }
 
   static async delete(id) {
-    const query = 'DELETE FROM cohorts WHERE id = $1 RETURNING *';
+    // Soft delete using 'suspended' status as 'Deleted' is not in the check constraint
+    const query = "UPDATE cohorts SET status = 'suspended' WHERE id = $1 RETURNING *";
     const result = await pool.query(query, [id]);
     return result.rows[0];
   }

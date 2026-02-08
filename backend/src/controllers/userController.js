@@ -222,7 +222,7 @@ const userController = {
       }
 
       // Validate requested role
-      const allowedRoles = ['field_facilitator', 'agronomist'];
+      const allowedRoles = ['field_facilitator', 'agronomist', 'project_manager'];
       if (requested_role && !allowedRoles.includes(requested_role)) {
         return res.status(400).json({ error: 'Invalid role requested' });
       }

@@ -52,10 +52,10 @@ const TrainingPage: React.FC = () => {
 
             // Fetch all training data in parallel
             const [sessionsData, participantsData, materialsData, statsData] = await Promise.all([
-                apiGet('/training/sessions'),
-                apiGet('/training/participants'),
-                apiGet('/training/materials'),
-                apiGet('/training/stats')
+                apiGet('/api/training/sessions'),
+                apiGet('/api/training/participants'),
+                apiGet('/api/training/materials'),
+                apiGet('/api/training/stats')
             ]);
 
             setSessions(sessionsData as any[]);
@@ -76,9 +76,9 @@ const TrainingPage: React.FC = () => {
 
     const handleMaterialDownload = async (materialId: number) => {
         try {
-            await apiGet(`/training/materials/${materialId}/download`);
+            await apiGet(`/api/training/materials/${materialId}/download`);
             // Refresh materials to update download count
-            const updatedMaterials = await apiGet('/training/materials');
+            const updatedMaterials = await apiGet('/api/training/materials');
             setMaterials(updatedMaterials as any[]);
         } catch (err) {
             console.error('Error downloading material:', err);
@@ -112,7 +112,7 @@ const TrainingPage: React.FC = () => {
 
     const handleScheduleSession = async (sessionData: any) => {
         try {
-            await apiPost('/training/sessions', sessionData);
+            await apiPost('/api/training/sessions', sessionData);
             await fetchTrainingData(); // Refresh data
         } catch (err) {
             console.error('Error scheduling session:', err);
@@ -121,7 +121,7 @@ const TrainingPage: React.FC = () => {
 
     const handleSaveModule = async (moduleData: any) => {
         try {
-            await apiPost('/training/modules', moduleData);
+            await apiPost('/api/training/modules', moduleData);
             // TODO: Fetch modules
         } catch (err) {
             console.error('Error saving module:', err);
@@ -130,7 +130,7 @@ const TrainingPage: React.FC = () => {
 
     const handleSaveQuiz = async (quizData: any) => {
         try {
-            await apiPost('/training/quizzes', quizData);
+            await apiPost('/api/training/quizzes', quizData);
             // TODO: Fetch quizzes
         } catch (err) {
             console.error('Error saving quiz:', err);

@@ -10,7 +10,7 @@ interface KPICardProps {
         value: number;
         isPositive: boolean;
     };
-    color?: 'blue' | 'green' | 'orange' | 'purple' | 'red';
+    color?: 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'amber' | 'emerald' | 'indigo' | 'teal' | 'cyan';
     children?: React.ReactNode;
 }
 
@@ -24,12 +24,17 @@ const KPICard: React.FC<KPICardProps> = ({
     children
 }) => {
 
-    const colorMap = {
+    const colorMap: Record<string, { bg: string; text: string; border: string }> = {
         blue: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
         green: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
-        orange: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' },
+        orange: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
         purple: { bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-200' },
         red: { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' },
+        amber: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' },
+        emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
+        indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-200' },
+        teal: { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-200' },
+        cyan: { bg: 'bg-cyan-50', text: 'text-cyan-600', border: 'border-cyan-200' },
     };
 
     const theme = colorMap[color];

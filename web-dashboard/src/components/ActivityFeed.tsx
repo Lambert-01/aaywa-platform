@@ -18,6 +18,10 @@ interface Activity {
 const ActivityFeed: React.FC = () => {
     const [activities, setActivities] = useState<Activity[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showAll, setShowAll] = useState(false);
+
+    // Display only 5 activities by default
+    const displayedActivities = showAll ? activities : activities.slice(0, 5);
 
     useEffect(() => {
         fetchActivities();
@@ -45,78 +49,114 @@ const ActivityFeed: React.FC = () => {
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'training': return <AcademicCapIcon className="h-5 w-5 text-purple-500" />;
-            case 'compost': return <ArchiveBoxIcon className="h-5 w-5 text-green-500" />;
-            case 'sale': return <BanknotesIcon className="h-5 w-5 text-blue-500" />;
-            default: return <UserGroupIcon className="h-5 w-5 text-gray-500" />;
+            case 'training': return <AcademicCapIcon className="h-5 w-5 text-purple-600" />;
+            case 'compost': return <ArchiveBoxIcon className="h-5 w-5 text-emerald-600" />;
+            case 'sale': return <BanknotesIcon className="h-5 w-5 text-blue-600" />;
+            default: return <UserGroupIcon className="h-5 w-5 text-gray-600" />;
         }
     };
 
     const getBgColor = (type: string) => {
         switch (type) {
-            case 'training': return 'bg-purple-100';
-            case 'compost': return 'bg-green-100';
-            case 'sale': return 'bg-blue-100';
-            default: return 'bg-gray-100';
+            case 'training': return 'bg-purple-100 border border-purple-200';
+            case 'compost': return 'bg-emerald-100 border border-emerald-200';
+            case 'sale': return 'bg-blue-100 border border-blue-200';
+            default: return 'bg-gray-100 border border-gray-200';
         }
     };
 
     if (loading) {
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                    <div className="space-y-3">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="h-12 bg-gray-200 rounded"></div>
-                        ))}
+            <div className="animate-pulse space-y-4">
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="flex space-x-4">
+                        <div className="h-10 w-10 bg-gray-200 rounded-xl"></div>
+                        <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-3 bg-gray-100 rounded w-1/4"></div>
+                        </div>
                     </div>
-                </div>
+                ))}
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-slate-800">Recent Activity</h3>
-                <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                    • Live
-                </span>
-            </div>
+        <div className="space-y-4">
             {activities.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No recent activity</p>
+                <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <UserGroupIcon className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 font-medium">No recent activity</p>
+                    <p className="text-gray-400 text-sm mt-1">Activity will appear here as it happens</p>
+                </div>
             ) : (
-                <div className="flow-root">
-                    <ul className="-mb-8">
-                        {activities.map((activity, activityIdx) => (
-                            <li key={activityIdx}>
-                                <div className="relative pb-8">
-                                    {activityIdx !== activities.length - 1 ? (
-                                        <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
-                                    ) : null}
-                                    <div className="relative flex space-x-3">
-                                        <div>
-                                            <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${getBgColor(activity.type)}`}>
-                                                {getIcon(activity.type)}
-                                            </span>
-                                        </div>
-                                        <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                                            <div>
-                                                <p className="text-sm text-gray-700">{activity.description}</p>
+                <>
+                    <div className="flow-root">
+                        <ul className="space-y-0">
+                            {displayedActivities.map((activity, activityIdx) => (
+                                <li key={activityIdx} className="group hover:bg-gray-50/50 transition-colors duration-150 rounded-lg -mx-2 px-2">
+                                    <div className="relative py-4">
+                                        {activityIdx !== displayedActivities.length - 1 ? (
+                                            <span className="absolute top-10 left-6 -ml-px h-full w-0.5 bg-gradient-to-b from-gray-200 to-transparent" aria-hidden="true" />
+                                        ) : null}
+                                        <div className="relative flex space-x-4">
+                                            <div className="flex-shrink-0">
+                                                <span className={`h-10 w-10 rounded-xl flex items-center justify-center ring-4 ring-white shadow-sm ${getBgColor(activity.type)} group-hover:scale-110 transition-transform duration-200`}>
+                                                    {getIcon(activity.type)}
+                                                </span>
                                             </div>
-                                            <div className="text-right text-sm whitespace-nowrap text-gray-400">
-                                                <time dateTime={activity.timestamp}>
-                                                    {formatDistanceToNow(new Date(activity.timestamp))} ago
-                                                </time>
+                                            <div className="min-w-0 flex-1 pt-1">
+                                                <div className="flex justify-between items-start gap-4">
+                                                    <p className="text-sm text-gray-700 font-medium leading-relaxed">
+                                                        {activity.description}
+                                                    </p>
+                                                    <div className="text-right text-xs whitespace-nowrap text-gray-500 font-medium">
+                                                        <time dateTime={activity.timestamp}>
+                                                            {formatDistanceToNow(new Date(activity.timestamp))} ago
+                                                        </time>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {activities.length > 5 && (
+                        <div className="pt-4 border-t border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-gray-600">
+                                    Showing <span className="font-semibold text-gray-900">{displayedActivities.length}</span> of <span className="font-semibold text-gray-900">{activities.length}</span> activities
+                                </p>
+                                <button
+                                    onClick={() => setShowAll(!showAll)}
+                                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-brand-blue-600 bg-brand-blue-50 hover:bg-brand-blue-100 rounded-lg transition-all duration-200 hover:scale-105 shadow-sm hover:shadow"
+                                >
+                                    {showAll ? (
+                                        <>
+                                            Show Less
+                                            <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                            </svg>
+                                        </>
+                                    ) : (
+                                        <>
+                                            View All
+                                            <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

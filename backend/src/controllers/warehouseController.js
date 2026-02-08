@@ -428,6 +428,18 @@ const warehouseController = {
 
   getStats: async (req, res) => {
     try {
+      // Total facilities
+      const totalFacilitiesResult = await pool.query(
+        'SELECT COUNT(*) as total FROM storage_facilities'
+      );
+      const totalFacilities = parseInt(totalFacilitiesResult.rows[0].total || 0);
+
+      // Operational facilities
+      const operationalFacilitiesResult = await pool.query(
+        "SELECT COUNT(*) as total FROM storage_facilities WHERE status = 'operational'"
+      );
+      const operationalFacilities = parseInt(operationalFacilitiesResult.rows[0].total || 0);
+
       // Total stored
       const totalStoredResult = await pool.query(
         'SELECT SUM(current_usage_kg) as total FROM storage_facilities'
@@ -485,6 +497,8 @@ const warehouseController = {
       const maintenanceFund = 20000 - parseFloat(maintenanceFundResult.rows[0].spent || 0);
 
       res.json({
+        totalFacilities: totalFacilities,
+        operationalFacilities: operationalFacilities,
         totalStored: totalStored.toFixed(2),
         totalCapacity: totalCapacity.toFixed(2),
         usagePercentage: totalCapacity > 0 ? ((totalStored / totalCapacity) * 100).toFixed(1) : 0,

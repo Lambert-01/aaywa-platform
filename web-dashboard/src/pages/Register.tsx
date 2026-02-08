@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
     UserPlusIcon,
     EnvelopeIcon,
@@ -11,6 +11,7 @@ import {
 import { API_URL } from '../api/config';
 
 const Register: React.FC = () => {
+    const location = useLocation();
     const [formData, setFormData] = useState({
         full_name: '',
         email: '',
@@ -18,6 +19,21 @@ const Register: React.FC = () => {
         requested_role: 'field_facilitator',
         message: ''
     });
+
+    // Check for invite params
+    React.useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const email = params.get('email');
+        const role = params.get('role');
+
+        if (email || role) {
+            setFormData(prev => ({
+                ...prev,
+                email: email || prev.email,
+                requested_role: role || prev.requested_role
+            }));
+        }
+    }, [location.search]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);

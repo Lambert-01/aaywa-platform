@@ -41,7 +41,6 @@ const Layout: React.FC = () => {
     { name: 'Training', href: '/dashboard/training', icon: AcademicCapIcon, roles: ['project_manager', 'field_facilitator'] },
     { name: 'Warehouse', href: '/dashboard/warehouse', icon: BuildingStorefrontIcon, roles: ['project_manager', 'agronomist'] },
     { name: 'Geospatial Map', href: '/dashboard/maps', icon: GlobeAltIcon, roles: ['project_manager', 'agronomist'] },
-    { name: 'Learning Materials', href: '/dashboard/learning', icon: AcademicCapIcon, roles: ['all'] },
   ];
 
   const filteredNavigation = navigation.filter(item =>

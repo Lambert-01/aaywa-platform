@@ -11,7 +11,8 @@ import {
     BeakerIcon,
     CurrencyDollarIcon,
     AcademicCapIcon,
-    TrashIcon
+    TrashIcon,
+    BanknotesIcon
 } from '@heroicons/react/24/outline';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -25,9 +26,8 @@ import FilterPanel from '../components/FilterPanel';
 import ExportButton from '../components/ExportButton';
 import StatusBadge from '../components/StatusBadge';
 import ModalLayout from '../components/ModalLayout';
-import CohortHealthRadar from '../components/cohort/CohortHealthRadar';
 import FarmerPlotMap from '../components/cohort/FarmerPlotMap';
-import { apiGet, getAuthToken } from '../utils/api';
+import { apiGet, apiPost, apiDelete, getAuthToken } from '../utils/api';
 import { formatCurrency } from '../utils/formatters';
 
 import { MapContainer, TileLayer, Polygon as LeafletPolygon, useMapEvents, Marker, Popup } from 'react-leaflet';
@@ -84,7 +84,7 @@ const CohortsPage: React.FC = () => {
         name: '',
         croppingSystem: 'Avocado',
         location: '',
-        intercrops: [] as string[],
+        intercrops: '',  // Changed to string for text input
         targetArea: 1.0,
         startDate: new Date().toISOString().split('T')[0],
         childcare: true,
@@ -184,8 +184,8 @@ const CohortsPage: React.FC = () => {
 
         try {
             const [metrics, farmers] = await Promise.all([
-                apiGet(`/cohorts/${id}/metrics`),
-                apiGet(`/cohorts/${id}/farmers`)
+                apiGet(`/api/cohorts/${id}/metrics`),
+                apiGet(`/api/cohorts/${id}/farmers`)
             ]);
             setCohortMetrics(metrics);
             setCohortFarmers(farmers as any[]);
@@ -199,51 +199,80 @@ const CohortsPage: React.FC = () => {
         if (!window.confirm('Are you sure you want to delete this cohort?')) return;
 
         try {
-            // await apiDelete(`/cohorts/${id}`); // Uncomment when API ready
+            await apiDelete(`/api/cohorts/${id}`);
             setCohorts(cohorts.filter(c => c.id !== id));
             if (selectedCohort?.id === id) setSelectedCohort(null);
         } catch (error) {
             console.error('Failed to delete cohort', error);
+            alert('Failed to delete cohort');
         }
     };
 
-    const handleCreateCohort = () => {
+    const handleCreateCohort = async () => {
         // Validation
         if (!newCohortData.name || !newCohortData.location) {
             alert("Please fill in all required fields (Name, Location)");
             return;
         }
 
-        const newCohort: Cohort = {
-            id: Date.now(), // Unique ID
-            name: newCohortData.name,
-            croppingSystem: newCohortData.croppingSystem as any,
-            location: newCohortData.location,
-            farmerCount: 0, // Starts at 0
-            areaHa: newCohortData.targetArea,
-            status: "Active",
-            vslaGroup: vslaName,
-            performance: { yieldIncrease: 0, repaymentRate: 0, attendanceRate: 0, avgIncome: 0 }
-        };
+        try {
+            const payload = {
+                name: newCohortData.name,
+                cropping_system: newCohortData.croppingSystem,
+                location: newCohortData.location,
+                intercrops: newCohortData.intercrops.split(',').map(s => s.trim()).filter(Boolean), // Parse string to array (ignored by backend but good practice)
+                target_area: newCohortData.targetArea,
+                start_date: newCohortData.startDate,
+                childcare_support: newCohortData.childcare,
+                repayment_threshold: newCohortData.repaymentThreshold,
+                seed_capital: 300000,
+                warehouse_assign: newCohortData.warehouse,
+                boundary_coordinates: newCohortData.boundary
+            };
 
-        setCohorts([...cohorts, newCohort]);
-        setIsCreateModalOpen(false);
-        // Reset form
-        setNewCohortData({
-            name: '', croppingSystem: 'Avocado', location: '', intercrops: [],
-            targetArea: 1.0, startDate: new Date().toISOString().split('T')[0],
-            childcare: true, repaymentThreshold: 85, warehouse: 'Huye Center A', boundary: []
-        });
+            await apiPost('/api/cohorts', payload);
+
+            // Refresh list
+            await fetchCohorts();
+
+            setIsCreateModalOpen(false);
+            // Reset form
+            setNewCohortData({
+                name: '', croppingSystem: 'Avocado', location: '', intercrops: '',
+                targetArea: 1.0, startDate: new Date().toISOString().split('T')[0],
+                childcare: true, repaymentThreshold: 85, warehouse: 'Huye Center A', boundary: []
+            });
+            alert('Cohort created successfully!');
+        } catch (error) {
+            console.error('Failed to create cohort', error);
+            alert('Failed to create cohort. Please try again.');
+        }
     };
 
     // --- Calculated KPIs ---
     const totalCohorts = cohorts.length;
     const totalFarmers = cohorts.reduce((sum, c) => sum + c.farmerCount, 0);
-    const avgYield = 28; // Calculated from real data in production
-    const repaymentRate = 92;
-    const trainingAttendance = 88;
-    const postHarvestLoss = 8;
-    const vslaScore = 94;
+
+    const kpiStats = React.useMemo(() => {
+        if (cohorts.length === 0) return {
+            avgYield: 0,
+            repaymentRate: 0,
+            trainingAttendance: 0,
+            postHarvestLoss: 8, // Default fallback
+            vslaScore: 94       // Default fallback
+        };
+
+        const total = cohorts.length;
+        return {
+            avgYield: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.yieldIncrease || 0), 0) / total),
+            repaymentRate: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.repaymentRate || 0), 0) / total),
+            trainingAttendance: Math.round(cohorts.reduce((acc, c) => acc + (c.performance?.attendanceRate || 0), 0) / total),
+            postHarvestLoss: 8, // Keep hardcoded until backend provides this
+            vslaScore: 94       // Keep hardcoded until backend provides this
+        };
+    }, [cohorts]);
+
+    const { avgYield, repaymentRate, trainingAttendance, postHarvestLoss, vslaScore } = kpiStats;
 
     // --- Filtering ---
     const filteredCohorts = cohorts.filter(c => {
@@ -473,14 +502,14 @@ const CohortsPage: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Cropping System</label>
-                                    <select
+                                    <label className="block text-sm font-medium text-gray-700">Cropping System</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Avocado, Coffee, Macadamia"
                                         value={newCohortData.croppingSystem}
                                         onChange={(e) => setNewCohortData({ ...newCohortData, croppingSystem: e.target.value })}
-                                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-blue-500 focus:border-brand-blue-500 sm:text-sm rounded-md border"
-                                    >
-                                        <option value="Avocado">Avocado (Vegetable Intercrops)</option>
-                                        <option value="Macadamia">Macadamia (Legume Intercrops)</option>
-                                    </select>
+                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-brand-blue-500 focus:border-brand-blue-500 sm:text-sm p-2 border"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Target Area (ha)</label>
@@ -495,31 +524,14 @@ const CohortsPage: React.FC = () => {
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700">Intercrops (Hold Ctrl to select multiple)</label>
-                                    <select
-                                        multiple
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-brand-blue-500 focus:border-brand-blue-500 sm:text-sm p-2 border h-24"
-                                        onChange={(e) => {
-                                            const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                            setNewCohortData({ ...newCohortData, intercrops: selected });
-                                        }}
-                                    >
-                                        {newCohortData.croppingSystem === 'Avocado' ? (
-                                            <>
-                                                <option value="Amaranth">Amaranth</option>
-                                                <option value="Tomatoes">Tomatoes</option>
-                                                <option value="Green Beans">Green Beans</option>
-                                                <option value="Leafy Greens">Leafy Greens</option>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <option value="Beans">Beans</option>
-                                                <option value="Peas">Peas</option>
-                                                <option value="Soybeans">Soybeans</option>
-                                                <option value="Vegetables">Vegetables</option>
-                                            </>
-                                        )}
-                                    </select>
+                                    <label className="block text-sm font-medium text-gray-700">Intercrops (Example: Beans, Maize, Peas)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Type crops separated by commas..."
+                                        value={newCohortData.intercrops}
+                                        onChange={(e) => setNewCohortData({ ...newCohortData, intercrops: e.target.value })}
+                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-brand-blue-500 focus:border-brand-blue-500 sm:text-sm p-2 border"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -619,6 +631,38 @@ const CohortsPage: React.FC = () => {
 
                             <div className="flex-1 overflow-y-auto pr-2">
                                 {activeTab === 'overview' && cohortMetrics && (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                        <KPICard
+                                            title="Yield Growth"
+                                            value={`${cohortMetrics?.yieldIncrease || 0}%`}
+                                            trend={{ value: 5, isPositive: true }}
+                                            icon={<ChartBarIcon className="w-full h-full" />}
+                                            color="green"
+                                        />
+                                        <KPICard
+                                            title="Repayment"
+                                            value={`${cohortMetrics?.repaymentRate || 0}%`}
+                                            trend={{ value: 2, isPositive: true }}
+                                            icon={<BanknotesIcon className="w-full h-full" />}
+                                            color="blue"
+                                        />
+                                        <KPICard
+                                            title="Attendance"
+                                            value={`${cohortMetrics?.attendanceRate || 0}%`}
+                                            trend={{ value: 1, isPositive: false }}
+                                            icon={<UserGroupIcon className="w-full h-full" />}
+                                            color="purple"
+                                        />
+                                        <KPICard
+                                            title="Avg Income"
+                                            value={formatCurrency(cohortMetrics?.avgIncome || 0)}
+                                            trend={{ value: 12, isPositive: true }}
+                                            icon={<CurrencyDollarIcon className="w-full h-full" />}
+                                            color="emerald"
+                                        />
+                                    </div>
+                                )}
+                                {activeTab === 'overview' && cohortMetrics && (
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                         <div className="lg:col-span-2 space-y-4">
                                             <div className="h-96 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative">
@@ -627,10 +671,10 @@ const CohortsPage: React.FC = () => {
                                                     boundary={[
                                                         [-2.6, 29.7], [-2.605, 29.705], [-2.595, 29.71]
                                                     ]}
-                                                    plots={cohortFarmers.map((f: any, i: number) => ({
+                                                    plots={cohortFarmers.map((f: any) => ({
                                                         id: f.id,
-                                                        lat: -2.6 + (Math.random() * 0.01),
-                                                        lng: 29.7 + (Math.random() * 0.01),
+                                                        lat: f.location_lat || -2.6 + (Math.random() * 0.01), // Fallback if no geo data
+                                                        lng: f.location_lng || 29.7 + (Math.random() * 0.01),
                                                         farmerName: f.full_name
                                                     }))}
                                                 />
@@ -641,12 +685,7 @@ const CohortsPage: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-4">
-                                            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                                                <h4 className="font-semibold text-gray-900 mb-4">Performance Radar</h4>
-                                                <div className="h-64">
-                                                    <CohortHealthRadar data={radarData} />
-                                                </div>
-                                            </div>
+                                            {/* Performance Radar Removed */}
                                             <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                                                 <h4 className="font-semibold text-blue-900 mb-2">Next Actions</h4>
                                                 <ul className="text-sm text-blue-800 space-y-2">
@@ -710,7 +749,4 @@ const CohortsPage: React.FC = () => {
         </div>
     );
 };
-
-
-
-export default CohortsPage;
+export default CohortsPage;  

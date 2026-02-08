@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { PhotoIcon, MapPinIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { apiGet } from '../../utils/api';
 
 interface FarmerFormProps {
     initialData?: any;
@@ -23,6 +24,20 @@ const LocationMarker = ({ position, setPosition }: { position: [number, number],
 };
 
 const FarmerForm: React.FC<FarmerFormProps> = ({ initialData, onSubmit, onCancel, isLoading }) => {
+    const [cohorts, setCohorts] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchCohorts = async () => {
+            try {
+                const data = await apiGet('/api/cohorts');
+                setCohorts((data as any[]) || []);
+            } catch (error) {
+                console.error('Failed to fetch cohorts for dropdown', error);
+            }
+        };
+        fetchCohorts();
+    }, []);
+
     const [formData, setFormData] = useState({
         full_name: '',
         phone: '',
@@ -323,10 +338,12 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ initialData, onSubmit, onCancel
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                             >
-                                <option value="1">Cohort 1 (Avocado)</option>
-                                <option value="2">Cohort 2 (Avocado)</option>
-                                <option value="3">Cohort 3 (Macadamia)</option>
-                                <option value="4">Cohort 4 (Macadamia)</option>
+                                <option value="">Select Cohort</option>
+                                {cohorts.map((cohort: any) => (
+                                    <option key={cohort.id} value={cohort.id}>
+                                        {cohort.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 

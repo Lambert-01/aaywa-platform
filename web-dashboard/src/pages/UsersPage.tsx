@@ -12,7 +12,8 @@ import {
     BellAlertIcon,
     EnvelopeIcon,
     PhoneIcon,
-    BriefcaseIcon
+    BriefcaseIcon,
+    LinkIcon
 } from '@heroicons/react/24/outline';
 import { API_URL } from '../api/config';
 
@@ -76,12 +77,36 @@ const UsersPage: React.FC = () => {
         role: 'field_facilitator'
     });
 
+    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [inviteData, setInviteData] = useState({ email: '', role: 'field_facilitator' });
+    const [generatedLink, setGeneratedLink] = useState('');
+
     const [rejectionReason, setRejectionReason] = useState('');
 
     useEffect(() => {
         fetchUsers();
         fetchPendingUsers();
     }, []);
+
+    // ... existing handlers ...
+
+    const handleGenerateLink = (e: React.FormEvent) => {
+        e.preventDefault();
+        const baseUrl = window.location.origin;
+        const link = `${baseUrl}/register?email=${encodeURIComponent(inviteData.email)}&role=${inviteData.role}`;
+        setGeneratedLink(link);
+    };
+
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(generatedLink);
+        alert('Link copied to clipboard!');
+    };
+
+    const openInviteModal = () => {
+        setInviteData({ email: '', role: 'field_facilitator' });
+        setGeneratedLink('');
+        setShowInviteModal(true);
+    };
 
     const fetchUsers = async () => {
         try {
@@ -337,17 +362,26 @@ const UsersPage: React.FC = () => {
                     </h1>
                     <p className="text-gray-600 mt-1">Manage staff users, roles, and permissions</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingUser(null);
-                        setFormData({ full_name: '', email: '', password: '', role: 'field_facilitator', is_active: true });
-                        setShowModal(true);
-                    }}
-                    className="group bg-gradient-to-r from-emerald-500 to-cyan-600 text-white px-6 py-3 rounded-xl hover:from-emerald-600 hover:to-cyan-700 flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                >
-                    <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-                    <span className="font-semibold">Add New User</span>
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={openInviteModal}
+                        className="group bg-white border-2 border-emerald-500 text-emerald-600 px-6 py-3 rounded-xl hover:bg-emerald-50 flex items-center space-x-2 shadow-sm hover:shadow-md transition-all duration-300"
+                    >
+                        <LinkIcon className="w-5 h-5" />
+                        <span className="font-semibold">Invite User</span>
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingUser(null);
+                            setFormData({ full_name: '', email: '', password: '', role: 'field_facilitator', is_active: true });
+                            setShowModal(true);
+                        }}
+                        className="group bg-gradient-to-r from-emerald-500 to-cyan-600 text-white px-6 py-3 rounded-xl hover:from-emerald-600 hover:to-cyan-700 flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    >
+                        <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+                        <span className="font-semibold">Add New User</span>
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -780,6 +814,91 @@ const UsersPage: React.FC = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Invite User Modal */}
+            {showInviteModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl transform animate-slideUp">
+                        <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent mb-6">
+                            Invite Team Member
+                        </h2>
+
+                        {!generatedLink ? (
+                            <form onSubmit={handleGenerateLink} className="space-y-5">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={inviteData.email}
+                                        onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all outline-none"
+                                        placeholder="user@example.com"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                                    <select
+                                        value={inviteData.role}
+                                        onChange={(e) => setInviteData({ ...inviteData, role: e.target.value })}
+                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all outline-none"
+                                    >
+                                        <option value="field_facilitator">Field Facilitator</option>
+                                        <option value="agronomist">Agronomist</option>
+                                        <option value="project_manager">Project Manager</option>
+                                    </select>
+                                </div>
+                                <div className="flex justify-end space-x-3 mt-8">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowInviteModal(false)}
+                                        className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-cyan-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-cyan-700 shadow-lg"
+                                    >
+                                        Generate Link
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="space-y-6">
+                                <div className="text-center">
+                                    <CheckCircleIcon className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
+                                    <h3 className="text-lg font-bold text-gray-800">Link Generated!</h3>
+                                    <p className="text-gray-600 mt-2">Share this link with the user to invite them.</p>
+                                </div>
+
+                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 break-all">
+                                    <p className="text-sm text-gray-600 font-mono select-all">{generatedLink}</p>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={handleCopyLink}
+                                        className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                                        </svg>
+                                        Copy Link
+                                    </button>
+                                    <button
+                                        onClick={() => setShowInviteModal(false)}
+                                        className="w-full py-3 border-2 border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

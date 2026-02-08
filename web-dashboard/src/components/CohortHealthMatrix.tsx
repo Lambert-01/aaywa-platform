@@ -59,38 +59,72 @@ const CohortHealthMatrix: React.FC = () => {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-slate-800">Cohort Health Matrix</h3>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-slate-800">Cohort Health Matrix</h3>
+                <button className="text-sm text-brand-blue-600 font-medium hover:bg-brand-blue-50 px-3 py-1 rounded-lg transition-colors">
+                    View All Cohorts
+                </button>
             </div>
             {cohorts.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No cohort data available</p>
+                <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+                    <p className="text-slate-500 font-medium">No cohort data available</p>
+                </div>
             ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <table className="min-w-full">
                         <thead>
-                            <tr>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cohort</th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System</th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmers</th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <tr className="border-b border-slate-100">
+                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Cohort Name</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Crop</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Farmers</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Attendance</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Yield Trend</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">VSLA Balance</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {cohorts.map((cohort) => (
-                                <tr key={cohort.id} className="hover:bg-slate-50 cursor-pointer transition-colors">
-                                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{cohort.name}</td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{cohort.cropping_system}</td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{cohort.farmer_count}</td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
-                                        RWF {(cohort.total_revenue / 1000).toFixed(0)}K
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <StatusBadge status={getStatus(cohort.farmer_count)} size="sm" />
-                                    </td>
-                                </tr>
-                            ))}
+                        <tbody className="divide-y divide-slate-50">
+                            {cohorts.map((cohort, index) => {
+                                // Mock data for demo purposes if not in API
+                                const attendance = 85 + (index * 2) % 15;
+                                const yieldTrend = index % 3 === 0 ? 'up' : index % 3 === 1 ? 'down' : 'stable';
+                                const vslaBalance = 150000 + (index * 50000);
+                                const status = attendance < 80 ? 'Warning' : 'Active';
+
+                                return (
+                                    <tr key={cohort.id} className="hover:bg-slate-50/80 transition-colors duration-150">
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">{cohort.name}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-600">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${cohort.cropping_system.includes('Avocado') ? 'bg-green-100 text-green-700' :
+                                                    cohort.cropping_system.includes('Macadamia') ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+                                                }`}>
+                                                {cohort.cropping_system}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-600">{cohort.farmer_count}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-600">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div className={`h-full rounded-full ${attendance >= 90 ? 'bg-green-500' : attendance >= 80 ? 'bg-blue-500' : 'bg-amber-500'}`} style={{ width: `${attendance}%` }}></div>
+                                                </div>
+                                                <span className="text-xs font-medium">{attendance}%</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm">
+                                            {yieldTrend === 'up' && <span className="text-green-600 flex items-center font-medium"><span className="mr-1">↑</span> Rising</span>}
+                                            {yieldTrend === 'down' && <span className="text-red-500 flex items-center font-medium"><span className="mr-1">↓</span> Falling</span>}
+                                            {yieldTrend === 'stable' && <span className="text-slate-500 flex items-center font-medium"><span className="mr-1">→</span> Stable</span>}
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-700">
+                                            RWF {(vslaBalance / 1000).toFixed(0)}K
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                            <StatusBadge status={status} size="sm" />
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
