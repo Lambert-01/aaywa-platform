@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Header from '../components/Header';
 import ProductCard from '../components/marketplace/ProductCard';
 import ShoppingCart from '../components/marketplace/ShoppingCart';
@@ -33,6 +34,7 @@ interface CartItem {
 type ViewMode = 'catalog' | 'checkout' | 'confirmation';
 
 const Marketplace: React.FC = () => {
+    const { t } = useTranslation();
     const [products, setProducts] = useState<Product[]>([]);
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -225,13 +227,18 @@ const Marketplace: React.FC = () => {
                         <div className="relative max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12 py-20 md:py-28">
                             <div className="max-w-3xl">
                                 <h1 className="text-5xl md:text-6xl font-extrabold mb-6 text-white tracking-tight">
-                                    Farm Fresh, <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-teal-200">Delivered.</span>
+                                    {t('marketplace.hero.title_prefix')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-teal-200">{t('marketplace.hero.title_highlight')}</span>
                                 </h1>
                                 <p className="text-xl md:text-2xl text-gray-300 mb-8 font-light leading-relaxed">
-                                    Support Rwanda's young women farmers and experience premium organic produce directly from the source.
+                                    {t('marketplace.hero.subtitle')}
                                 </p>
                                 <div className="flex flex-wrap gap-3">
-                                    {['🌱 Organic Certified', '🤝 Fair Trade', '📍 Fully Traceable', '🚚 Next Day Delivery'].map((feature) => (
+                                    {[
+                                        t('marketplace.hero.features.organic'),
+                                        t('marketplace.hero.features.fair_trade'),
+                                        t('marketplace.hero.features.traceable'),
+                                        t('marketplace.hero.features.delivery')
+                                    ].map((feature) => (
                                         <span key={feature} className="bg-white/10 backdrop-blur border border-white/20 px-4 py-2 rounded-full text-white text-sm font-medium">
                                             {feature}
                                         </span>
@@ -254,25 +261,25 @@ const Marketplace: React.FC = () => {
                             <div className="lg:w-80 flex-shrink-0">
                                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-bold text-gray-900">Refine Search</h3>
+                                        <h3 className="text-lg font-bold text-gray-900">{t('marketplace.filters.title')}</h3>
                                         <button
                                             onClick={() => setFilters({ cropType: 'all', cohort: 'all', minQuantity: 0 })}
                                             className="text-xs text-green-600 hover:text-green-700 font-bold uppercase tracking-wide"
                                         >
-                                            Reset
+                                            {t('marketplace.filters.reset')}
                                         </button>
                                     </div>
 
                                     <div className="space-y-6">
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Crop Type</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('marketplace.filters.crop_type')}</label>
                                             <select
                                                 value={filters.cropType}
                                                 onChange={(e) => setFilters(prev => ({ ...prev, cropType: e.target.value }))}
                                                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-shadow appearance-none"
                                                 style={{ backgroundImage: 'none' }}
                                             >
-                                                <option value="all">All Types</option>
+                                                <option value="all">{t('marketplace.filters.all_types')}</option>
                                                 {cropTypes.map(type => (
                                                     <option key={type} value={type}>{type}</option>
                                                 ))}
@@ -280,13 +287,13 @@ const Marketplace: React.FC = () => {
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Cohort</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('marketplace.filters.cohort')}</label>
                                             <select
                                                 value={filters.cohort}
                                                 onChange={(e) => setFilters(prev => ({ ...prev, cohort: e.target.value }))}
                                                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-shadow appearance-none"
                                             >
-                                                <option value="all">All Cohorts</option>
+                                                <option value="all">{t('marketplace.filters.all_cohorts')}</option>
                                                 {cohorts.map(cohort => (
                                                     <option key={cohort} value={cohort}>{cohort}</option>
                                                 ))}
@@ -294,7 +301,7 @@ const Marketplace: React.FC = () => {
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Min Quantity (Boxes)</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('marketplace.filters.min_quantity')}</label>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -311,7 +318,7 @@ const Marketplace: React.FC = () => {
                             <div className="flex-1">
                                 <div className="flex justify-between items-center mb-6">
                                     <p className="text-gray-600">
-                                        Showing <span className="font-semibold">{filteredProducts.length}</span> products
+                                        {t('marketplace.showing_products_prefix')} <span className="font-semibold">{filteredProducts.length}</span> {t('marketplace.showing_products_suffix')}
                                     </p>
                                     <button
                                         onClick={() => setIsCartOpen(true)}
@@ -320,7 +327,7 @@ const Marketplace: React.FC = () => {
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
-                                        Cart
+                                        {t('marketplace.cart')}
                                         {cartItems.length > 0 && (
                                             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center border-2 border-white">
                                                 {cartItems.length}
@@ -335,12 +342,12 @@ const Marketplace: React.FC = () => {
                                     </div>
                                 ) : filteredProducts.length === 0 ? (
                                     <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                                        <p className="text-gray-500 text-lg">No products match your filters</p>
+                                        <p className="text-gray-500 text-lg">{t('marketplace.no_products')}</p>
                                         <button
                                             onClick={() => setFilters({ cropType: 'all', cohort: 'all', minQuantity: 0 })}
                                             className="mt-4 text-green-600 hover:text-green-700 font-medium"
                                         >
-                                            Clear Filters
+                                            {t('marketplace.filters.clear')}
                                         </button>
                                     </div>
                                 ) : (
@@ -391,19 +398,19 @@ const Marketplace: React.FC = () => {
 
                                         <div className="space-y-4 mb-8 border-t border-b border-gray-100 py-6">
                                             <div className="flex justify-between items-center">
-                                                <span className="text-gray-500">Price per Box</span>
+                                                <span className="text-gray-500">{t('marketplace.product_details.price_per_box')}</span>
                                                 <span className="text-2xl font-bold text-gray-900">{selectedProduct.pricePerKg.toLocaleString()} RWF</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-gray-500">Available Stock</span>
-                                                <span className="font-semibold">{selectedProduct.availableQuantity} Boxes</span>
+                                                <span className="text-gray-500">{t('marketplace.product_details.available_stock')}</span>
+                                                <span className="font-semibold">{selectedProduct.availableQuantity} {t('marketplace.product_details.boxes')}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-gray-500">Harvest Date</span>
+                                                <span className="text-gray-500">{t('marketplace.product_details.harvest_date')}</span>
                                                 <span className="font-semibold">{new Date(selectedProduct.harvestDate).toLocaleDateString()}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-gray-500">Certifications</span>
+                                                <span className="text-gray-500">{t('marketplace.product_details.certifications')}</span>
                                                 <div className="flex gap-2">
                                                     {selectedProduct.qualityCert.map(cert => (
                                                         <span key={cert} className="text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-600 capitalize">
@@ -415,8 +422,7 @@ const Marketplace: React.FC = () => {
                                         </div>
 
                                         <p className="text-gray-600 mb-8 leading-relaxed">
-                                            Grown with care by our partner farmers in Musanze. Detailed quality assurance checks performed before shipment.
-                                            Fresh from the farm to your doorstep.
+                                            {t('marketplace.product_details.description')}
                                         </p>
 
                                         <button
@@ -426,7 +432,7 @@ const Marketplace: React.FC = () => {
                                             }}
                                             className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 shadow-xl shadow-green-200 transition-all transform hover:-translate-y-1"
                                         >
-                                            Add to Cart
+                                            {t('marketplace.product_details.add_to_cart')}
                                         </button>
                                     </div>
                                 </div>
@@ -474,5 +480,4 @@ const Marketplace: React.FC = () => {
         </div>
     );
 };
-
 export default Marketplace;

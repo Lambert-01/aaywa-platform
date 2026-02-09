@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/model.module.css';
 
 interface Step {
@@ -10,29 +11,31 @@ interface Step {
 }
 
 const FourStepJourney: React.FC = () => {
+    const { t } = useTranslation();
+
     const steps: Step[] = [
         {
             id: 1,
-            title: 'Train & Equip',
-            description: 'Young women join cohorts and receive training, compost, and seedlings (invoiced).',
+            title: t('model_page.journey.step1.title'),
+            description: t('model_page.journey.step1.desc'),
             icon: '🌱'
         },
         {
             id: 2,
-            title: 'Farm & Produce',
-            description: 'Grow avocado/macadamia + vegetables using organic fertilizer on leased plots.',
+            title: t('model_page.journey.step2.title'),
+            description: t('model_page.journey.step2.desc'),
             icon: '👩‍🌾'
         },
         {
             id: 3,
-            title: 'Sell & Repay',
-            description: 'Produce sold via Sanza or local markets; input costs deducted at point of sale.',
+            title: t('model_page.journey.step3.title'),
+            description: t('model_page.journey.step3.desc'),
             icon: '💰'
         },
         {
             id: 4,
-            title: 'Share & Reinvest',
-            description: 'Net profits split 50/50. Women earn income; Sanza reinvests in scaling.',
+            title: t('model_page.journey.step4.title'),
+            description: t('model_page.journey.step4.desc'),
             icon: '🤝'
         }
     ];
@@ -63,7 +66,7 @@ const FourStepJourney: React.FC = () => {
                     variants={containerVariants}
                 >
                     <h2 className="text-4xl font-bold text-white text-center mb-16 uppercase tracking-wider font-['Clash_Grotesk']">
-                        Four-Step Journey
+                        {t('model_page.journey.title')}
                     </h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">

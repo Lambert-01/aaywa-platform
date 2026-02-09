@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/contact.module.css';
 
 const ContactForm: React.FC = () => {
+    const { t } = useTranslation();
     const [formState, setFormState] = useState({
         name: '',
         organization: '',
@@ -40,15 +42,15 @@ const ContactForm: React.FC = () => {
                 className="bg-zinc-900 border border-[#FFD700] rounded-xl p-12 text-center max-w-2xl mx-auto my-20"
             >
                 <div className="text-6xl mb-6">✨</div>
-                <h3 className="text-3xl font-bold text-white mb-4 font-['Clash_Grotesk']">Message Sent!</h3>
+                <h3 className="text-3xl font-bold text-white mb-4 font-['Clash_Grotesk']">{t('contact.form.success.title')}</h3>
                 <p className="text-gray-300">
-                    Thank you for reaching out. A member of our team will respond within 24 hours.
+                    {t('contact.form.success.message')}
                 </p>
                 <button
                     onClick={() => setIsSuccess(false)}
                     className="mt-8 text-[#FFD700] hover:text-white underline"
                 >
-                    Send another message
+                    {t('contact.form.success.another')}
                 </button>
             </motion.div>
         );
@@ -70,7 +72,7 @@ const ContactForm: React.FC = () => {
                                 value={formState.name}
                                 onChange={handleChange}
                             />
-                            <label htmlFor="name" className="inputLabel">Full Name *</label>
+                            <label htmlFor="name" className="inputLabel">{t('contact.form.name')}</label>
                         </div>
                         <div className="inputGroup">
                             <input
@@ -82,7 +84,7 @@ const ContactForm: React.FC = () => {
                                 value={formState.organization}
                                 onChange={handleChange}
                             />
-                            <label htmlFor="organization" className="inputLabel">Organization</label>
+                            <label htmlFor="organization" className="inputLabel">{t('contact.form.organization')}</label>
                         </div>
                     </div>
 
@@ -98,7 +100,7 @@ const ContactForm: React.FC = () => {
                                 value={formState.email}
                                 onChange={handleChange}
                             />
-                            <label htmlFor="email" className="inputLabel">Email Address *</label>
+                            <label htmlFor="email" className="inputLabel">{t('contact.form.email')}</label>
                         </div>
                         <div className="inputGroup">
                             <input
@@ -110,7 +112,7 @@ const ContactForm: React.FC = () => {
                                 value={formState.phone}
                                 onChange={handleChange}
                             />
-                            <label htmlFor="phone" className="inputLabel">Phone Number</label>
+                            <label htmlFor="phone" className="inputLabel">{t('contact.form.phone')}</label>
                         </div>
                     </div>
 
@@ -124,12 +126,12 @@ const ContactForm: React.FC = () => {
                             onChange={handleChange}
                         >
                             <option value="" disabled hidden></option>
-                            <option value="General Inquiry">General Inquiry</option>
-                            <option value="Buy Produce">Buy Produce</option>
-                            <option value="Partnership">Partnership Proposal</option>
-                            <option value="Other">Other</option>
+                            <option value="General Inquiry">{t('contact.form.subject.general')}</option>
+                            <option value="Buy Produce">{t('contact.form.subject.buy')}</option>
+                            <option value="Partnership">{t('contact.form.subject.partnership')}</option>
+                            <option value="Other">{t('contact.form.subject.other')}</option>
                         </select>
-                        <label htmlFor="subject" className="inputLabel">Subject *</label>
+                        <label htmlFor="subject" className="inputLabel">{t('contact.form.subject.label')}</label>
                     </div>
 
                     <div className="inputGroup">
@@ -143,7 +145,7 @@ const ContactForm: React.FC = () => {
                             value={formState.message}
                             onChange={handleChange}
                         />
-                        <label htmlFor="message" className="inputLabel">Message *</label>
+                        <label htmlFor="message" className="inputLabel">{t('contact.form.message')}</label>
                     </div>
 
                     <div className="text-center pt-8">
@@ -152,7 +154,7 @@ const ContactForm: React.FC = () => {
                             disabled={isSubmitting}
                             className="bg-[#FFD700] text-black px-12 py-4 rounded font-bold uppercase tracking-wider hover:scale-105 hover:shadow-[0_4px_20px_rgba(255,215,0,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isSubmitting ? 'Sending...' : 'Send Message'}
+                            {isSubmitting ? t('contact.form.sending') : t('contact.form.submit')}
                         </button>
                     </div>
                 </form>

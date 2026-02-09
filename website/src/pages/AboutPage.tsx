@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -18,85 +19,87 @@ const PlaceholderImage: React.FC<{ name: string }> = ({ name }) => {
 };
 
 const AboutPage: React.FC = () => {
+    const { t } = useTranslation();
+
     // Team Data Structure
     const boardMembers = [
         {
             name: "Bonnette Ishimwe",
-            role: "President | Modal Farm Owner",
+            role: t('about.team.bonnette.role'),
             image: "/images/team/bonette-ishimwe.jpeg",
-            bio: "Leading the strategic vision of AAYWA & PARTNERS to empower women through land ownership and market access."
+            bio: t('about.team.bonnette.bio')
         },
         {
             name: "Nicole Kalisa Umutoni",
-            role: "Vice-President | Innovation Development",
+            role: t('about.team.nicole.role'),
             image: "/images/team/kalisa.jpeg",
-            bio: "Innovation strategist and Women Empowerment Catalyst, campaigning for 'The United Alkebulan'. AfroFoods Direct Selling expert."
+            bio: t('about.team.nicole.bio')
         },
         {
             name: "Rose Muhumuza",
-            role: "Executive Secretary | Agri-Tourism",
+            role: t('about.team.rose.role'),
             image: "/images/team/rose-muhumuza.jpeg",
-            bio: "Orchestrating the operational excellence of our agri-tourism initiatives and stakeholder engagement."
+            bio: t('about.team.rose.bio')
         },
         {
             name: "Solange Umutoni",
-            role: "Treasurer | Agronomist",
+            role: t('about.team.solange.role'),
             image: "/images/team/solange-umutoni.jpeg",
-            bio: "Ensuring financial integrity and agronomic best practices for sustainable growth."
+            bio: t('about.team.solange.bio')
         }
     ];
 
     const boardAdvisors = [
         {
             name: "Nadia Niwemugeni",
-            role: "Food Scientist Expert",
+            role: t('about.team.nadia.role'),
             image: null,
-            bio: "Providing expert guidance on food processing standards and nutritional value enhancement."
+            bio: t('about.team.nadia.bio')
         },
         {
             name: "Ingabe Kalisa Gashayija",
-            role: "Food Scientist Expert",
+            role: t('about.team.ingabe.role'),
             image: null,
-            bio: "Advising on product development and quality assurance for international markets."
+            bio: t('about.team.ingabe.bio')
         }
     ];
 
     const effectiveMembers = [
         {
             name: "Colombe Rukwaya",
-            role: "Modal Farm Owner",
+            role: t('about.team.colombe.role'),
             image: null,
-            bio: "Pioneering sustainable farming models that serve as blueprints for our community cohorts."
+            bio: t('about.team.colombe.bio')
         },
         {
             name: "Bénie Ange IRADUKUNDA",
-            role: "Agronomist",
+            role: t('about.team.benie.role'),
             image: "/images/team/ange-iradukunda.jpeg",
-            bio: "Optimizing crop yields through regenerative techniques and hands-on farmer training."
+            bio: t('about.team.benie.bio')
         },
         {
             name: "Hyacintha Tuyisenge",
-            role: "Agronomist",
+            role: t('about.team.hyacintha.role'),
             image: "/images/team/tuyisenge-hyacenta.jpeg",
-            bio: "Specializing in soil health and organic pest management strategies."
+            bio: t('about.team.hyacintha.bio')
         },
         {
             name: "Shilla Ndegeya",
-            role: "Executive Director",
+            role: t('about.team.shilla.role'),
             image: "/images/team/shilla-ndegeya.jpeg",
-            bio: "Driving organizational growth with a focus on Disability Inclusion and Women's Economic Empowerment."
+            bio: t('about.team.shilla.bio')
         },
         {
             name: "Concilie Uwitonze",
-            role: "Operations Manager",
+            role: t('about.team.concilie.role'),
             image: "/images/team/concilie.jpeg",
-            bio: "Managing the day-to-day logistics to ensure seamless farm-to-market operations."
+            bio: t('about.team.concilie.bio')
         },
         {
             name: "Faith Muhoza",
-            role: "Modal Farm Owner | MK Farms Ltd.",
+            role: t('about.team.faith.role'),
             image: "/images/team/faith-ndegeya.jpeg",
-            bio: "Example of success: transforming MK Farms into a model of profitability and community impact."
+            bio: t('about.team.faith.bio')
         }
     ];
 
@@ -160,14 +163,14 @@ const AboutPage: React.FC = () => {
                                 transition={{ duration: 0.8 }}
                             >
                                 <span className="text-[#E6C200] font-bold tracking-[0.2em] uppercase text-sm mb-4 block">
-                                    Our Structure
+                                    {t('about.structure')}
                                 </span>
                                 <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white uppercase tracking-wider"
                                     style={{ fontFamily: "'Clash Grotesk', sans-serif" }}>
-                                    Governance & <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E6C200] to-yellow-200">Team</span>
+                                    {t('about.governance_team')}
                                 </h1>
                                 <p className="text-gray-400 max-w-2xl mx-auto text-lg font-light leading-relaxed">
-                                    Led by a dedicated Board of Directors and supported by expert advisors, ensuring transparency, impact, and sustainable growth.
+                                    {t('about.governance_desc')}
                                 </p>
                             </motion.div>
                         </div>
@@ -179,9 +182,9 @@ const AboutPage: React.FC = () => {
                             <div className="flex items-end justify-between mb-12 border-l-4 border-[#E6C200] pl-6">
                                 <div>
                                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-2" style={{ fontFamily: "'Clash Grotesk', sans-serif" }}>
-                                        Board Members
+                                        {t('about.board.title')}
                                     </h2>
-                                    <p className="text-gray-500 font-light">Directing strategy and ensuring accountability.</p>
+                                    <p className="text-gray-500 font-light">{t('about.board.subtitle')}</p>
                                 </div>
                             </div>
 
@@ -198,10 +201,10 @@ const AboutPage: React.FC = () => {
                         <div className="container mx-auto px-6 max-w-5xl">
                             <div className="text-center mb-16">
                                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: "'Clash Grotesk', sans-serif" }}>
-                                    Board Advisors
+                                    {t('about.advisors.title')}
                                 </h2>
                                 <p className="text-gray-400 max-w-xl mx-auto font-light">
-                                    Industry experts guiding our technical and scientific advancements.
+                                    {t('about.advisors.subtitle')}
                                 </p>
                             </div>
 
@@ -219,9 +222,9 @@ const AboutPage: React.FC = () => {
                             <div className="flex items-end justify-between mb-12 border-l-4 border-blue-500 pl-6">
                                 <div>
                                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-2" style={{ fontFamily: "'Clash Grotesk', sans-serif" }}>
-                                        Effective Members
+                                        {t('about.effective.title')}
                                     </h2>
-                                    <p className="text-gray-500 font-light">The operational engine driving daily impact.</p>
+                                    <p className="text-gray-500 font-light">{t('about.effective.subtitle')}</p>
                                 </div>
                             </div>
 

@@ -1,39 +1,40 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import '../../styles/contact.module.css';
 
 const LocationSection: React.FC = () => {
+    const { t } = useTranslation();
+
     return (
         <section className="py-20 bg-[#111111]">
             <div className="container mx-auto px-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     <div>
                         <h2 className="text-3xl font-bold text-white mb-8 font-['Clash_Grotesk'] uppercase">
-                            Visit Our Operations
+                            {t('contact.location.title')}
                         </h2>
 
                         <div className="space-y-8">
                             <div>
                                 <h3 className="text-[#FFD700] text-sm uppercase tracking-widest mb-2 font-bold">
-                                    Headquarters
+                                    {t('contact.location.hq')}
                                 </h3>
-                                <p className="text-gray-300 text-lg font-light">
-                                    Southern Province, Rwanda<br />
-                                    (Near Huye District Center)
+                                <p className="text-gray-300 text-lg font-light whitespace-pre-line">
+                                    {t('contact.location.address')}
                                 </p>
                             </div>
 
                             <div>
                                 <h3 className="text-[#00A1DE] text-sm uppercase tracking-widest mb-2 font-bold">
-                                    Hours
+                                    {t('contact.location.hours_label')}
                                 </h3>
-                                <p className="text-gray-300 text-lg font-light">
-                                    Monday – Friday<br />
-                                    8:00 AM – 5:00 PM CAT
+                                <p className="text-gray-300 text-lg font-light whitespace-pre-line">
+                                    {t('contact.location.hours')}
                                 </p>
                             </div>
 
                             <p className="text-gray-500 text-sm italic pt-4">
-                                * Visits by appointment only to ensure biosecurity on our farms.
+                                {t('contact.location.note')}
                             </p>
                         </div>
                     </div>

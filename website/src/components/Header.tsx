@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,11 +19,11 @@ const Header: React.FC = () => {
   }, []);
 
   const navLinks = [
-    { path: '/', label: 'Home' },
-    { path: '/about', label: 'About' },
-    { path: '/model', label: 'Model' },
-    { path: '/blog', label: 'Impact' },
-    { path: '/contact', label: 'Contact' },
+    { path: '/', label: t('nav.home') },
+    { path: '/about', label: t('nav.about') },
+    { path: '/model', label: t('nav.model') },
+    { path: '/blog', label: t('header.impact') },
+    { path: '/contact', label: t('nav.contact') },
   ];
 
   return (
@@ -79,6 +82,8 @@ const Header: React.FC = () => {
                 </Link>
               ))}
 
+              <LanguageSwitcher />
+
               {/* CTA Button */}
               <Link to="/buy">
                 <button
@@ -98,7 +103,7 @@ const Header: React.FC = () => {
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  BUY PRODUCE
+                  {t('header.buy_produce')}
                 </button>
               </Link>
             </div>
@@ -162,7 +167,7 @@ const Header: React.FC = () => {
                   letterSpacing: '2px',
                 }}
               >
-                BUY PRODUCE
+                {t('header.buy_produce')}
               </button>
             </Link>
           </div>

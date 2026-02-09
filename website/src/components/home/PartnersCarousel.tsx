@@ -1,23 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/home.module.css';
 
 interface Partner {
     name: string;
     logo: string; // Path to logo image or inline SVG
+    type: string; // Added type for new partner data
 }
 
 const PartnersCarousel: React.FC = () => {
+    // const { t } = useTranslation(); // Removed unused t
     const [isVisible, setIsVisible] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const sectionRef = useRef<HTMLDivElement>(null);
 
+    // Updated partners array with new data and structure
     const partners: Partner[] = [
-        { name: 'Afro Source', logo: '🍃' }, // Placeholder emoji - replace with actual logo
-        { name: 'MTN Rwanda', logo: '📱' },
-        { name: 'AAYWA & PARTNERS', logo: '🌱' },
-        { name: 'Sanza Alkebulan', logo: '🌍' },
+        { name: 'Afro Source', logo: '/images/partners/afro-source.png', type: 'Export Partner' },
+        { name: 'OXFAM', logo: '/images/partners/oxfam.png', type: 'NGO Partner' },
+        { name: 'RAB', logo: '/images/partners/rab.png', type: 'Government' },
+        { name: 'Equity Bank', logo: '/images/partners/equity.png', type: 'Finance' },
+        { name: 'Yara', logo: '/images/partners/yara.png', type: 'Inputs' },
+        { name: 'Gov. of Rwanda', logo: '/images/partners/gov-rw.png', type: 'Strategic' },
     ];
 
     useEffect(() => {

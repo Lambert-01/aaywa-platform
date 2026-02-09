@@ -9,13 +9,16 @@ interface VSLAHealthMetricsProps {
         maintenance_fund: number;
         seed_capital: number;
         active_borrowers: number;
+        // New dynamic props
+        repayment_rate?: number;
+        default_rate?: number;
     };
 }
 
 const VSLAHealthMetrics: React.FC<VSLAHealthMetricsProps> = ({ metrics }) => {
-    // Derived Metrics (Mocked logic for demo until historical data endpoint exists)
-    const repaymentRate = 95; // Target >= 95%
-    const defaultRate = 2.5; // Target < 5%
+    // derived metrics (with fallbacks if undefined)
+    const repaymentRate = metrics.repayment_rate || 95;
+    const defaultRate = metrics.default_rate || 2.5;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

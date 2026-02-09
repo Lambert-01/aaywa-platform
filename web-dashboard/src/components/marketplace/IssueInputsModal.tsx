@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { apiGet, apiPost } from '../../utils/api';
+import { formatCurrency } from '../../utils/formatters';
 
 interface Farmer {
     id: number;
@@ -192,7 +193,7 @@ const IssueInputsModal: React.FC<IssueInputsModalProps> = ({ isOpen, onClose, on
                         <div className="text-right">
                             <span className="text-gray-600 mr-4">Total Amount:</span>
                             <span className="text-xl font-bold text-gray-900">
-                                ${calculateTotal().toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {formatCurrency(calculateTotal())}
                             </span>
                         </div>
                     </div>

@@ -1,0 +1,281 @@
+{
+    "hero": {
+        "title": "Jeunes Femmes. Terre. Dignité.",
+        "subtitle": "Autonomiser les mères adolescentes grâce à l'agriculture biologique, l'inclusion financière et l'accès sécurisé au marché.",
+        "partners": "Nos Partenaires"
+    },
+    "nav": {
+        "home": "Accueil",
+        "about": "À Propos",
+        "model": "Notre Modèle",
+        "marketplace": "Marché",
+        "contact": "Contact"
+    },
+    "about": {
+        "structure": "Notre Structure",
+        "governance_team": "Gouvernance & Équipe",
+        "governance_desc": "Dirigé par un Conseil d'Administration dévoué et soutenu par des conseillers experts, assurant transparence, impact et croissance durable.",
+        "board": {
+            "title": "Membres du Conseil",
+            "subtitle": "Diriger la stratégie et assurer la responsabilité."
+        },
+        "advisors": {
+            "title": "Conseillers du Conseil",
+            "subtitle": "Experts de l'industrie guidant nos avancées techniques et scientifiques."
+        },
+        "effective": {
+            "title": "Membres Effectifs",
+            "subtitle": "Le moteur opérationnel qui conduit l'impact quotidien."
+        },
+        "team": {
+            "bonnette": {
+                "role": "Présidente | Propriétaire de Ferme Modèle",
+                "bio": "Diriger la vision stratégique d'AAYWA & PARTNERS pour autonomiser les femmes par la propriété foncière et l'accès au marché."
+            },
+            "nicole": {
+                "role": "Vice-Présidente | Développement de l'Innovation",
+                "bio": "Stratège en innovation et catalyseur de l'autonomisation des femmes, militante pour 'The United Alkebulan'. Experte en vente directe AfroFoods."
+            },
+            "rose": {
+                "role": "Secrétaire Exécutive | Agri-Tourisme",
+                "bio": "Orchestrer l'excellence opérationnelle de nos initiatives agri-touristiques et l'engagement des parties prenantes."
+            },
+            "solange": {
+                "role": "Trésorière | Agronome",
+                "bio": "Assurer l'intégrité financière et les meilleures pratiques agronomiques pour une croissance durable."
+            },
+            "nadia": {
+                "role": "Experte en Sciences Alimentaires",
+                "bio": "Fournir des conseils d'experts sur les normes de transformation alimentaire et l'amélioration de la valeur nutritionnelle."
+            },
+            "ingabe": {
+                "role": "Experte en Sciences Alimentaires",
+                "bio": "Conseiller sur le développement de produits et l'assurance qualité pour les marchés internationaux."
+            },
+            "colombe": {
+                "role": "Propriétaire de Ferme Modèle",
+                "bio": "Pionnière des modèles agricoles durables qui servent de plans pour nos cohortes communautaires."
+            },
+            "benie": {
+                "role": "Agronome",
+                "bio": "Optimiser les rendements des cultures grâce à des techniques régénératrices et une formation pratique des agriculteurs."
+            },
+            "hyacintha": {
+                "role": "Agronome",
+                "bio": "Spécialisée dans la santé des sols et les stratégies de gestion biologique des ravageurs."
+            },
+            "shilla": {
+                "role": "Directrice Exécutive",
+                "bio": "Piloter la croissance organisationnelle avec un accent sur l'inclusion du handicap et l'autonomisation économique des femmes."
+            },
+            "concilie": {
+                "role": "Responsable des Opérations",
+                "bio": "Gérer la logistique quotidienne pour assurer des opérations fluides de la ferme au marché."
+            },
+            "faith": {
+                "role": "Propriétaire de Ferme Modèle | MK Farms Ltd.",
+                "bio": "Exemple de réussite : transformer MK Farms en un modèle de rentabilité et d'impact communautaire."
+            }
+        }
+    },
+    "model_page": {
+        "hero": {
+            "title": "Le Modèle AAYWA & PARTNERS",
+            "subtitle": "Un plan évolutif pour une agriculture régénératrice dirigée par des femmes, alliant productivité, accès au marché et inclusion financière."
+        },
+        "journey": {
+            "title": "Parcours en Quatre Étapes",
+            "step1": {
+                "title": "Former & Équiper",
+                "desc": "Les jeunes femmes rejoignent des cohortes et reçoivent une formation, du compost et des semis (facturés)."
+            },
+            "step2": {
+                "title": "Cultiver & Produire",
+                "desc": "Cultiver avocats/macadamia + légumes avec engrais organique sur parcelles louées."
+            },
+            "step3": {
+                "title": "Vendre & Rembourser",
+                "desc": "Produits vendus via Sanza ou marchés locaux ; coûts d'intrants déduits à la vente."
+            },
+            "step4": {
+                "title": "Partager & Réinvestir",
+                "desc": "Bénéfices nets partagés 50/50. Les femmes gagnent un revenu ; Sanza réinvestit pour grandir."
+            }
+        },
+        "innovations": {
+            "title": "Innovations Fondamentales",
+            "subtitle": "Notre modèle fonctionne car il aborde chaque aspect de la chaîne de valeur.",
+            "profit_sharing": {
+                "title": "Partage des Profits 50/50",
+                "desc": "Un partenariat digne, pas de la charité. Les bénéfices nets sont partagés équitablement."
+            },
+            "organic_fertilizer": {
+                "title": "Cœur d'Engrais Organique",
+                "desc": "Le compost est notre stratégie centrale—régénérer la santé des sols tout en augmentant les rendements."
+            },
+            "vsla": {
+                "title": "Intégration VSLA",
+                "desc": "Inclusion financière intégrée. Les Associations Villageoises d'Épargne et de Crédit permettent d'épargner et de prêter."
+            },
+            "avocado": {
+                "title": "Focus Avocat",
+                "desc": "Culture à haute valeur (Hass) intercalée pour la sécurité alimentaire à court terme et le profit à long terme."
+            },
+            "warehouse": {
+                "title": "Systèmes d'Entrepôt",
+                "desc": "La gestion post-récolte moderne réduit les pertes et assure une qualité premium pour le marché."
+            },
+            "champion": {
+                "title": "Cascade de Champions",
+                "desc": "Mise à l'échelle pair-à-pair où les agricultrices performantes forment les autres."
+            }
+        },
+        "impact": {
+            "women_empowered": "Jeunes Femmes Autonomisées",
+            "yield_increase": "Augm. Moy. Rendement",
+            "repayment_rate": "Taux Remboursement Intrants",
+            "vslas": "VSLAs Établies",
+            "total_income": "Revenu Total Généré"
+        },
+        "map": {
+            "title_mobile": "Notre Portée",
+            "title_desktop": "Notre Empreinte Géographique",
+            "subtitle": "Sélectionnez un lieu sur la carte pour voir les données détaillées de performance et la distribution des cultures.",
+            "instruction": "Cliquer sur un point révèle des données en direct",
+            "farmers": "Agriculteurs",
+            "crops": "Cultures Principales",
+            "quote": "\"Cette cohorte a atteint 98% de remboursement lors de son premier cycle.\"",
+            "clear": "Effacer la Sélection"
+        },
+        "cta": {
+            "title": "Mettre ce Modèle à l'Échelle",
+            "text": "Partenariat avec nous pour répliquer AAYWA & PARTNERS à l'échelle nationale. Nous avons le plan, l'équipe et la preuve de concept.",
+            "contact": "Contactez-nous",
+            "download": "Télécharger le Guide"
+        }
+    },
+    "header": {
+        "impact": "Impact",
+        "buy_produce": "Acheter des Produits"
+    },
+    "footer": {
+        "home": "Accueil",
+        "model": "Notre Modèle",
+        "buy": "Acheter des Produits",
+        "contact": "Contact",
+        "description": "Autonomiser les jeunes femmes agricultrices grâce à l'agriculture régénératrice au Rwanda.",
+        "quick_links": "Liens Rapides",
+        "follow_us": "Suivez-nous",
+        "rights": "AAYWA & PARTNERS. TOUS DROITS RÉSERVÉS."
+    },
+    "home": {
+        "hero": {
+            "title": "Jeunes Femmes. Terre. Dignité.",
+            "subtitle": "Agriculture régénératrice au Rwanda",
+            "explore": "Découvrir le Modèle",
+            "buy": "Acheter des Produits"
+        },
+        "impact": {
+            "empowered": "Jeunes femmes autonomisées",
+            "yield": "Augmentation moy. du rendement",
+            "profit": "Partage équitable des profits"
+        },
+        "story": {
+            "quote": "\"Nous ne sommes pas des bénéficiaires. Nous sommes des agricultrices.\"",
+            "author": "— Marie, Championne Cohorte 1",
+            "watch": "REGARDER SON HISTOIRE"
+        },
+        "map": {
+            "title": "Croissance à Travers le Rwanda",
+            "instruction": "Cliquez sur un lieu pour en savoir plus sur nos cohortes"
+        },
+        "partners": {
+            "title": "Partenaires de Confiance",
+            "instruction": "Survoler pour pauser • Cliquer pour naviguer"
+        }
+    },
+    "contact": {
+        "title": "Contactez le Projet AAYWA & PARTNERS | Construisons Ensemble",
+        "description": "Entrez en contact avec l'équipe AAYWA & PARTNERS. Partenariats, commandes de produits et demandes générales.",
+        "hero": {
+            "title": "Contactez-nous",
+            "subtitle": "Construisons ensemble une agriculture régénératrice"
+        },
+        "methods": {
+            "general": "Demandes Générales",
+            "buy": "Acheter des Produits",
+            "partnerships": "Partenariats"
+        },
+        "form": {
+            "name": "Nom Complet *",
+            "organization": "Organisation",
+            "email": "Adresse Email *",
+            "phone": "Numéro de Téléphone",
+            "subject": {
+                "label": "Sujet *",
+                "general": "Demande Générale",
+                "buy": "Acheter des Produits",
+                "partnership": "Proposition de Partenariat",
+                "other": "Autre"
+            },
+            "message": "Message *",
+            "submit": "Envoyer le Message",
+            "sending": "Envoi...",
+            "success": {
+                "title": "Message Envoyé !",
+                "message": "Merci de nous avoir contactés. Un membre de notre équipe vous répondra dans les 24 heures.",
+                "another": "Envoyer un autre message"
+            }
+        },
+        "location": {
+            "title": "Visitez Nos Opérations",
+            "hq": "Siège Social",
+            "address": "Province du Sud, Rwanda\n(Près du Centre du District de Huye)",
+            "hours_label": "Heures",
+            "hours": "Lundi – Vendredi\n8:00 – 17:00 CAT",
+            "note": "* Visites sur rendez-vous uniquement pour assurer la biosécurité de nos fermes."
+        },
+        "social": {
+            "afro_source_quote": "AAYWA & PARTNERS prouve que l'agriculture régénératrice et l'inclusion économique des femmes peuvent aller de pair. Leur modèle assure la durabilité depuis le sol.",
+            "afro_source_role": "Partenaire Exportateur Principal",
+            "sanza_quote": "Le modèle 50/50 construit une véritable confiance. Nous ne donnons pas seulement des fournitures ; nous construisons une entreprise ensemble avec ces agricultrices.",
+            "sanza_role": "Sanza Alkebulan"
+        }
+    },
+    "marketplace": {
+        "hero": {
+            "title_prefix": "Produits Frais,",
+            "title_highlight": "Livrés.",
+            "subtitle": "Soutenez les jeunes agricultrices rwandaises et découvrez des produits biologiques de première qualité directement à la source.",
+            "features": {
+                "organic": "🌱 Certifié Biologique",
+                "fair_trade": "🤝 Commerce Équitable",
+                "traceable": "📍 Entièrement Traçable",
+                "delivery": "🚚 Livraison le Lendemain"
+            }
+        },
+        "filters": {
+            "title": "Affiner la Recherche",
+            "reset": "Réinitialiser",
+            "crop_type": "Type de Culture",
+            "all_types": "Tous les Types",
+            "cohort": "Cohorte",
+            "all_cohorts": "Toutes les Cohortes",
+            "min_quantity": "Quantité Min (Boîtes)",
+            "clear": "Effacer les Filtres"
+        },
+        "cart": "Panier",
+        "showing_products_prefix": "Affichage de",
+        "showing_products_suffix": "produits",
+        "no_products": "Aucun produit ne correspond à vos filtres",
+        "product_details": {
+            "price_per_box": "Prix par Boîte",
+            "available_stock": "Stock Disponible",
+            "harvest_date": "Date de Récolte",
+            "certifications": "Certifications",
+            "description": "Cultivé avec soin par nos agriculteurs partenaires à Musanze. Contrôles qualité détaillés effectués avant expédition. Frais de la ferme à votre porte.",
+            "add_to_cart": "Ajouter au Panier",
+            "boxes": "Boîtes"
+        }
+    }
+}

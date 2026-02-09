@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/home.module.css';
 
 interface CohortLocation {
@@ -10,6 +11,7 @@ interface CohortLocation {
 }
 
 const InteractiveMap: React.FC = () => {
+    // const { t } = useTranslation(); // Removed unused t
     const [isVisible, setIsVisible] = useState(false);
     const [hoveredCohort, setHoveredCohort] = useState<number | null>(null);
     const sectionRef = useRef<HTMLDivElement>(null);

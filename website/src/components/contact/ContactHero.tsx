@@ -1,8 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/contact.module.css';
 
 const ContactHero: React.FC = () => {
+    const { t } = useTranslation();
+
     return (
         <section className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-[#0A0A0A]">
             {/* Background Gradient */}
@@ -35,7 +38,7 @@ const ContactHero: React.FC = () => {
                     transition={{ duration: 0.8 }}
                     className="text-5xl md:text-7xl font-bold mb-6 text-white uppercase tracking-widest font-['Clash_Grotesk']"
                 >
-                    Get In Touch
+                    {t('contact.hero.title')}
                 </motion.h1>
 
                 <motion.p
@@ -44,7 +47,7 @@ const ContactHero: React.FC = () => {
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="text-xl md:text-2xl font-light text-gray-300 max-w-2xl mx-auto"
                 >
-                    Let's build regenerative agriculture together
+                    {t('contact.hero.subtitle')}
                 </motion.p>
             </div>
         </section>

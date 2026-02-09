@@ -1,14 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Footer: React.FC = () => {
+    const { t } = useTranslation();
     const currentYear = new Date().getFullYear();
 
     const quickLinks = [
-        { path: '/', label: 'Home' },
-        { path: '/model', label: 'Our Model' },
-        { path: '/buy', label: 'Buy Produce' },
-        { path: '/contact', label: 'Contact' },
+        { path: '/', label: t('footer.home') },
+        { path: '/model', label: t('footer.model') },
+        { path: '/buy', label: t('footer.buy') },
+        { path: '/contact', label: t('footer.contact') },
     ];
 
     const socialLinks = [
@@ -63,7 +65,7 @@ const Footer: React.FC = () => {
                                 fontWeight: 300,
                             }}
                         >
-                            Empowering young women farmers through regenerative agriculture in Rwanda.
+                            {t('footer.description')}
                         </p>
                     </div>
 
@@ -77,7 +79,7 @@ const Footer: React.FC = () => {
                                 letterSpacing: '1px',
                             }}
                         >
-                            Quick Links
+                            {t('footer.quick_links')}
                         </h3>
                         <ul className="space-y-2">
                             {quickLinks.map((link) => (
@@ -115,7 +117,7 @@ const Footer: React.FC = () => {
                                 letterSpacing: '1px',
                             }}
                         >
-                            Contact
+                            {t('footer.contact')}
                         </h3>
                         <ul className="space-y-3">
                             <li>
@@ -171,7 +173,7 @@ const Footer: React.FC = () => {
                                 letterSpacing: '1px',
                             }}
                         >
-                            Follow Us
+                            {t('footer.follow_us')}
                         </h3>
                         <div className="flex gap-4">
                             {socialLinks.map((social) => (
@@ -216,7 +218,7 @@ const Footer: React.FC = () => {
                             letterSpacing: '0.5px',
                         }}
                     >
-                        © {currentYear} AAYWA & PARTNERS. ALL RIGHTS RESERVED.
+                        © {currentYear} {t('footer.rights')}
                     </p>
                 </div>
             </div>

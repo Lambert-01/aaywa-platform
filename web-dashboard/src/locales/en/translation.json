@@ -1,0 +1,19 @@
+{
+    "dashboard": {
+        "title": "AAYWA Dashboard",
+        "welcome": "Welcome back",
+        "role": "Role"
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "farmers": "Farmers",
+        "vsla": "VSLA Groups",
+        "compost": "Compost",
+        "sales": "Inputs & Sales",
+        "maps": "Farm Maps",
+        "cohorts": "Cohorts",
+        "training": "Training",
+        "orders": "Orders",
+        "users": "System Users"
+    }
+}

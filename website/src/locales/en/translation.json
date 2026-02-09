@@ -1,0 +1,281 @@
+{
+    "hero": {
+        "title": "Young Women. Land. Dignity.",
+        "subtitle": "Empowering teen mothers through organic agriculture, financial inclusion, and secured market access.",
+        "partners": "Our Partners"
+    },
+    "nav": {
+        "home": "Home",
+        "about": "About Us",
+        "model": "Our Model",
+        "marketplace": "Marketplace",
+        "contact": "Contact"
+    },
+    "about": {
+        "structure": "Our Structure",
+        "governance_team": "Governance & Team",
+        "governance_desc": "Led by a dedicated Board of Directors and supported by expert advisors, ensuring transparency, impact, and sustainable growth.",
+        "board": {
+            "title": "Board Members",
+            "subtitle": "Directing strategy and ensuring accountability."
+        },
+        "advisors": {
+            "title": "Board Advisors",
+            "subtitle": "Industry experts guiding our technical and scientific advancements."
+        },
+        "effective": {
+            "title": "Effective Members",
+            "subtitle": "The operational engine driving daily impact."
+        },
+        "team": {
+            "bonnette": {
+                "role": "President | Modal Farm Owner",
+                "bio": "Leading the strategic vision of AAYWA & PARTNERS to empower women through land ownership and market access."
+            },
+            "nicole": {
+                "role": "Vice-President | Innovation Development",
+                "bio": "Innovation strategist and Women Empowerment Catalyst, campaigning for 'The United Alkebulan'. AfroFoods Direct Selling expert."
+            },
+            "rose": {
+                "role": "Executive Secretary | Agri-Tourism",
+                "bio": "Orchestrating the operational excellence of our agri-tourism initiatives and stakeholder engagement."
+            },
+            "solange": {
+                "role": "Treasurer | Agronomist",
+                "bio": "Ensuring financial integrity and agronomic best practices for sustainable growth."
+            },
+            "nadia": {
+                "role": "Food Scientist Expert",
+                "bio": "Providing expert guidance on food processing standards and nutritional value enhancement."
+            },
+            "ingabe": {
+                "role": "Food Scientist Expert",
+                "bio": "Advising on product development and quality assurance for international markets."
+            },
+            "colombe": {
+                "role": "Modal Farm Owner",
+                "bio": "Pioneering sustainable farming models that serve as blueprints for our community cohorts."
+            },
+            "benie": {
+                "role": "Agronomist",
+                "bio": "Optimizing crop yields through regenerative techniques and hands-on farmer training."
+            },
+            "hyacintha": {
+                "role": "Agronomist",
+                "bio": "Specializing in soil health and organic pest management strategies."
+            },
+            "shilla": {
+                "role": "Executive Director",
+                "bio": "Driving organizational growth with a focus on Disability Inclusion and Women's Economic Empowerment."
+            },
+            "concilie": {
+                "role": "Operations Manager",
+                "bio": "Managing the day-to-day logistics to ensure seamless farm-to-market operations."
+            },
+            "faith": {
+                "role": "Modal Farm Owner | MK Farms Ltd.",
+                "bio": "Example of success: transforming MK Farms into a model of profitability and community impact."
+            }
+        }
+    },
+    "model_page": {
+        "hero": {
+            "title": "The AAYWA & PARTNERS Model",
+            "subtitle": "A scalable blueprint for regenerative, women-led agriculture that combines productivity, market access, and financial inclusion."
+        },
+        "journey": {
+            "title": "Four-Step Journey",
+            "step1": {
+                "title": "Train & Equip",
+                "desc": "Young women join cohorts and receive training, compost, and seedlings (invoiced)."
+            },
+            "step2": {
+                "title": "Farm & Produce",
+                "desc": "Grow avocado/macadamia + vegetables using organic fertilizer on leased plots."
+            },
+            "step3": {
+                "title": "Sell & Repay",
+                "desc": "Produce sold via Sanza or local markets; input costs deducted at point of sale."
+            },
+            "step4": {
+                "title": "Share & Reinvest",
+                "desc": "Net profits split 50/50. Women earn income; Sanza reinvests in scaling."
+            }
+        },
+        "innovations": {
+            "title": "Core Innovations",
+            "subtitle": "Our model works because it addresses every aspect of the value chain.",
+            "profit_sharing": {
+                "title": "50/50 Profit Sharing",
+                "desc": "A dignified partnership, not charity. Net profits are split equally between farmers and the enterprise."
+            },
+            "organic_fertilizer": {
+                "title": "Organic Fertilizer Core",
+                "desc": "Compost is our central strategy—regenerating soil health while boosting crop yields sustainably."
+            },
+            "vsla": {
+                "title": "VSLA Integration",
+                "desc": "Financial inclusion built-in. Village Savings and Loan Associations empower saving and lending."
+            },
+            "avocado": {
+                "title": "Avocado Focus",
+                "desc": "High-value crop (Hass variety) intercropped for short-term food security and long-term profit."
+            },
+            "warehouse": {
+                "title": "Warehouse Systems",
+                "desc": "Modern post-harvest management reduces losses and ensures premium quality for market."
+            },
+            "champion": {
+                "title": "Champion Cascade",
+                "desc": "Peer-to-peer scaling where successful farmers train others, multiplying our impact."
+            }
+        },
+        "impact": {
+            "women_empowered": "Young Women Empowered",
+            "yield_increase": "Avg. Yield Increase",
+            "repayment_rate": "Input Repayment Rate",
+            "vslas": "VSLAs Established",
+            "total_income": "Total Income Generated"
+        },
+        "map": {
+            "title_mobile": "Our Reach",
+            "title_desktop": "Our Geographic Footprint",
+            "subtitle": "Select a location on the map to view detailed cohort performance data and crop distribution.",
+            "instruction": "Clicking a dot reveals live data",
+            "farmers": "Farmers",
+            "crops": "Primary Crops",
+            "quote": "\"This cohort has achieved 98% repayment in their first cycle.\"",
+            "clear": "Clear Selection"
+        },
+        "cta": {
+            "title": "Scale This Model",
+            "text": "Partner with us to replicate AAYWA & PARTNERS nationwide. We have the blueprint, the team, and the proof of concept.",
+            "contact": "Contact Us",
+            "download": "Download Guide"
+        }
+    },
+    "header": {
+        "impact": "Impact",
+        "buy_produce": "Buy Produce"
+    },
+    "footer": {
+        "home": "Home",
+        "model": "Our Model",
+        "buy": "Buy Produce",
+        "contact": "Contact",
+        "description": "Empowering young women farmers through regenerative agriculture in Rwanda.",
+        "quick_links": "Quick Links",
+        "follow_us": "Follow Us",
+        "rights": "AAYWA & PARTNERS. ALL RIGHTS RESERVED."
+    },
+    "home": {
+        "hero": {
+            "title": "Young Women. Land. Dignity.",
+            "subtitle": "Regenerative agriculture in Rwanda",
+            "explore": "Explore the Model",
+            "buy": "Buy Produce"
+        },
+        "impact": {
+            "empowered": "Young women empowered",
+            "yield": "Avg. yield increase",
+            "profit": "Fair profit sharing"
+        },
+        "story": {
+            "quote": "\"We are not beneficiaries. We are farmers.\"",
+            "author": "— Marie, Cohort 1 Champion",
+            "watch": "WATCH HER STORY"
+        },
+        "map": {
+            "title": "Growing Across Rwanda",
+            "instruction": "Click on a location to learn more about our cohorts"
+        },
+        "partners": {
+            "title": "Trusted Partners",
+            "instruction": "Hover to pause • Click to navigate"
+        }
+    },
+    "contact": {
+        "title": "Contact Project AAYWA & PARTNERS | Let's Build Together",
+        "description": "Get in touch with the AAYWA & PARTNERS team. Partnerships, produce orders, and general inquiries.",
+        "hero": {
+            "title": "Get In Touch",
+            "subtitle": "Let's build regenerative agriculture together"
+        },
+        "methods": {
+            "general": "General Inquiries",
+            "buy": "Buy Produce",
+            "partnerships": "Partnerships"
+        },
+        "form": {
+            "name": "Full Name *",
+            "organization": "Organization",
+            "email": "Email Address *",
+            "phone": "Phone Number",
+            "subject": {
+                "label": "Subject *",
+                "general": "General Inquiry",
+                "buy": "Buy Produce",
+                "partnership": "Partnership Proposal",
+                "other": "Other"
+            },
+            "message": "Message *",
+            "submit": "Send Message",
+            "sending": "Sending...",
+            "success": {
+                "title": "Message Sent!",
+                "message": "Thank you for reaching out. A member of our team will respond within 24 hours.",
+                "another": "Send another message"
+            }
+        },
+        "location": {
+            "title": "Visit Our Operations",
+            "hq": "Headquarters",
+            "address": "Southern Province, Rwanda\n(Near Huye District Center)",
+            "hours_label": "Hours",
+            "hours": "Monday – Friday\n8:00 AM – 5:00 PM CAT",
+            "note": "* Visits by appointment only to ensure biosecurity on our farms."
+        },
+        "social": {
+            "afro_source_quote": "AAYWA & PARTNERS proves that regenerative agriculture and women’s economic inclusion can go hand-in-hand. Their model ensures sustainability from the soil up.",
+            "afro_source_role": "Primary Export Partner",
+            "sanza_quote": "The 50/50 model builds real trust. We are not just giving supplies; we are building a business together with these farmers.",
+            "sanza_role": "Sanza Alkebulan"
+        }
+    },
+    "marketplace": {
+        "hero": {
+            "title_prefix": "Farm Fresh,",
+            "title_highlight": "Delivered.",
+            "subtitle": "Support Rwanda's young women farmers and experience premium organic produce directly from the source.",
+            "features": {
+                "organic": "🌱 Organic Certified",
+                "fair_trade": "🤝 Fair Trade",
+                "traceable": "📍 Fully Traceable",
+                "delivery": "🚚 Next Day Delivery"
+            }
+        },
+        "filters": {
+            "title": "Refine Search",
+            "reset": "Reset",
+            "crop_type": "Crop Type",
+            "all_types": "All Types",
+            "cohort": "Cohort",
+            "all_cohorts": "All Cohorts",
+            "min_quantity": "Min Quantity (Boxes)",
+            "clear": "Clear Filters"
+        },
+        "cart": "Cart",
+        "showing_products_prefix": "Showing",
+        "showing_products_suffix": "products",
+        "no_products": "No products match your filters",
+        "product_details": {
+            "price_per_box": "Price per Box",
+            "available_stock": "Available Stock",
+            "harvest_date": "Harvest Date",
+            "certifications": "Certifications",
+            "description": "Grown with care by our partner farmers in Musanze. Detailed quality assurance checks performed before shipment. Fresh from the farm to your doorstep.",
+            "add_to_cart": "Add to Cart",
+            "boxes": "Boxes"
+        }
+    }
+}

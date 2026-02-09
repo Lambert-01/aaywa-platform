@@ -1,17 +1,19 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const Hero: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="bg-gradient-to-r from-green-600 to-blue-600 text-white section-padding">
       <div className="container-max">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Empowering Women Farmers in Rwanda
+              {t('hero.title')}
             </h1>
             <p className="text-xl mb-8">
-              AAYWA & PARTNER connects 100 young women and adolescent mothers with sustainable agriculture,
-              financial inclusion, and market opportunities through innovative technology and community support.
+              {t('hero.subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <button className="btn-secondary">

@@ -18,10 +18,14 @@ import { apiGet, apiPost, apiPatch, apiDelete } from '../utils/api';
 import { formatCurrency } from '../utils/formatters';
 
 const InputsSalesPage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+    const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'inputs'>('products');
     const [products, setProducts] = useState<any[]>([]);
     const [orders, setOrders] = useState<any[]>([]);
+    const [inputInvoices, setInputInvoices] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+
+    // Auth context (mock for now if not available)
+    const userId = 'real'; // or get from context
 
     // Modals
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -32,11 +36,6 @@ const InputsSalesPage: React.FC = () => {
     // Filters
     const [productFilter, setProductFilter] = useState('all');
     const [orderStatusFilter, setOrderStatusFilter] = useState('all');
-
-    useEffect(() => {
-        fetchProducts();
-        fetchOrders();
-    }, []);
 
     const fetchProducts = async () => {
         setLoading(true);
@@ -79,6 +78,21 @@ const InputsSalesPage: React.FC = () => {
             console.error('Failed to fetch orders:', error);
         }
     };
+
+    const fetchInvoices = async () => {
+        try {
+            const data = await apiGet<any[]>('/api/inputs');
+            setInputInvoices(data || []);
+        } catch (error) {
+            console.error('Failed to fetch input invoices:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
+        fetchOrders();
+        fetchInvoices();
+    }, []);
 
     const handleCreateProduct = async (productData: any) => {
         try {
@@ -221,6 +235,15 @@ const InputsSalesPage: React.FC = () => {
                         >
                             Orders
                         </button>
+                        <button
+                            onClick={() => setActiveTab('inputs')}
+                            className={`${activeTab === 'inputs'
+                                ? 'border-brand-blue-500 text-brand-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                } whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm`}
+                        >
+                            Issued Inputs
+                        </button>
                     </nav>
                 </div>
 
@@ -304,6 +327,71 @@ const InputsSalesPage: React.FC = () => {
                     </div>
                 )}
 
+                {/* Issued Inputs Tab */}
+                {activeTab === 'inputs' && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-semibold text-gray-900">Issued Input History</h3>
+                            <button
+                                onClick={() => setIsIssueInputModalOpen(true)}
+                                className="px-4 py-2 bg-orange-600 text-white rounded-md text-sm font-medium shadow-md hover:bg-orange-700 inline-flex items-center"
+                            >
+                                <PlusIcon className="w-4 h-4 mr-2" />
+                                Issue New Inputs
+                            </button>
+                        </div>
+                        <div className="bg-white shadow rounded-lg overflow-hidden">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issued By</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {inputInvoices.map((invoice: any) => (
+                                        <tr key={invoice.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {new Date(invoice.created_at).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {invoice.farmer_name}
+                                                <div className="text-xs text-gray-500">{invoice.farmer_phone}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                                <ul className="list-disc pl-4">
+                                                    {(Array.isArray(invoice.items)
+                                                        ? invoice.items
+                                                        : (typeof invoice.items === 'string' ? JSON.parse(invoice.items) : [])
+                                                    ).map((item: any, idx: number) => (
+                                                        <li key={idx}>{item.quantity}x {item.name}</li>
+                                                    ))}
+                                                </ul>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+                                                {formatCurrency(invoice.total_amount)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {invoice.issued_by}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {inputInvoices.length === 0 && (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                                                No inputs issued yet.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 {/* Modals */}
                 <ProductCreationModal
                     isOpen={isProductModalOpen}
@@ -324,7 +412,7 @@ const InputsSalesPage: React.FC = () => {
                     isOpen={isIssueInputModalOpen}
                     onClose={() => setIsIssueInputModalOpen(false)}
                     onSubmit={() => {
-                        // Ideally refresh kpis or recent activities if we had them
+                        fetchInvoices();
                         alert('Inputs issued successfully!');
                     }}
                 />

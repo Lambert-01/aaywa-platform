@@ -213,6 +213,69 @@ async function initializeDatabase() {
       )
     `);
 
+    // Input Invoices Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS input_invoices (
+        id SERIAL PRIMARY KEY,
+        farmer_id INTEGER REFERENCES farmers(id),
+        items JSONB DEFAULT '[]',
+        total_amount DECIMAL(10,2) NOT NULL,
+        issued_by VARCHAR(100),
+        status VARCHAR(20) DEFAULT 'completed',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Add items column if it doesn't exist (migration for existing table)
+    try {
+      await pool.query(`ALTER TABLE input_invoices ADD COLUMN IF NOT EXISTS items JSONB DEFAULT '[]'`);
+    } catch (e) {
+      console.log('Column items might already exist');
+    }
+
+    // Add total_amount column if it doesn't exist
+    try {
+      await pool.query(`ALTER TABLE input_invoices ADD COLUMN IF NOT EXISTS total_amount DECIMAL(10,2) DEFAULT 0`);
+    } catch (e) {
+      console.log('Column total_amount might already exist');
+    }
+
+    // Add issued_by column if it doesn't exist
+    try {
+      await pool.query(`ALTER TABLE input_invoices ADD COLUMN IF NOT EXISTS issued_by VARCHAR(100)`);
+    } catch (e) {
+      console.log('Column issued_by might already exist');
+    }
+
+    // Add input_type column if it doesn't exist
+    try {
+      await pool.query(`ALTER TABLE input_invoices ADD COLUMN IF NOT EXISTS input_type VARCHAR(50) DEFAULT 'mixed'`);
+    } catch (e) {
+      console.log('Column input_type might already exist');
+    }
+
+    // Add quantity column if it doesn't exist (seems to be required based on error logs)
+    try {
+      await pool.query(`ALTER TABLE input_invoices ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1`);
+    } catch (e) {
+      console.log('Column quantity might already exist');
+    }
+
+    // Add unit_price column if it doesn't exist (seems to be required based on error logs)
+    try {
+      await pool.query(`ALTER TABLE input_invoices ADD COLUMN IF NOT EXISTS unit_price DECIMAL(10,2) DEFAULT 0`);
+    } catch (e) {
+      console.log('Column unit_price might already exist');
+    }
+
+    // Add total_cost column if it doesn't exist (seems to be duplicate of total_amount but required)
+    try {
+      await pool.query(`ALTER TABLE input_invoices ADD COLUMN IF NOT EXISTS total_cost DECIMAL(10,2) DEFAULT 0`);
+    } catch (e) {
+      console.log('Column total_cost might already exist');
+    }
+
     console.log('✅ Marketplace tables verified/created successfully');
   } catch (error) {
     console.error('❌ Database initialization failed:', error);

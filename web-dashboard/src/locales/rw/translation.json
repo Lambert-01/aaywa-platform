@@ -1,0 +1,19 @@
+{
+    "dashboard": {
+        "title": "AAYWA Dashboard",
+        "welcome": "Murakaza neza",
+        "role": "Inshingano"
+    },
+    "nav": {
+        "dashboard": "Incamake",
+        "farmers": "Abahinzi",
+        "vsla": "Amatsinda (VSLA)",
+        "compost": "Ifumbire",
+        "sales": "Inyongeramusaruro & Kugurisha",
+        "maps": "Amakarita y'Imirima",
+        "cohorts": "Ibyiciro",
+        "training": "Amahugurwa",
+        "orders": "Komande",
+        "users": "Abakozi b'Ikigo"
+    }
+}

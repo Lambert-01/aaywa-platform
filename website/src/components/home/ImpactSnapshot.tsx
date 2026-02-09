@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, Variants } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/home.module.css';
 
 interface ImpactCard {
@@ -9,6 +10,7 @@ interface ImpactCard {
 }
 
 const ImpactSnapshot: React.FC = () => {
+    const { t } = useTranslation();
     const [isVisible, setIsVisible] = useState(false);
     const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +39,7 @@ const ImpactSnapshot: React.FC = () => {
                 </svg>
             ),
             value: '100',
-            description: 'Young women empowered',
+            description: t('home.impact.empowered'),
         },
         {
             icon: (
@@ -46,7 +48,7 @@ const ImpactSnapshot: React.FC = () => {
                 </svg>
             ),
             value: '30%',
-            description: 'Avg. yield increase',
+            description: t('home.impact.yield'),
         },
         {
             icon: (
@@ -55,7 +57,7 @@ const ImpactSnapshot: React.FC = () => {
                 </svg>
             ),
             value: '50/50',
-            description: 'Fair profit sharing',
+            description: t('home.impact.profit'),
         },
     ];
 

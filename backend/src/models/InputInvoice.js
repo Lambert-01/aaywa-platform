@@ -2,23 +2,29 @@ const pool = require('../config/database');
 
 class InputInvoice {
   static async create(invoiceData) {
-    const { farmer_id, items, total_amount, issued_by } = invoiceData;
+    const { farmer_id, items, total_amount, issued_by, input_type } = invoiceData;
+    // Determine input type if not provided, default to 'mixed'
+    const type = input_type || 'mixed';
+    // Calculate total quantity from items
+    const total_quantity = items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0) || 1;
+    // Calculate average unit price (total / quantity) to satisfy schema constraint
+    const avg_unit_price = total_quantity > 0 ? (total_amount / total_quantity) : 0;
+
     const query = `
-      INSERT INTO input_invoices (farmer_id, items, total_amount, issued_by)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO input_invoices (farmer_id, items, total_amount, issued_by, input_type, quantity, unit_price, total_cost)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
-    const values = [farmer_id, JSON.stringify(items), total_amount, issued_by];
+    const values = [farmer_id, JSON.stringify(items), total_amount, issued_by, type, total_quantity, avg_unit_price, total_amount];
     const result = await pool.query(query, values);
     return result.rows[0];
   }
 
   static async findById(id) {
     const query = `
-      SELECT ii.*, u.full_name as farmer_name, u.phone as farmer_phone
+      SELECT ii.*, f.full_name as farmer_name, f.phone as farmer_phone
       FROM input_invoices ii
       JOIN farmers f ON ii.farmer_id = f.id
-      JOIN users u ON f.user_id = u.id
       WHERE ii.id = $1
     `;
     const result = await pool.query(query, [id]);
@@ -27,10 +33,9 @@ class InputInvoice {
 
   static async findAll() {
     const query = `
-      SELECT ii.*, u.full_name as farmer_name, u.phone as farmer_phone
+      SELECT ii.*, f.full_name as farmer_name, f.phone as farmer_phone
       FROM input_invoices ii
       JOIN farmers f ON ii.farmer_id = f.id
-      JOIN users u ON f.user_id = u.id
       ORDER BY ii.created_at DESC
     `;
     const result = await pool.query(query);
@@ -39,10 +44,9 @@ class InputInvoice {
 
   static async findByFarmer(farmerId) {
     const query = `
-      SELECT ii.*, u.full_name as farmer_name
+      SELECT ii.*, f.full_name as farmer_name
       FROM input_invoices ii
       JOIN farmers f ON ii.farmer_id = f.id
-      JOIN users u ON f.user_id = u.id
       WHERE ii.farmer_id = $1
       ORDER BY ii.created_at DESC
     `;

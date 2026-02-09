@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../../styles/home.module.css';
 
 const HeroSection: React.FC = () => {
+    const { t } = useTranslation();
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
@@ -94,7 +96,7 @@ const HeroSection: React.FC = () => {
                         textShadow: '2px 2px 10px rgba(0,0,0,0.5)',
                     }}
                 >
-                    Young Women. Land. Dignity.
+                    {t('home.hero.title')}
                 </motion.h1>
 
                 <motion.p
@@ -107,7 +109,7 @@ const HeroSection: React.FC = () => {
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >
-                    Regenerative agriculture in Rwanda
+                    {t('home.hero.subtitle')}
                 </motion.p>
 
                 <motion.div
@@ -132,7 +134,7 @@ const HeroSection: React.FC = () => {
                                 e.currentTarget.style.boxShadow = 'none';
                             }}
                         >
-                            Explore the Model
+                            {t('home.hero.explore')}
                         </button>
                     </Link>
 
@@ -156,7 +158,7 @@ const HeroSection: React.FC = () => {
                                 e.currentTarget.style.color = '#FFFFFF';
                             }}
                         >
-                            Buy Produce
+                            {t('home.hero.buy')}
                         </button>
                     </Link>
                 </motion.div>

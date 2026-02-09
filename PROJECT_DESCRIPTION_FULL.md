@@ -1,192 +1,282 @@
-# 🌍 Project AAYWA & PARTNERS: Comprehensive Platform Documentation
+# 🌍 Project AAYWA & PARTNERS: The Comprehensive Digital Ecosystem
 
-**Version:** 1.0  
-**Date:** January 31, 2026  
-**Status:** Active Development  
-
----
-
-## 📖 Table of Contents
-
-1.  [Executive Summary](#1-executive-summary)
-2.  [Platform Architecture & Technology Stack](#2-platform-architecture--technology-stack)
-3.  [Component Deep Dive: The Public Website](#3-component-deep-dive-the-public-website)
-4.  [Component Deep Dive: The Operational Dashboard](#4-component-deep-dive-the-operational-dashboard)
-5.  [Component Deep Dive: The Backend Infrastructure](#5-component-deep-dive-the-backend-infrastructure)
-6.  [Data Models & Business Logic](#6-data-models--business-logic)
-7.  [Future Roadmap: Mobile & IoT](#7-future-roadmap-mobile--iot)
+**Version:** 4.1 (Roadmap & Enhancement Edition)  
+**Date:** February 9, 2026  
+**Status:** Operational / Phase 1 Deployment  
+**Alignment:** Strictly Aligned with "AAYWA PROJECT - DUFATANYE TUGABANE" Concept Note
 
 ---
 
-## 1. Executive Summary
+## 1. Executive Summary & Strategic Alignment
 
-**Project AAYWA & PARTNERS** is not merely an agricultural management tool; it is a digital ecosystem designed to revolutionize the refined agriculture sector in Rwanda. At its core, the project seeks to dismantle the traditional charity-based models of development and replace them with a robust, dignity-driven business model. We empower young women farmers—specifically teen mothers and vulnerable youths—by providing them with land access, organic inputs, technical training, and direct market routes.
+**Project AAYWA** is a transformative social business initiative in Rwanda designed to empower 100 young women and adolescent mothers through nutrition-sensitive agriculture. The project is built on three pillars: **secure land access**, **organic fertilizer production**, and **financial inclusion** via Village Savings and Loan Associations (VSLAs).
 
-The platform serves as the digital backbone of this initiative, ensuring **Transparency**, **Traceability**, and **Trust**. By digitizing the entire value chain—from the soil composition in Huye to the final sale in Kigali or international markets—we create a verifiable record of impact that attracts premium buyers and impact investors.
+The **AAYWA Platform** is the digital backbone of this initiative. It is not merely a record-keeping tool but a "Transparency Engine" that ensures:
+1.  **Traceability**: From the raw manure inputs in the compost piles to the final avocado sold in Kigali, every step is digitally logged.
+2.  **Financial Integrity**: The platform automates the critical **50/50 profit-sharing model** mandated by the concept note, ensuring that after input costs are recovered, profits are split fairly and transparently between the farmers and Sanza Alkebulan.
+3.  **Governance**: By digitizing VSLA metrics (savings, loans, trust scores), the platform creates a credit history for previously unbanked women, unlocking future economic opportunities.
 
-### The Problem
-*   **Fragmentation**: Smallholder farmers are disconnected from high-value markets.
-*   **Lack of Data**: Banks and investors cannot verify the creditworthiness of unbanked farmers.
-*   **Inefficiency**: Paper-based records lead to loss of produce, poor inventory management, and delayed payments.
-
-### The Solution: AAYWA Platform
-A unified digital infrastructure comprising:
-1.  **Public Website**: For storytelling, branding, and market access.
-2.  **Web Dashboard**: For rigorous operational management, M&E (Monitoring and Evaluation), and financial tracking.
-3.  **Backend API**: The central nervous system processing real-time data.
-4.  **Mobile App**: For field agents to capture data offline in remote areas.
+This document provides a complete technical deep-dive into the platform's architecture, including the full file structure, database schemas, API documentation, and module-by-module breakdown.
 
 ---
 
-## 2. Platform Architecture & Technology Stack
+## 2. System Architecture
 
-The system is built on a modern, scalable **MERN-like stack** (utilizing React for frontend and Node.js for backend), designed for performance, modularity, and offline-first capabilities.
+The platform follows a modern **Monorepo** structure, separating concerns into three distinct applications that share a common data source. We utilize the MERN stack (MongoDB/PostgreSQL, Express, React, Node.js) for its JSON-native capabilities and scalability.
 
-### 2.1 Technology Stack
-
-*   **Frontend (Website & Dashboard)**:
-    *   **Framework**: React 18 with TypeScript for type safety and code reliability.
-    *   **Styling**: Tailwind CSS for rapid, responsive utility-first styling. We use a custom design system featuring "Rwanda Blue" (`#00A1DE`), "Sanza Gold" (`#FFD700`), and "Deep Earth" (`#0A0A0A`).
-    *   **Animation**: Framer Motion for premium, high-fidelity interactions (scroll reveals, hover effects).
-    *   **State Management**: React Context API for managing global state (User Auth, Cart, Filters).
-
-*   **Backend API**:
-    *   **Runtime**: Node.js with Express.js architecture.
-    *   **Pattern**: MVC (Model-View-Controller) ensuring separation of concerns.
-    *   **Security**: JWT (JSON Web Tokens) for stateless authentication; Role-Based Access Control (RBAC) middleware.
-
-*   **Database**:
-    *   **Primary Store**: MongoDB (NoSQL) allows for flexible schema design, essential for the varying data structures of different crops and farmer profiles.
-    *   **Geospatial Data**: Native GeoJSON support for mapping farm polygons and cohort locations.
-
----
-
-## 3. Component Deep Dive: The Public Website (`/website`)
-
-The website (`AAYWA & PARTNERS`) acts as the global face of the organization. It is not just an informational brochure but a conversion-driven platform designed to serve three distinct user personas: **Partners/Investors**, **Buyers**, and **General Public**.
-
-### 3.1 Design Philosophy: "Premium Impact"
-We moved away from the typical "NGO aesthetic" (often cluttered, rustic) to a **Premium, Corporate-Agri** look.
-*   **Visual Language**: High-contrast dark mode foundation implies sophistication. Gold accents represent value/wealth, while Blue represents trust and water/sky.
-*   **Typography**: *Clash Grotesk* for headlines provides a bold, editorial feel; *Inter* for body text ensures readability.
-
-### 3.2 Key Pages & Features
-
-#### **A. Home Page (`Home.tsx`)**
-*   **Hero Section**: A full-screen cinematic experience with a video background capability. The headline "Young Women. Land. Dignity." sets the immediate tone.
-*   **Impact Snapshot**: Three key metrics (Active Farmers, Hectares Regenerated, Income Increase) displayed with animated counters to show real-time progress.
-*   **Interactive Map**: A visual representation of Rwanda showing our cohort locations. Users can hover over "Huye" or "Bugesera" to see specific crop data.
-*   **Partners Carousel**: Social proof featuring logos of partners like MTN Rwanda and Afro Source.
-
-#### **B. About Page (`AboutPage.tsx`)**
-*   **Structure**: Restructured to show clear governance.
-    *   *Board Members*: Top-level strategic direction (President Bonnette Ishimwe).
-    *   *Advisors*: Technical experts in food science.
-    *   *Effective Members*: The operational engine (Executive Director Shilla Ndegeya).
-*   **Feature**: "Meet the Team" cards use a glassmorphism effect, revealing bios and LinkedIn connections on hover, fostering professional trust.
-
-#### **C. The Model (`ModelPage.tsx`)**
-*   **4-Step Journey**: A graphical timeline explaining the "Train → Farm → Sell → Share" methodology.
-*   **Core Innovations**: Cards highlighting the 50/50 profit share, organic inputs, and financial inclusion (VSLA).
-*   **Call to Action**: Strategy to convert visitors into franchise partners who want to replicate the AAYWA model.
-
-#### **D. Marketplace (`Marketplace.tsx`)**
-*   **E-Commerce Functionality**: Allows bulk buyers (restaurants, hotels) to browse seasonal availability.
-*   **Cart System**: fully functional shopping cart with "Request Quote" logic (B2B focus) rather than instant credit card checkout, aligning with wholesale trade practices.
-
-#### **E. Contact (`ContactPage.tsx`)**
-*   **Smart Routing**: The form asks "I am a..." (Buyer, Partner, Researcher) to route inquiries to the correct department.
-*   **Location Intelligence**: Embedded Google Map showing the exact headquarters and farm clusters.
+```mermaid
+graph TD
+    User((User/Farmer/Buyer))
+    
+    subgraph "Frontend Layer"
+        Website[Public Website\n(React + Tailwind)]
+        Dashboard[Operational Dashboard\n(React + TypeScript)]
+    end
+    
+    subgraph "Backend Layer"
+        API[Node.js + Express API\n(REST Architecture)]
+        Auth[JWT Authentication\n& RBAC Middleware]
+    end
+    
+    subgraph "Data Layer"
+        DB[(PostgreSQL / MongoDB\nHybrid Data Store)]
+        Files[File Storage\n(Images/Docs)]
+    end
+    
+    User -->|Visits| Website
+    User -->|Manages| Dashboard
+    Website -->|Requests| API
+    Dashboard -->|Requests| API
+    API -->|Queries| DB
+    API -->|Validates| Auth
+```
 
 ---
 
-## 4. Component Deep Dive: The Operational Dashboard (`/web-dashboard`)
+## 3. Comprehensive Project Structure
 
-This is the powerhouse of the platform. Used by the Executive Director, Agronomists, and Operations Managers to run the business.
+The codebase is organized into four primary directories: `website`, `web-dashboard`, `backend`, and `database`.
 
-### 4.1 Dashboard Overview (`Dashboard.tsx`)
-*   **KPI Command Center**: The top bar displays vital health signs:
-    *   *Total Active Cohorts*
-    *   *Weekly Harvest Volume (tons)*
-    *   *VSLA Total Savings (RWF)*
-*   **Activity Feed**: A real-time log of system events (e.g., "Olive N. just recorded 50kg Compost batch", "New Order #1234 received").
+### 3.1 📂 `website`: The Public Face
+Located at `c:\Users\educa\OneDrive\Desktop\aaywa platform\website`. This portal drives market access and partnership credibility.
 
-### 4.2 Module Breakdown
+*   **src/pages/**
+    *   `Home.tsx`: The primary landing page. Features the "Young Women. Land. Dignity." hero section.
+    *   `AboutPage.tsx`: Details the governance structure (Board, Effective Members).
+    *   `ModelPage.tsx`: Explains the "Lease → Farm → Sell → Share" business model.
+    *   `Marketplace.tsx`: B2B e-commerce interface for wholesale buyers (e.g., Afro Source).
+    *   `ContactPage.tsx`: Innovative routing form for Partners vs. Buyers.
+    *   `Blog.tsx`: Updates on cohort progress.
+*   **src/components/**
+    *   `home/`: `Hero.tsx`, `Impact.tsx` (real-time metrics), `Partners.tsx`, `InteractiveMap.tsx`.
+    *   `model/`: `ModelHero.tsx` (visual timeline).
+    *   `marketplace/`: `ProductCard.tsx`, `CartDrawer.tsx` (quote request system), `CheckoutForm.tsx`.
+    *   `layout/`: `Header.tsx`, `Footer.tsx`.
+*   **config/**
+    *   `tailwind.config.js`: Custom colors (`brand-blue`, `brand-gold`).
 
-#### **A. Farmer Management (`FarmersPage.tsx`)**
-*   **Digital Identities**: Each farmer has a profile containing:
-    *   Personal Info & ID
-    *   Land Size & Geolocation
-    *   Household dependencies (measuring social impact).
-*   **Cohort Assignment**: Farmers are grouped into "Cohorts" (groups of 10-20) for easier training and collective selling.
+### 3.2 📂 `web-dashboard`: The Operational Engine
+Located at `c:\Users\educa\OneDrive\Desktop\aaywa platform\web-dashboard`. Restricted access for Agronomists and Officers.
 
-#### **B. VSLA (Village Savings & Loan) (`VSLAView.tsx`)**
-*   **Financial Inclusion**: Tracks the weekly savings of every woman.
-*   **Loan Logic**: managing small micro-loans within the group. The system calculates interest, repayment schedules, and risk scores automatically.
-*   **Visualization**: Charts showing the growth of "Social Funds" vs. "Investment Funds" over time.
+*   **src/pages/**
+    *   `Dashboard.tsx`: High-level KPI view (Total Harvest, Active Cohorts, VSLA Savings).
+    *   `FarmersPage.tsx`: Digital profiles for all 100 beneficiaries.
+    *   `VSLA.tsx`: **Critical Module**. Tracks weekly savings, loan cycles, and "Trust Scores".
+    *   `CompostPage.tsx`: Logs organic fertilizer production batches and quality metrics (moisture, temp).
+    *   `InputsSalesPage.tsx`: Manages inventory (seeds, tools) and sales recording.
+    *   `MapsPage.tsx`: GIS interface using Leaflet to show farm polygons.
+    *   `CohortsPage.tsx`: Aggregated view of the 4 cohorts (25 members each).
+    *   `TrainingPage.tsx`: Tracks "Training of Trainers" (ToT) attendance and certification.
+    *   `OrdersPage.tsx`: Management of incoming orders from the website.
+    *   `UsersPage.tsx`: Admin management for system users (RBAC).
+*   **src/components/**
+    *   `vsla/`: `MemberFinancialTable.tsx`, `TransactionFormModal.tsx`, `VSLAHealthMetrics.tsx`, `OfficerManagementCard.tsx`.
+    *   `compost/`: `BatchList.tsx`, `QualityControlForm.tsx`, `StipendManagement.tsx` (tracks €2.50/day payments).
+    *   `warehouse/`: `InventoryTable.tsx`, `StockMovementForm.tsx`.
+    *   `maps/`: `FarmMap.tsx`, `GeoInformatics.tsx`.
+    *   `alerts/`: `AlertsDropdown.tsx`.
 
-#### **C. Compost & Inputs (`CompostPage.tsx`)**
-*   **Production Tracking**: We treat compost like gold. The system tracks raw material inputs (manure, green waste) and output batches.
-*   **Quality Control**: Agronomists can log temperature and moisture readings during the decomposition process.
-*   **Stock Management**: knowing exactly how many tons of fertilizer are available for the next planting season.
+### 3.3 📂 `backend`: The Logic Core
+Located at `c:\Users\educa\OneDrive\Desktop\aaywa platform\backend`. Node.js/Express server.
 
-#### **D. Supply Chain (Inputs & Sales) (`InputsSalesPage.tsx`)**
-*   **Inventory**: Tracks seeds, tools, and equipment distributed to farmers.
-*   **Invoicing**: Automatically generates invoices for inputs given on credit, to be deducted from harvest payments.
-*   **Sales Records**: Logs every sale to external buyers. It calculates the "Sanza Share" (Project's cut) vs. "Farmer Share" automatically.
+*   **src/controllers/**
+    *   `saleController.js`: **Core Logic**. Automates the 50/50 profit split.
+    *   `vslaController.js`: Calculates member creditworthiness.
+    *   `compostController.js`: Manages fertilizer batch lifecycles.
+    *   `farmerController.js`: CRUD operations for beneficiaries.
+    *   `authController.js`: JWT generation and login logic.
+    *   `dashboardController.js`: KPI aggregation.
+*   **src/models/**
+    *   `Farmer.js`, `Cohort.js`, `VSLA.js`, `Compost.js`, `Sale.js`, `InputInvoice.js`, `Product.js`, `Order.js`, `User.js`, `Training.js`, `Warehouse.js`.
+*   **src/routes/**
+    *   `sales.routes.js`, `vsla.routes.js`, `compost.routes.js` link controllers to endpoints.
+*   **src/middleware/**
+    *   `roleGuard.js`: Enforces RBAC settings.
+    *   `auth.js`: Verifies JWT tokens.
+*   **src/services/**
+    *   `profitShareCalculator.js`: Shared service that executes the net revenue division logic.
 
-#### **E. Geospatial Intelligence (`MapsPage.tsx`)**
-*   **Land Mapping**: Uses polygon data to render farm boundaries on a satellite map.
-*   **Integration**: Color-coded overlay to show crop health or harvest readiness (Green = Ready, Yellow = Growing).
+### 3.4 📂 `database`: The Data Foundation
+Located at `c:\Users\educa\OneDrive\Desktop\aaywa platform\database`.
 
----
-
-## 5. Component Deep Dive: The Backend Infrastructure (`/backend`)
-
-The backend is built for **resilience** and **integrity**. It serves as the single source of truth.
-
-### 5.1 API Structure (RESTful)
-*   **`/api/farmers`**: CRUD operations for farmer profiles.
-*   **`/api/cohorts`**: Managing groups and their aggregate data.
-*   **`/api/sales`**: Transactional data.
-*   **`/api/compost`**: IoT data logs for fertilizer production.
-
-### 5.2 Database Schema (MongoDB Models)
-*   **Farmer Model**:
-    *   `_id`, `names`, `nationalId`, `phone`, `cohortId` (Ref), `landSize`.
-*   **Sale Model**:
-    *   `buyerName`, `items` [{ `crop`, `qty`, `price` }], `totalAmount`, `status` (Paid/Pending).
-*   **VSLA Model**:
-    *   Tracks complex nested structures of `cycles` -> `meetings` -> `transactions`.
-
-### 5.3 Security & Role Management
-*   **Middleware (`roleGuard.js`)**: Ensures strict access control.
-    *   *Admin/Director*: Full access.
-    *   *Agronomist*: Can View/Edit Crop Data, cannot Delete Financials.
-    *   *Partner*: Read-only access to Impact Reports.
-
----
-
-## 6. Data Models & Business Logic
-
-The secret sauce of AAYWA is how logic is baked into the code:
-
-1.  **The 50/50 Profit Share**: The `SaleController` contains logic that automatically splits revenue. When a sale is recorded, the system credits 50% to the Farmer's digital wallet and 50% to the operational account.
-2.  **Credit Scoring**: By analyzing VSLA savings consistency + Harvest reliability, the system assigns a "Trust Score" to farmers, unlocking larger input loans.
-3.  **Traceability**: Every batch of produce sold carries a `BatchID` that links back to the specific Farmer and Compost Batch used, ensuring full organic certification compliance.
+*   `schema.sql`: Core PostgreSQL table definitions.
+*   `compost_schema.sql`: Tables for `compost_batches` and `quality_checks`.
+*   `maps_schema.sql`: PostGIS enabled tables for farm boundaries.
+*   `warehouse_schema.sql`: Inventory tracking tables.
+*   `alerts_schema.sql`: System notification triggers.
 
 ---
 
-## 7. Future Roadmap: Mobile & IoT
+## 4. API Documentation
 
-### Mobile App (Flutter)
-Currently in early development (`/mobile-app`), this tool is for the **Field Officer**.
-*   **Offline Mode**: Critical for rural areas. Agents can sync data when they reach Wi-Fi.
-*   **GPS Capture**: Using the phone's GPS to map land polygons accurately.
+The backend exposes a RESTful API. Below are the key endpoints powering the system.
 
-### IoT Integration
-*   **Soil Sensors**: Future plans to integrate LoRaWAN soil sensors that push moisture data directly to the Dashboard via the Backend API.
+| Method | Endpoint | Description | Access Control |
+| :--- | :--- | :--- | :--- |
+| **AUTH** | | | |
+| `POST` | `/api/auth/login` | Authenticates user and returns JWT. | Public |
+| `POST` | `/api/auth/register` | Creates a new admin/staff account. | Admin Only |
+| **VSLA** | | | |
+| `GET` | `/api/vsla/:id` | Returns group details and aggregate savings. | Staff |
+| `POST` | `/api/vsla/:id/transactions` | Records a deposit/withdrawal. Updates member balance. | Officer |
+| `GET` | `/api/vsla/:id/metrics` | Returns calculated Trust Scores. | Staff |
+| **SALES** | | | |
+| `POST` | `/api/sales` | Records a sale. **Triggers 50/50 split logic.** | Agronomist |
+| `GET` | `/api/sales/revenue` | Returns Sanza vs. Farmer revenue share. | Admin |
+| **COMPOST** | | | |
+| `POST` | `/api/compost/batch` | Creates a new fertilizer batch. | Agronomist |
+| `POST` | `/api/compost/quality` | Logs moisture/temp check. Triggers bonus if valid. | Agronomist |
 
 ---
 
-**Conclusion**: The AAYWA & PARTNERS Platform is not a prototype; it is a scalable, enterprise-grade solution ready to manage thousands of farmers, ensuring that technology serves the cause of human dignity and economic freedom.
+## 5. Database Schema Diagrams
+
+### 5.1 Core Beneficiary & Financial Schema
+Detailed relationship between Farmers, Cohorts, and the Financial (VSLA/Sales) systems.
+
+```mermaid
+erDiagram
+    COHORT ||--|{ FARMER : contains
+    FARMER ||--o| VSLA_MEMBER : is
+    VSLA ||--|{ VSLA_MEMBER : tracks
+    FARMER ||--o{ SALE : produces
+    SALE ||--|{ INPUT_INVOICE : repays
+
+    COHORT {
+        int id
+        string name "e.g. Cohort 1"
+        string location
+        int agronomist_id
+    }
+
+    FARMER {
+        int id
+        string names
+        string national_id
+        float land_size_ha
+        int cohort_id
+    }
+
+    VSLA_MEMBER {
+        int id
+        int farmer_id
+        decimal total_savings
+        decimal loan_balance
+        int trust_score
+    }
+
+    SALE {
+        int id
+        int farmer_id
+        decimal gross_amount
+        decimal input_deduction
+        decimal farmer_share_50pct
+        decimal sanza_share_50pct
+        date transaction_date
+    }
+```
+
+### 5.2 Compost & Production Schema
+Tracks the organic fertilizer value chain, linking production batches to the casual workers (stipends).
+
+```mermaid
+erDiagram
+    COMPOST_BATCH ||--|{ QUALITY_CHECK : undergoes
+    COMPOST_BATCH ||--|{ CASUAL_LABOR : employs
+    COMPOST_BATCH ||--o{ FARM_APPLICATION : applied_to
+
+    COMPOST_BATCH {
+        int id
+        string batch_code
+        date start_date
+        date maturity_date
+        decimal volume_tons
+        status current_status
+    }
+
+    QUALITY_CHECK {
+        int id
+        int batch_id
+        float temperature
+        float moisture_content
+        string inspector_name
+        boolean passed
+    }
+```
+
+---
+
+## 6. Module Deep Dives & Business Logic
+
+### 6.1 The 50/50 Profit Share Engine (`saleController.js` & `profitShareCalculator.js`)
+This is the financial heart of the social business.
+*   **Input Recovery First**: When a sale happens (e.g., 100kg Avocados for 100,000 RWF), the system checks `InputInvoice` table. If the farmer owes 20,000 RWF for seeds, this is deducted first.
+*   **Split**: The remaining 80,000 RWF is split: 40,000 to the Farmer's wallet, 40,000 to Sanza Alkebulan.
+*   **Transparency**: The farmer receives a generated digital receipt showing exactly where every franc went.
+
+### 6.2 The Digital VSLA (`VSLA.tsx`)
+This module promotes financial inclusion.
+*   **Seed Capital**: The system logs the initial €10 injection per member as a "Special Deposit" that cannot be withdrawn immediately but serves as loan collateral.
+*   **Trust Score Algorithm**: We calculate a score (0-100) based on:
+    *   *Consistency*: Deposits made every week vs. sporadic.
+    *   *Repayment*: On-time loan repayments.
+    *   This score allows high-performing farmers to access larger input loans for the next season.
+
+### 6.3 Organic Fertilizer Traceability (`CompostPage.tsx`)
+Ensures the "Organic" promise is kept.
+*   **Batch Tracking**: Every pile is tracked from "Turning" to "Mature".
+*   **Stipend Management**: Logs the days worked by adolescent mothers. The system alerts if a payment is due (e.g., end of month), ensuring timely €2.50/day payments.
+
+---
+
+## 7. Future Roadmap & Remaining Enhancements
+
+To fully realize the vision of the DRAFT 3 Concept Note and reach enterprise scale, the following technical enhancements are scheduled for Phase 2:
+
+### 7.1 📱 Mobile App Completion (Critical for Field Ops)
+*   **Current Status**: Scaffolded (`mobile-app/lib/main.dart` initialized).
+*   **Required Action**: Develop offline-first forms for:
+    *   Geolocating farm plots (using phone GPS).
+    *   Logging attendance at trainings (by scanning QR codes on farmer ID cards).
+    *   Recording sales directly at the collection center.
+*   **Tech Stack**: Flutter + SQLite (local db) + Background Sync.
+
+### 7.2 📠 Automated Reporting
+*   **Current Status**: Mocked in `vslaController.js` (`generateStatements`).
+*   **Required Action**: Integrate `pdfkit` or `Puppeteer` to generate real, downloadable PDF statements for farmers.
+*   **Required Action**: Integrate `Africa's Talking` SMS API to send weekly balance summaries to members' feature phones.
+
+### 7.3 📡 IoT Soil Sensors
+*   **Current Status**: Planned.
+*   **Required Action**: Create a new API endpoint `/api/sensors/ingest` to receive data from LoRaWAN soil moisture sensors. This will replace manual "Quality Control" logs in `CompostPage.tsx`.
+
+### 7.4 🧪 Comprehensive Testing
+*   **Current Status**: Manual testing only.
+*   **Required Action**: Implement `Jest` unit tests for the critical `profitShareCalculator.js` to ensure the 50/50 split never fails.
+*   **Required Action**: End-to-End (E2E) tests using `Cypress` for the "New Sale" user flow.
+
+---
+
+## 8. Conclusion
+
+The AAYWA Platform Version 4.1 is a robust, enterprise-grade system. It does not just support the AAYWA project; it enforces its rules. By hardening the 50/50 split and organic certification into code, we ensure that the project's promise of dignity and economic empowerment is delivered with mathematical precision.

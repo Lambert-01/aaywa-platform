@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/model.module.css';
 
 interface Cohort {
@@ -12,6 +13,7 @@ interface Cohort {
 }
 
 const CohortMap: React.FC = () => {
+    const { t } = useTranslation();
     const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null);
 
     const cohorts: Cohort[] = [
@@ -56,7 +58,7 @@ const CohortMap: React.FC = () => {
                     {/* Map Visualization */}
                     <div className="w-full lg:w-1/2 relative min-h-[400px]">
                         <h2 className="text-3xl font-bold text-white mb-8 font-['Clash_Grotesk'] lg:hidden">
-                            Our Reach
+                            {t('model_page.map.title_mobile')}
                         </h2>
 
                         {/* Simplified Rwanda Map SVG */}
@@ -102,11 +104,11 @@ const CohortMap: React.FC = () => {
 
                                     <div className="grid grid-cols-2 gap-6 mb-6">
                                         <div>
-                                            <p className="text-gray-400 text-sm uppercase tracking-wider mb-1">Farmers</p>
+                                            <p className="text-gray-400 text-sm uppercase tracking-wider mb-1">{t('model_page.map.farmers')}</p>
                                             <p className="text-2xl text-white font-bold">{selectedCohort.farmers}</p>
                                         </div>
                                         <div>
-                                            <p className="text-gray-400 text-sm uppercase tracking-wider mb-1">Primary Crops</p>
+                                            <p className="text-gray-400 text-sm uppercase tracking-wider mb-1">{t('model_page.map.crops')}</p>
                                             <div className="flex flex-wrap gap-2 text-white">
                                                 {selectedCohort.crops.map(c => (
                                                     <span key={c} className="bg-[#00A1DE]/20 text-[#00A1DE] px-2 py-0.5 rounded text-sm border border-[#00A1DE]/30">
@@ -118,14 +120,14 @@ const CohortMap: React.FC = () => {
                                     </div>
 
                                     <p className="text-gray-400 font-light italic border-l-2 border-gray-700 pl-4">
-                                        "This cohort has achieved 98% repayment in their first cycle."
+                                        {t('model_page.map.quote')}
                                     </p>
 
                                     <button
                                         onClick={() => setSelectedCohort(null)}
                                         className="mt-8 text-sm text-gray-500 hover:text-white transition-colors"
                                     >
-                                        ← Clear Selection
+                                        ← {t('model_page.map.clear')}
                                     </button>
                                 </motion.div>
                             ) : (
@@ -135,13 +137,13 @@ const CohortMap: React.FC = () => {
                                     className="text-center lg:text-left"
                                 >
                                     <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6 font-['Clash_Grotesk']">
-                                        Our Geographic<br />Footprint
+                                        {t('model_page.map.title_desktop')}
                                     </h2>
                                     <p className="text-xl text-gray-400 font-light mb-8 max-w-md">
-                                        Select a location on the map to view detailed cohort performance data and crop distribution.
+                                        {t('model_page.map.subtitle')}
                                     </p>
                                     <div className="flex items-center gap-4 text-sm text-[#FFD700]">
-                                        <span className="animate-pulse">●</span> Clicking a dot reveals live data
+                                        <span className="animate-pulse">●</span> {t('model_page.map.instruction')}
                                     </div>
                                 </motion.div>
                             )}

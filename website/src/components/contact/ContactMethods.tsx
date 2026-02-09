@@ -1,23 +1,26 @@
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/contact.module.css';
 
 const ContactMethods: React.FC = () => {
+    const { t } = useTranslation();
+
     const methods = [
         {
-            title: 'General Inquiries',
+            title: t('contact.methods.general'),
             email: 'info@aaywa.rw',
             phone: '+250 788 000 000',
             icon: '✉️'
         },
         {
-            title: 'Buy Produce',
+            title: t('contact.methods.buy'),
             email: 'orders@aaywa.rw',
             phone: '+250 788 111 111',
             icon: '🛒'
         },
         {
-            title: 'Partnerships',
+            title: t('contact.methods.partnerships'),
             email: 'partners@aaywa.rw',
             phone: '+250 788 222 222',
             icon: '🤝'

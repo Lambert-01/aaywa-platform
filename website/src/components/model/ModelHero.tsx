@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/model.module.css';
 
 const ModelHero: React.FC = () => {
+    const { t } = useTranslation();
     const containerVariants: Variants = {
         hidden: { opacity: 0 },
         visible: {
@@ -38,7 +40,7 @@ const ModelHero: React.FC = () => {
                         className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 text-white uppercase tracking-[3px]"
                         style={{ fontFamily: "'Clash Grotesk', 'Inter', sans-serif" }}
                     >
-                        The AAYWA & PARTNERS Model
+                        {t('model_page.hero.title')}
                     </motion.h1>
 
                     <motion.div
@@ -51,7 +53,7 @@ const ModelHero: React.FC = () => {
                         className="text-xl md:text-2xl font-light text-gray-300 max-w-3xl mx-auto leading-relaxed"
                         style={{ fontFamily: "'Inter', sans-serif" }}
                     >
-                        A scalable blueprint for regenerative, women-led agriculture that combines productivity, market access, and financial inclusion.
+                        {t('model_page.hero.subtitle')}
                     </motion.p>
                 </motion.div>
             </div>

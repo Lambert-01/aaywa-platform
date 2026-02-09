@@ -3,6 +3,8 @@ import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import GlobalSearch from './GlobalSearch';
 import NotificationCenter from './alerts/NotificationCenter';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 import {
   HomeIcon,
   UsersIcon,
@@ -22,6 +24,7 @@ const Layout: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   // Helper for icons not imported above (to keep imports clean)
   function UserGroupIcon(props: any) { return <UsersIcon {...props} /> } // Reusing UsersIcon for now or import real one
@@ -30,17 +33,17 @@ const Layout: React.FC = () => {
   function GlobeAltIcon(props: any) { return <MapIcon {...props} /> }
 
   const navigation = [
-    { name: 'Overview', href: '/dashboard', icon: HomeIcon, roles: ['all'] },
-    { name: 'Farmers', href: '/dashboard/farmers', icon: UsersIcon, roles: ['project_manager', 'agronomist', 'field_facilitator'] },
-    { name: 'Users', href: '/dashboard/users', icon: UserCircleIcon, roles: ['project_manager'] },
-    { name: 'Cohorts', href: '/dashboard/cohorts', icon: MapIcon, roles: ['project_manager', 'agronomist'] },
-    { name: 'VSLA Groups', href: '/dashboard/vsla', icon: UserGroupIcon, roles: ['project_manager', 'field_facilitator'] },
-    { name: 'Inputs & Sales', href: '/dashboard/inputs-sales', icon: TruckIcon, roles: ['project_manager', 'agronomist'] },
-    { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCartIcon, roles: ['all'] },
-    { name: 'Compost', href: '/dashboard/compost', icon: RecycleIcon, roles: ['project_manager', 'agronomist'] },
-    { name: 'Training', href: '/dashboard/training', icon: AcademicCapIcon, roles: ['project_manager', 'field_facilitator'] },
+    { name: t('nav.dashboard'), href: '/dashboard', icon: HomeIcon, roles: ['all'] },
+    { name: t('nav.farmers'), href: '/dashboard/farmers', icon: UsersIcon, roles: ['project_manager', 'agronomist', 'field_facilitator'] },
+    { name: t('nav.users'), href: '/dashboard/users', icon: UserCircleIcon, roles: ['project_manager'] },
+    { name: t('nav.cohorts'), href: '/dashboard/cohorts', icon: MapIcon, roles: ['project_manager', 'agronomist'] },
+    { name: t('nav.vsla'), href: '/dashboard/vsla', icon: UserGroupIcon, roles: ['project_manager', 'field_facilitator'] },
+    { name: t('nav.sales'), href: '/dashboard/inputs-sales', icon: TruckIcon, roles: ['project_manager', 'agronomist'] },
+    { name: t('nav.orders'), href: '/dashboard/orders', icon: ShoppingCartIcon, roles: ['all'] },
+    { name: t('nav.compost'), href: '/dashboard/compost', icon: RecycleIcon, roles: ['project_manager', 'agronomist'] },
+    { name: t('nav.training'), href: '/dashboard/training', icon: AcademicCapIcon, roles: ['project_manager', 'field_facilitator'] },
     { name: 'Warehouse', href: '/dashboard/warehouse', icon: BuildingStorefrontIcon, roles: ['project_manager', 'agronomist'] },
-    { name: 'Geospatial Map', href: '/dashboard/maps', icon: GlobeAltIcon, roles: ['project_manager', 'agronomist'] },
+    { name: t('nav.maps'), href: '/dashboard/maps', icon: GlobeAltIcon, roles: ['project_manager', 'agronomist'] },
   ];
 
   const filteredNavigation = navigation.filter(item =>
@@ -86,7 +89,7 @@ const Layout: React.FC = () => {
             const isActive = location.pathname === item.href;
             return (
               <Link
-                key={item.name}
+                key={item.href} // Changed key to href as name is now translated and might change
                 to={item.href}
                 onClick={() => setSidebarOpen(false)}
                 className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
@@ -154,6 +157,7 @@ const Layout: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-3 lg:space-x-6 ml-auto">
+            <LanguageSwitcher />
             <NotificationCenter />
             <div className="h-6 w-px bg-gray-200"></div>
             <button className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">

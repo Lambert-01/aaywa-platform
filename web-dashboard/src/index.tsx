@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import './styles/leaflet-custom.css';
+import './i18n'; // Initialize i18n
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 

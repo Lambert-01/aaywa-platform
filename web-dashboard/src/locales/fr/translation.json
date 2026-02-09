@@ -1,0 +1,19 @@
+{
+    "dashboard": {
+        "title": "Tableau de Bord AAYWA",
+        "welcome": "Bienvenue",
+        "role": "Rôle"
+    },
+    "nav": {
+        "dashboard": "Tableau de Bord",
+        "farmers": "Agriculteurs",
+        "vsla": "Groupes VSLA",
+        "compost": "Compost",
+        "sales": "Intrants & Ventes",
+        "maps": "Cartes des Fermes",
+        "cohorts": "Cohortes",
+        "training": "Formation",
+        "orders": "Commandes",
+        "users": "Utilisateurs Système"
+    }
+}

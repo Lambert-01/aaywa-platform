@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import '../../styles/home.module.css';
 
 const StorySection: React.FC = () => {
+    const { t } = useTranslation();
     const videoRef = useRef<HTMLVideoElement>(null);
     const sectionRef = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
@@ -91,7 +93,7 @@ const StorySection: React.FC = () => {
                                         lineHeight: 1.3,
                                     }}
                                 >
-                                    "We are not beneficiaries. We are farmers."
+                                    {t('home.story.quote')}
                                 </p>
                                 <footer className="flex items-center gap-4">
                                     <div
@@ -106,7 +108,7 @@ const StorySection: React.FC = () => {
                                             color: 'rgba(255, 255, 255, 0.7)',
                                         }}
                                     >
-                                        — Marie, Cohort 1 Champion
+                                        {t('home.story.author')}
                                     </cite>
                                 </footer>
                             </blockquote>
@@ -132,7 +134,7 @@ const StorySection: React.FC = () => {
                                 }}
                             >
                                 <span className="relative">
-                                    WATCH HER STORY
+                                    {t('home.story.watch')}
                                     <span
                                         className="absolute bottom-0 left-0 w-full h-0.5 bg-yellow-400 transform origin-left transition-transform duration-300 scale-x-0 group-hover:scale-x-100"
                                         style={{ background: '#FFD700' }}
