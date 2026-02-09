@@ -118,7 +118,7 @@ const DashboardCharts = ({ data }: { data: ChartData | null }) => {
                 </div>
             </div>
 
-        
+
         </div>
     );
 };

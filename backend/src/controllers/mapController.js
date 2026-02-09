@@ -16,7 +16,16 @@ exports.getFarmersGeo = async (req, res) => {
             WHERE f.plot_boundary_coordinates IS NOT NULL
         `;
         const result = await pool.query(query);
-        res.json(result.rows);
+
+        // Ensure coordinates are parsed
+        const farmers = result.rows.map(farmer => ({
+            ...farmer,
+            plot_boundary_coordinates: typeof farmer.plot_boundary_coordinates === 'string'
+                ? JSON.parse(farmer.plot_boundary_coordinates)
+                : farmer.plot_boundary_coordinates
+        }));
+
+        res.json(farmers);
     } catch (error) {
         console.error('Error fetching farmers geo data:', error);
         res.status(500).json({ message: 'Error fetching farmers data' });
@@ -40,7 +49,16 @@ exports.getCohortsGeo = async (req, res) => {
             WHERE c.boundary_coordinates IS NOT NULL
         `;
         const result = await pool.query(query);
-        res.json(result.rows);
+
+        // Ensure coordinates are parsed
+        const cohorts = result.rows.map(cohort => ({
+            ...cohort,
+            boundary_coordinates: typeof cohort.boundary_coordinates === 'string'
+                ? JSON.parse(cohort.boundary_coordinates)
+                : cohort.boundary_coordinates
+        }));
+
+        res.json(cohorts);
     } catch (error) {
         console.error('Error fetching cohorts geo data:', error);
         res.status(500).json({ message: 'Error fetching cohorts data' });

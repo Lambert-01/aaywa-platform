@@ -108,18 +108,40 @@ const MapsPage: React.FC = () => {
 
             setFarmers((farmersData as any[]).map(f => ({
                 ...f,
-                plot_boundary_coordinates: f.plot_boundary_coordinates?.map((c: any) => ({
-                    lat: Number(c.lat),
-                    lng: Number(c.lng)
-                })) || []
+                plot_boundary_coordinates: (() => {
+                    let coords = f.plot_boundary_coordinates;
+                    if (typeof coords === 'string') {
+                        try {
+                            coords = JSON.parse(coords);
+                        } catch (e) {
+                            console.warn('Failed to parse farmer coordinates:', e);
+                            return [];
+                        }
+                    }
+                    return Array.isArray(coords) ? coords.map((c: any) => ({
+                        lat: Number(c.lat),
+                        lng: Number(c.lng)
+                    })).filter((c: any) => !isNaN(c.lat) && !isNaN(c.lng)) : [];
+                })()
             })));
 
             setCohorts((cohortsData as any[]).map(c => ({
                 ...c,
-                boundary_coordinates: c.boundary_coordinates?.map((coord: any) => ({
-                    lat: Number(coord.lat),
-                    lng: Number(coord.lng)
-                })) || []
+                boundary_coordinates: (() => {
+                    let coords = c.boundary_coordinates;
+                    if (typeof coords === 'string') {
+                        try {
+                            coords = JSON.parse(coords);
+                        } catch (e) {
+                            console.warn('Failed to parse cohort coordinates:', e);
+                            return [];
+                        }
+                    }
+                    return Array.isArray(coords) ? coords.map((coord: any) => ({
+                        lat: Number(coord.lat),
+                        lng: Number(coord.lng)
+                    })).filter((c: any) => !isNaN(c.lat) && !isNaN(c.lng)) : [];
+                })()
             })));
 
             setWarehouses((warehousesData as any[]).map(w => ({

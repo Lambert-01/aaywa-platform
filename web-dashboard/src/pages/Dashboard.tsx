@@ -183,79 +183,60 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
         try {
             const token = localStorage.getItem('aaywa_token');
-            const response = await fetch(`${API_URL}/api/dashboard/kpi?range=${timeFilter}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            const headers = { 'Authorization': `Bearer ${token}` };
 
-            const chartsResponse = await fetch(`${API_URL}/api/dashboard/charts`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            // Execute all dashboard API calls in parallel
+            const [
+                response,
+                chartsResponse,
+                mapResponse,
+                eventsResponse,
+                ordersResponse,
+                warehouseStatsResponse,
+                mapStatsResponse,
+                warehousesResponse,
+                farmersResponse,
+                cohortsResponse,
+                aggregationCentersResponse
+            ] = await Promise.all([
+                fetch(`${API_URL}/api/dashboard/kpi?range=${timeFilter}`, { headers }),
+                fetch(`${API_URL}/api/dashboard/charts`, { headers }),
+                fetch(`${API_URL}/api/dashboard/map`, { headers }),
+                fetch(`${API_URL}/api/dashboard/events`, { headers }),
+                fetch(`${API_URL}/api/marketplace/orders`, { headers }),
+                fetch(`${API_URL}/api/warehouses/stats`, { headers }),
+                fetch(`${API_URL}/api/maps/stats`, { headers }),
+                fetch(`${API_URL}/api/warehouses/facilities`, { headers }),
+                fetch(`${API_URL}/api/maps/farmers`, { headers }),
+                fetch(`${API_URL}/api/maps/cohorts`, { headers }),
+                fetch(`${API_URL}/api/maps/aggregation-centers`, { headers })
+            ]);
 
-            const mapResponse = await fetch(`${API_URL}/api/dashboard/map`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            const eventsResponse = await fetch(`${API_URL}/api/dashboard/events`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            // Fetch recent orders
-            const ordersResponse = await fetch(`${API_URL}/api/marketplace/orders`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            // Fetch warehouse stats
-            const warehouseStatsResponse = await fetch(`${API_URL}/api/warehouses/stats`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            // Fetch map stats
-            const mapStatsResponse = await fetch(`${API_URL}/api/maps/stats`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            // Fetch warehouses list
-            const warehousesResponse = await fetch(`${API_URL}/api/warehouses/facilities`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            // Fetch farmers
-            const farmersResponse = await fetch(`${API_URL}/api/maps/farmers`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            // Fetch cohorts
-            const cohortsResponse = await fetch(`${API_URL}/api/maps/cohorts`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            // Fetch aggregation centers
-            const aggregationCentersResponse = await fetch(`${API_URL}/api/maps/aggregation-centers`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
+            // KPI Data
             if (response.ok) {
                 const data = await response.json();
                 setKpiData(data);
             }
 
+            // Charts Data
             if (chartsResponse.ok) {
                 const cData = await chartsResponse.json();
                 setChartData(cData);
             }
 
+            // Map Data (Legacy Dashboard Map)
             if (mapResponse.ok) {
                 const mData = await mapResponse.json();
                 setMapData(mData);
             }
 
+            // Events
             if (eventsResponse.ok) {
                 const eData = await eventsResponse.json();
                 setEventsData(eData);
             }
 
+            // Recent Orders
             if (ordersResponse.ok) {
                 const ordersData = await ordersResponse.json();
                 const mappedOrders = (ordersData.orders || []).slice(0, 5).map((o: any) => ({
@@ -270,9 +251,9 @@ const Dashboard = () => {
                 setRecentOrders(mappedOrders);
             }
 
+            // Warehouse Stats
             if (warehouseStatsResponse.ok) {
                 const wStats = await warehouseStatsResponse.json();
-                // Map backend response to frontend interface
                 setWarehouseStats({
                     totalFacilities: wStats.totalFacilities || 0,
                     totalCapacity: wStats.totalCapacity || 0,
@@ -288,11 +269,13 @@ const Dashboard = () => {
                 });
             }
 
+            // Map Stats
             if (mapStatsResponse.ok) {
                 const mStats = await mapStatsResponse.json();
                 setMapStats(mStats);
             }
 
+            // Warehouses List
             if (warehousesResponse.ok) {
                 const wData = await warehousesResponse.json();
                 setWarehouses((wData as any[]).map((w: any) => ({
@@ -305,6 +288,7 @@ const Dashboard = () => {
                 })));
             }
 
+            // Farmers (with robust parsing)
             if (farmersResponse.ok) {
                 const fData = await farmersResponse.json();
                 setFarmers((fData as any[]).map((f: any) => ({
@@ -327,6 +311,7 @@ const Dashboard = () => {
                 })));
             }
 
+            // Cohorts (with robust parsing)
             if (cohortsResponse.ok) {
                 const cData = await cohortsResponse.json();
                 setCohorts((cData as any[]).map((c: any) => ({
@@ -349,6 +334,7 @@ const Dashboard = () => {
                 })));
             }
 
+            // Aggregation Centers
             if (aggregationCentersResponse.ok) {
                 const aData = await aggregationCentersResponse.json();
                 setAggregationCenters((aData as any[]).map((a: any) => ({
