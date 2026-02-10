@@ -14,6 +14,7 @@ router.get('/me', authorizeRoles('farmer', 'champion'), farmerController.getMyPr
 router.post('/', authorizeRoles('project_manager', 'agronomist', 'field_facilitator'), farmerController.createFarmer);
 router.get('/', authorizeRoles('project_manager', 'agronomist', 'field_facilitator'), farmerController.getAllFarmers);
 router.get('/cohort/:cohortId', authorizeRoles('project_manager', 'agronomist'), farmerController.getFarmersByCohort);
+router.get('/:id/profile', authorizeRoles('project_manager', 'agronomist', 'field_facilitator'), farmerController.getFarmerProfileById);
 router.get('/:id', authorizeRoles('project_manager', 'agronomist', 'field_facilitator'), farmerController.getFarmerById);
 router.put('/:id', authorizeRoles('project_manager', 'agronomist'), farmerController.updateFarmer);
 router.delete('/:id', authorizeRoles('project_manager'), farmerController.deleteFarmer);

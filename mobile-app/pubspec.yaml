@@ -1,5 +1,5 @@
 name: aaywa_mobile
-description:AAYWA & PARTNER Mobile App for Rural Development
+description: AAYWA & PARTNER Mobile App for Rural Development
 
 version: 1.0.0+1
 
@@ -22,6 +22,7 @@ dependencies:
   connectivity_plus: ^5.0.2
   geolocator: ^10.1.0
   google_maps_flutter: ^2.5.3
+  mobile_scanner: ^3.5.5
   flutter_localizations:
     sdk: flutter
 
@@ -37,12 +38,5 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/images/logo.png
     - assets/images/
-    - assets/icons/
-
-  fonts:
-    - family: Roboto
-      fonts:
-        - asset: fonts/Roboto-Regular.ttf
-        - asset: fonts/Roboto-Bold.ttf
-          weight: 700

@@ -118,6 +118,25 @@ const authController = {
             // Log successful login
             console.log(`[SECURITY] Successful login: ${user.id} - ${user.email}`);
 
+            // Fetch farmer profile if role is farmer or champion
+            let farmerDetails = {};
+            if (['farmer', 'champion'].includes(user.role)) {
+                try {
+                    const pool = require('../config/database');
+                    const farmerRes = await pool.query('SELECT id, cohort_id, vsla_id FROM farmers WHERE user_id = $1', [user.id]);
+                    if (farmerRes.rows.length > 0) {
+                        const f = farmerRes.rows[0];
+                        farmerDetails = {
+                            farmer_id: f.id,
+                            cohort_id: f.cohort_id,
+                            vsla_id: f.vsla_id
+                        };
+                    }
+                } catch (e) {
+                    console.warn('Failed to fetch farmer details for login:', e.message);
+                }
+            }
+
             res.json({
                 success: true,
                 message: 'Login successful',
@@ -128,7 +147,8 @@ const authController = {
                     role: user.role,
                     phone: user.phone,
                     language: user.language,
-                    last_login: new Date()
+                    last_login: new Date(),
+                    ...farmerDetails
                 },
                 token
             });

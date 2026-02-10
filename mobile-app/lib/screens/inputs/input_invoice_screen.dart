@@ -1,0 +1,308 @@
+import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
+import '../../theme/design_system.dart';
+import '../../widgets/common/aaywa_button.dart';
+import '../../widgets/common/aaywa_card.dart';
+import '../../widgets/common/aaywa_input.dart';
+
+class InputInvoiceScreen extends StatefulWidget {
+  const InputInvoiceScreen({super.key});
+
+  @override
+  State<InputInvoiceScreen> createState() => _InputInvoiceScreenState();
+}
+
+class _InputInvoiceScreenState extends State<InputInvoiceScreen> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isSubmitting = false;
+
+  final _supplierController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _notesController = TextEditingController();
+
+  String _inputType = 'Fertilizer';
+  DateTime _purchaseDate = DateTime.now();
+  int _installments = 1;
+
+  final List<String> _inputTypes = [
+    'Fertilizer',
+    'Seeds',
+    'Pesticides',
+    'Tools',
+    'Other',
+  ];
+
+  @override
+  void dispose() {
+    _supplierController.dispose();
+    _amountController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitInvoice() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final apiService = ApiService();
+      final amount = double.parse(_amountController.text);
+
+      final data = {
+        'supplier': _supplierController.text,
+        'input_type': _inputType,
+        'total_amount': amount,
+        'installments': _installments,
+        'monthly_payment': amount / _installments,
+        'purchase_date': _purchaseDate.toIso8601String(),
+        'notes': _notesController.text,
+      };
+
+      await apiService.post('/inputs/invoice', data);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invoice recorded: ${amount.toStringAsFixed(0)} RWF'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  double _calculateMonthlyPayment() {
+    final amount = double.tryParse(_amountController.text) ?? 0.0;
+    if (_installments == 0) return 0.0;
+    return amount / _installments;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundGray,
+      appBar: AppBar(
+        title: const Text('Record Input Purchase'),
+        backgroundColor: AppColors.surfaceWhite,
+        elevation: 0,
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            // Info Card
+            AaywaCard(
+              hasAccentTop: true,
+              accentColor: AppColors.info,
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppColors.info),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Record inputs purchased on credit. Payments will be deducted from sales automatically.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textMedium,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // Supplier
+            AaywaInput(
+              controller: _supplierController,
+              label: 'Supplier Name',
+              hint: 'e.g., Rwanda Agriculture Inputs Ltd',
+              prefixIcon: Icons.store,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter supplier name';
+                }
+                return null;
+              },
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            // Input Type
+            AaywaDropdown(
+              value: _inputType,
+              label: 'Input Type',
+              items: _inputTypes
+                  .map((type) => DropdownMenuItem(
+                        value: type,
+                        child: Text(type),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _inputType = value);
+                }
+              },
+              prefixIcon: Icons.category,
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            // Amount
+            AaywaInput(
+              controller: _amountController,
+              label: 'Total Amount (RWF)',
+              hint: '0',
+              keyboardType: TextInputType.number,
+              prefixIcon: Icons.attach_money,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter amount';
+                }
+                if (double.tryParse(value) == null) {
+                  return 'Please enter a valid number';
+                }
+                return null;
+              },
+              onChanged: (value) => setState(() {}),
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            // Purchase Date
+            AaywaCard(
+              child: ListTile(
+                leading:
+                    Icon(Icons.calendar_today, color: AppColors.primaryGreen),
+                title: const Text('Purchase Date'),
+                subtitle: Text(
+                  '${_purchaseDate.day}/${_purchaseDate.month}/${_purchaseDate.year}',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: _purchaseDate,
+                    firstDate:
+                        DateTime.now().subtract(const Duration(days: 365)),
+                    lastDate: DateTime.now(),
+                  );
+                  if (date != null) {
+                    setState(() => _purchaseDate = date);
+                  }
+                },
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // Payment Plan
+            Text(
+              'PAYMENT PLAN',
+              style: AppTypography.overline.copyWith(
+                color: AppColors.textMedium,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            AaywaCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Number of Installments',
+                    style: AppTypography.labelMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    children: [1, 2, 3, 4, 6].map((count) {
+                      final isSelected = _installments == count;
+                      return ChoiceChip(
+                        label: Text('$count month${count > 1 ? "s" : ""}'),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() => _installments = count);
+                        },
+                        selectedColor: AppColors.primaryGreen,
+                        backgroundColor: AppColors.accentGreen.withOpacity(0.1),
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : AppColors.textDark,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const Divider(),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Monthly Payment',
+                        style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.textMedium,
+                        ),
+                      ),
+                      Text(
+                        '${_calculateMonthlyPayment().toStringAsFixed(0)} RWF',
+                        style: AppTypography.h4.copyWith(
+                          color: AppColors.primaryGreen,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            // Notes
+            AaywaInput(
+              controller: _notesController,
+              label: 'Notes (Optional)',
+              hint: 'Additional details...',
+              maxLines: 3,
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // Submit
+            AaywaButton(
+              label: 'Record Purchase',
+              icon: Icons.check_circle,
+              onPressed: _submitInvoice,
+              isLoading: _isSubmitting,
+              fullWidth: true,
+              size: ButtonSize.large,
+            ),
+
+            const SizedBox(height: AppSpacing.xxl),
+          ],
+        ),
+      ),
+    );
+  }
+}

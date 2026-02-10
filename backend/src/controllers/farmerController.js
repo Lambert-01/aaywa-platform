@@ -109,6 +109,31 @@ const farmerController = {
     }
   },
 
+  // Get farmer profile by ID (enriched)
+  getFarmerProfileById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const query = `
+        SELECT f.*, 
+               c.name as cohort_name, v.name as vsla_name
+        FROM farmers f
+        LEFT JOIN cohorts c ON f.cohort_id = c.id
+        LEFT JOIN vsla_groups v ON f.vsla_id = v.id
+        WHERE f.id = $1
+      `;
+      const result = await require('../config/database').query(query, [id]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Farmer profile not found' });
+      }
+
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Get farmer profile error:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  },
+
   // Update farmer
   updateFarmer: async (req, res) => {
     try {

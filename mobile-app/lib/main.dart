@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'services/database_service.dart';
 import 'providers/auth_provider.dart';
-import 'providers/sync_provider.dart';
+import 'providers/dashboard_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
-import 'services/database_service.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -12,14 +12,13 @@ void main() async {
 
   // Initialize database
   final databaseService = DatabaseService();
-  await databaseService.init();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => SyncProvider(databaseService)),
-        Provider.value(value: databaseService),
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        Provider(create: (_) => databaseService),
       ],
       child: const AAYWAApp(),
     ),
@@ -32,19 +31,17 @@ class AAYWAApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AAYWA',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      title: 'AAYWA Mobile',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme, // Use new professional theme
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {
-          return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
+          if (auth.isAuthenticated) {
+            return const HomeScreen();
+          }
+          return const LoginScreen();
         },
       ),
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
-      },
     );
   }
 }

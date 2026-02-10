@@ -39,8 +39,14 @@ app.use(cors({
       'https://aaywa-platform-1.onrender.com'
     ];
 
-    // Check if origin is in allowed list or matches Vercel preview domain
-    if (allowedOrigins.indexOf(origin) !== -1 || /\.vercel\.app$/.test(origin)) {
+    // In development, allow all localhost origins (for Flutter web with dynamic ports)
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isLocalhost = origin && /^http:\/\/localhost:\d+$/.test(origin);
+
+    // Check if origin is in allowed list or matches special patterns
+    if (allowedOrigins.indexOf(origin) !== -1 ||
+      /\.vercel\.app$/.test(origin) ||
+      (isDevelopment && isLocalhost)) {
       callback(null, true);
     } else {
       console.log('Blocked by CORS:', origin); // Log blocked origins for debugging

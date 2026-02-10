@@ -10,6 +10,7 @@ router.use(authenticateToken);
 router.post('/', authorizeRoles('agronomist', 'project_manager'), saleController.createSale);
 router.get('/', authorizeRoles('agronomist', 'project_manager'), saleController.getAllSales);
 router.get('/kpis', authorizeRoles('agronomist', 'project_manager'), saleController.getKPIs);
+router.get('/my-sales', authorizeRoles('farmer', 'champion', 'project_manager'), saleController.getMySales);
 router.get('/farmer/:farmerId', saleController.getSalesByFarmer);
 router.get('/farmer/:farmerId/summary', saleController.getFarmerSummary);
 router.get('/:id', saleController.getSaleById);

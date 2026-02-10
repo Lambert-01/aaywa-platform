@@ -28,7 +28,8 @@ class SyncService {
     // Get unsynced data from local database
     final unsyncedFarmers = await _databaseService.getUnsyncedFarmers();
     final unsyncedSales = await _databaseService.getUnsyncedSales();
-    final unsyncedVSLATransactions = await _databaseService.getUnsyncedVSLATransactions();
+    final unsyncedVSLATransactions =
+        await _databaseService.getUnsyncedVSLATransactions();
 
     // Send to server
     if (unsyncedFarmers.isNotEmpty) {
@@ -50,7 +51,8 @@ class SyncService {
     // Fetch new data from server since last sync
     final newFarmers = await _fetchFarmersFromServer(lastSync);
     final newSales = await _fetchSalesFromServer(lastSync);
-    final newVSLATransactions = await _fetchVSLATransactionsFromServer(lastSync);
+    final newVSLATransactions =
+        await _fetchVSLATransactionsFromServer(lastSync);
 
     // Save to local database
     await _databaseService.saveFarmers(newFarmers);
@@ -58,50 +60,84 @@ class SyncService {
     await _databaseService.saveVSLATransactions(newVSLATransactions);
   }
 
-  Future<void> _sendFarmersToServer(List<Map<String, dynamic>> farmers) async {
+  Future<void> _sendFarmersToServer(List<Farmer> farmers) async {
+    final farmersMap = farmers
+        .map((f) => {
+              'id': f.remoteId,
+              'name': f.fullName,
+              'national_id': f.nationalId,
+              'land_size': f.landSizeHa,
+              'location': f.locationStr
+            })
+        .toList();
+
     final response = await http.post(
       Uri.parse('$baseUrl/api/farmers/batch'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'farmers': farmers}),
+      body: jsonEncode({'farmers': farmersMap}),
     );
 
     if (response.statusCode == 200) {
-      // Mark as synced
-      await _databaseService.markFarmersAsSynced(farmers.map((f) => f['id']).toList());
+      // Mark as synced using local IDs
+      await _databaseService
+          .markFarmersAsSynced(farmers.map((f) => f.id).toList());
     } else {
       throw Exception('Failed to sync farmers');
     }
   }
 
-  Future<void> _sendSalesToServer(List<Map<String, dynamic>> sales) async {
+  Future<void> _sendSalesToServer(List<Sale> sales) async {
+    final salesMap = sales
+        .map((s) => {
+              'farmer_id': s.farmerId,
+              'crop_type': s.cropType,
+              'quantity_kg': s.quantityKg,
+              'price_per_kg': s.pricePerKg,
+              'total_amount': s.totalAmount,
+              'date': s.date
+            })
+        .toList();
+
     final response = await http.post(
       Uri.parse('$baseUrl/api/sales/batch'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'sales': sales}),
+      body: jsonEncode({'sales': salesMap}),
     );
 
     if (response.statusCode == 200) {
-      await _databaseService.markSalesAsSynced(sales.map((s) => s['id']).toList());
+      await _databaseService.markSalesAsSynced(sales.map((s) => s.id).toList());
     } else {
       throw Exception('Failed to sync sales');
     }
   }
 
-  Future<void> _sendVSLATransactionsToServer(List<Map<String, dynamic>> transactions) async {
+  Future<void> _sendVSLATransactionsToServer(
+      List<VSLATransaction> transactions) async {
+    final transactionsMap = transactions
+        .map((t) => {
+              'farmer_id': t.farmerId,
+              'amount': t.amount,
+              'type': t.type,
+              'date': t.date
+            })
+        .toList();
+
     final response = await http.post(
       Uri.parse('$baseUrl/api/vsla/transactions/batch'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'transactions': transactions}),
+      body: jsonEncode({'transactions': transactionsMap}),
     );
 
     if (response.statusCode == 200) {
-      await _databaseService.markVSLATransactionsAsSynced(transactions.map((t) => t['id']).toList());
+      await _databaseService
+          .markVSLATransactionsAsSynced(transactions.map((t) => t.id).toList());
     } else {
       throw Exception('Failed to sync VSLA transactions');
     }
   }
 
-  Future<List<Map<String, dynamic>>> _fetchFarmersFromServer(DateTime? lastSync) async {
+  Future<List<Map<String, dynamic>>> _fetchFarmersFromServer(
+      DateTime? lastSync) async {
     final url = lastSync != null
         ? '$baseUrl/api/farmers?since=${lastSync.toIso8601String()}'
         : '$baseUrl/api/farmers';
@@ -116,7 +152,8 @@ class SyncService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _fetchSalesFromServer(DateTime? lastSync) async {
+  Future<List<Map<String, dynamic>>> _fetchSalesFromServer(
+      DateTime? lastSync) async {
     final url = lastSync != null
         ? '$baseUrl/api/sales?since=${lastSync.toIso8601String()}'
         : '$baseUrl/api/sales';
@@ -131,7 +168,8 @@ class SyncService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _fetchVSLATransactionsFromServer(DateTime? lastSync) async {
+  Future<List<Map<String, dynamic>>> _fetchVSLATransactionsFromServer(
+      DateTime? lastSync) async {
     final url = lastSync != null
         ? '$baseUrl/api/vsla/transactions?since=${lastSync.toIso8601String()}'
         : '$baseUrl/api/vsla/transactions';

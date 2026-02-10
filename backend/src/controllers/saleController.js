@@ -6,19 +6,19 @@ const saleController = {
   // Create new sale with auto profit-sharing
   createSale: async (req, res) => {
     try {
-      const { 
-        farmer_id, 
-        input_invoice_id, 
-        crop_type, 
-        quantity, 
+      const {
+        farmer_id,
+        input_invoice_id,
+        crop_type,
+        quantity,
         unit_price,
-        buyer_id 
+        buyer_id
       } = req.body;
 
       // Calculate profit shares
-      const inputCost = input_invoice_id ? 
+      const inputCost = input_invoice_id ?
         await InputInvoice.getOutstandingBalance(farmer_id) : 0;
-      
+
       const calculation = ProfitShareCalculator.calculate(quantity, unit_price, inputCost);
 
       // Create sale record
@@ -68,7 +68,7 @@ const saleController = {
     try {
       const { id } = req.params;
       const sale = await Sale.findById(id);
-      
+
       if (!sale) {
         return res.status(404).json({ error: 'Sale not found' });
       }
@@ -77,6 +77,28 @@ const saleController = {
     } catch (error) {
       console.error('Get sale error:', error);
       res.status(500).json({ error: 'Failed to fetch sale' });
+    }
+  },
+
+  // Get my sales (for logged-in farmer)
+  getMySales: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const pool = require('../config/database');
+
+      // 1. Get Farmer Profile
+      const farmerRes = await pool.query('SELECT id FROM farmers WHERE user_id = $1', [userId]);
+      if (farmerRes.rows.length === 0) {
+        return res.json([]); // No profile = no sales
+      }
+      const farmerId = farmerRes.rows[0].id;
+
+      // 2. Get Sales
+      const sales = await Sale.findByFarmer(farmerId);
+      res.json(sales);
+    } catch (error) {
+      console.error('Get my sales error:', error);
+      res.status(500).json({ error: 'Failed to fetch sales history' });
     }
   },
 
@@ -120,7 +142,7 @@ const saleController = {
     try {
       const { id } = req.params;
       const sale = await Sale.findById(id);
-      
+
       if (!sale) {
         return res.status(404).json({ error: 'Sale not found' });
       }
@@ -129,16 +151,16 @@ const saleController = {
       const farmer = await Farmer.findById(sale.farmer_id);
 
       const statement = ProfitShareCalculator.generateSettlementStatement(
-        { 
-          crop_type: sale.crop_type, 
-          quantity: sale.quantity, 
+        {
+          crop_type: sale.crop_type,
+          quantity: sale.quantity,
           unitPrice: sale.unit_price,
-          inputCost: sale.input_cost 
+          inputCost: sale.input_cost
         },
-        { 
-          id: farmer.id, 
-          full_name: farmer.full_name, 
-          phone: farmer.phone 
+        {
+          id: farmer.id,
+          full_name: farmer.full_name,
+          phone: farmer.phone
         }
       );
 
@@ -154,7 +176,7 @@ const saleController = {
     try {
       const { id } = req.params;
       const sale = await Sale.delete(id);
-      
+
       if (!sale) {
         return res.status(404).json({ error: 'Sale not found' });
       }

@@ -9,6 +9,7 @@ router.use(authenticateToken);
 // ==================== TRAINING SESSIONS ====================
 router.post('/sessions', authorizeRoles('field_facilitator', 'project_manager'), trainingController.createSession);
 router.get('/sessions', trainingController.getAllSessions);
+router.get('/schedule', trainingController.getSchedule);
 router.get('/sessions/:id', trainingController.getSessionById);
 router.put('/sessions/:id', authorizeRoles('field_facilitator', 'project_manager'), trainingController.updateSession);
 router.delete('/sessions/:id', authorizeRoles('project_manager'), trainingController.deleteSession);
@@ -16,6 +17,7 @@ router.delete('/sessions/:id', authorizeRoles('project_manager'), trainingContro
 // ==================== ATTENDANCE ====================
 router.post('/attendance', authorizeRoles('field_facilitator', 'project_manager'), trainingController.recordAttendance);
 router.get('/sessions/:sessionId/attendance', trainingController.getAttendanceBySession);
+router.get('/my-badges', trainingController.getFarmerBadges);
 
 // ==================== QUIZZES ====================
 router.post('/quizzes', authorizeRoles('field_facilitator', 'project_manager'), trainingController.createQuiz);

@@ -22,6 +22,7 @@ router.get('/cohort-stats', getCohortStats);
 router.get('/vsla-summary', getVSLASummary);
 router.get('/charts', getDashboardCharts);
 router.get('/map', getDashboardMap);
+router.get('/mobile', getMobileDashboard);
 router.get('/events', getUpcomingEvents);
 
 module.exports = router;

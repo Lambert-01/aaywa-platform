@@ -10,6 +10,7 @@ router.use(authenticateToken);
 router.post('/', authorizeRoles('project_manager', 'agronomist'), vslaController.createVSLA);
 router.get('/', authorizeRoles('project_manager', 'field_facilitator'), vslaController.getAllVSLAs);
 router.get('/cohort/:cohortId', vslaController.getVSLAsByCohort);
+router.get('/summary', authorizeRoles('farmer', 'champion', 'project_manager'), vslaController.getMemberSummary);
 router.get('/:id', vslaController.getVSLAById); // Now returns metrics too
 router.get('/:id/metrics', vslaController.getVSLAMetrics); // Explicit metrics endpoint
 

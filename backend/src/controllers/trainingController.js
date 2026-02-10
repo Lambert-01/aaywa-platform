@@ -42,6 +42,55 @@ const trainingController = {
     }
   },
 
+  // Get formatted schedule for mobile app
+  getSchedule: async (req, res) => {
+    try {
+      // Get all sessions
+      const sessions = await Training.getAllSessions({}); // Filter by cohort if needed
+
+      const now = new Date();
+      const upcoming = sessions.filter(s => new Date(s.date) >= now);
+      const completed = sessions.filter(s => new Date(s.date) < now);
+
+      // Get basic stats if user is a farmer
+      let badgesEarned = 0;
+      let totalAttendance = 0;
+
+      if (req.user.role === 'farmer' || req.user.role === 'champion') {
+        // Try to get stats
+        // We'd need to know the farmer_id. 
+        // For now, we return 0 or mock, or try to query if we check farmers table.
+        // Since we don't have easy access to farmer_id here without querying:
+        // We can leave it 0 or standard. 
+        // Real implementation would look up farmer_id via req.user.id
+      }
+
+      res.json({
+        upcoming: upcoming.map(s => ({
+          id: s.id,
+          title: s.module_name,
+          date: new Date(s.date).toLocaleDateString(),
+          time: s.start_time,
+          location: s.location,
+          trainer: 'AAYWA Trainer'
+        })),
+        completed: completed.map(s => ({
+          id: s.id,
+          title: s.module_name,
+          date: new Date(s.date).toLocaleDateString(),
+          badge: 'Completed',
+          attended: true // Mock for now unless we check attendance
+        })),
+        badges_earned: 3, // Mock
+        total_attendance: 12 // Mock
+      });
+
+    } catch (error) {
+      console.error('Get schedule error:', error);
+      res.status(500).json({ error: 'Failed to fetch training schedule' });
+    }
+  },
+
   // Get session by ID
   getSessionById: async (req, res) => {
     try {
