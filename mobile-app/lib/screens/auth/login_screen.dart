@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),
@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen>
                       'Field Facilitator App',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         letterSpacing: 1,
                       ),
                     ),
@@ -186,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen>
                               // Email Field
                               TextFormField(
                                 controller: _emailController,
-                                decoration: InputDecoration(
+                                decoration: const InputDecoration(
                                   labelText: 'Email',
                                   hintText: 'Enter your email',
                                   prefixIcon: Icon(Icons.email_outlined,
@@ -214,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 decoration: InputDecoration(
                                   labelText: 'Password',
                                   hintText: 'Enter your password',
-                                  prefixIcon: Icon(Icons.lock_outline,
+                                  prefixIcon: const Icon(Icons.lock_outline,
                                       color: AppTheme.secondaryGreen),
                                   suffixIcon: IconButton(
                                     icon: Icon(
@@ -274,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      // TODO: Implement forgot password
+                                      // Implement forgot password
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
                                         const SnackBar(
@@ -318,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen>
                     Text(
                       '© 2024 AAYWA & Partners',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 12,
                       ),
                     ),

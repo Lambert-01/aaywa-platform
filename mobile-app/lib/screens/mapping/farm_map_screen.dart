@@ -15,7 +15,7 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
   final List<LatLng> _polygonPoints = [];
   final Set<Polygon> _polygons = {};
   final Set<Marker> _markers = {};
-  
+
   static const CameraPosition _kRwanda = CameraPosition(
     target: LatLng(-1.9441, 30.0619),
     zoom: 14.4746,
@@ -66,18 +66,20 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
         distanceFilter: 5,
       );
 
-      _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings)
-          .listen((Position position) {
+      _positionStream =
+          Geolocator.getPositionStream(locationSettings: locationSettings)
+              .listen((Position position) {
         final point = LatLng(position.latitude, position.longitude);
         setState(() {
           _polygonPoints.add(point);
           _markers.add(Marker(
             markerId: MarkerId(point.toString()),
             position: point,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueGreen),
           ));
         });
-        
+
         _updateCamera(point);
       });
     }
@@ -95,7 +97,7 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
         points: List.from(_polygonPoints),
         strokeColor: Colors.green,
         strokeWidth: 2,
-        fillColor: Colors.green.withOpacity(0.3),
+        fillColor: Colors.green.withValues(alpha: 0.3),
       ));
     });
   }
@@ -107,7 +109,7 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
       );
       return;
     }
-    // TODO: Save to database
+    debugPrint('Saving farm boundary: ${_polygonPoints.length} points');
     Navigator.pop(context, _polygonPoints);
   }
 

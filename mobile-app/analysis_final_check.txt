@@ -1,0 +1,6 @@
+Analyzing mobile-app...                                         
+
+   info - Unnecessary 'const' keyword - lib\screens\vsla\meeting_mode_screen.dart:423:15 - unnecessary_const
+   info - Unnecessary 'const' keyword - lib\screens\vsla\meeting_mode_screen.dart:427:15 - unnecessary_const
+   info - Unnecessary 'const' keyword - lib\screens\vsla\meeting_mode_screen.dart:428:15 - unnecessary_const
+

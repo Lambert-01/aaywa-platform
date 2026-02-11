@@ -8,7 +8,8 @@ const {
     getVSLASummary,
     getDashboardCharts,
     getDashboardMap,
-    getUpcomingEvents
+    getUpcomingEvents,
+    getMobileDashboard
 } = require('../controllers/dashboardController');
 
 // All dashboard endpoints require authentication

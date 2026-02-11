@@ -1,0 +1,9 @@
+Analyzing mobile-app...                                         
+
+   info - Use 'const' with the constructor to improve performance - lib\screens\auth\login_screen.dart:83:21 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\training\training_screen.dart:375:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\training\training_screen.dart:417:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\vsla\meeting_mode_screen.dart:419:9 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\vsla\meeting_mode_screen.dart:420:18 - prefer_const_constructors
+   info - Use 'const' literals as arguments to constructors of '@immutable' classes - lib\screens\vsla\meeting_mode_screen.dart:422:23 - prefer_const_literals_to_create_immutables
+

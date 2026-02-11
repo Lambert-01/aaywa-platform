@@ -30,7 +30,7 @@ class EmptyStateWidget extends StatelessWidget {
             Icon(
               icon,
               size: 80,
-              color: AppColors.textLight.withOpacity(0.5),
+              color: AppColors.textLight.withValues(alpha: 0.5),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
@@ -88,7 +88,7 @@ class ErrorStateWidget extends StatelessWidget {
             Icon(
               Icons.error_outline,
               size: 80,
-              color: AppColors.error.withOpacity(0.7),
+              color: AppColors.error.withValues(alpha: 0.7),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
@@ -138,7 +138,7 @@ class LoadingStateWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           if (message != null) ...[
@@ -177,7 +177,7 @@ class NoInternetWidget extends StatelessWidget {
             Icon(
               Icons.wifi_off,
               size: 80,
-              color: AppColors.warning.withOpacity(0.7),
+              color: AppColors.warning.withValues(alpha: 0.7),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(

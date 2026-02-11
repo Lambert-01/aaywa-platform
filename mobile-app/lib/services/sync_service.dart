@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'database_service.dart';
 
@@ -19,7 +20,9 @@ class SyncService {
       // Update last sync timestamp
       await _databaseService.updateLastSyncTimestamp();
     } catch (e) {
-      print('Sync failed: $e');
+      if (kDebugMode) {
+        debugPrint('Sync failed: $e');
+      }
       rethrow;
     }
   }

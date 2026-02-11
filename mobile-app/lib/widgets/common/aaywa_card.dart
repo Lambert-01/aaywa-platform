@@ -80,8 +80,8 @@ class AaywaCard extends StatelessWidget {
                 height: 96,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color:
-                      (accentColor ?? AppColors.primaryGreen).withOpacity(0.05),
+                  color: (accentColor ?? AppColors.primaryGreen)
+                      .withValues(alpha: 0.05),
                 ),
               ),
             ),

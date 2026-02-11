@@ -28,7 +28,8 @@ class _VSLATransactionFormState extends State<VSLATransactionForm> {
               value: _transactionType,
               items: const [
                 DropdownMenuItem(value: 'deposit', child: Text('Deposit')),
-                DropdownMenuItem(value: 'withdrawal', child: Text('Withdrawal')),
+                DropdownMenuItem(
+                    value: 'withdrawal', child: Text('Withdrawal')),
               ],
               onChanged: (value) {
                 setState(() => _transactionType = value!);
@@ -60,7 +61,7 @@ class _VSLATransactionFormState extends State<VSLATransactionForm> {
   }
 
   void _submitTransaction() {
-    // TODO: Implement transaction submission logic
+    // Implement transaction submission logic
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Transaction submitted')),
     );

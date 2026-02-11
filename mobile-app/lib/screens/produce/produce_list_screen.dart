@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../services/database_service.dart';
 
 class MyProduceScreen extends StatefulWidget {
-  const MyProduceScreen({Key? key}) : super(key: key);
+  const MyProduceScreen({super.key});
 
   @override
   State<MyProduceScreen> createState() => _MyProduceScreenState();
@@ -21,10 +19,10 @@ class _MyProduceScreenState extends State<MyProduceScreen> {
 
   Future<void> _fetchProduce() async {
     try {
-      final dbService = Provider.of<DatabaseService>(context, listen: false);
-      // TODO: Implement actual database query
+      // Implement actual database query
       // final data = await dbService.getStoredProduce(farmerId);
-      
+      debugPrint('Fetching produce...');
+
       // Mock data for now
       setState(() {
         _produce = [
@@ -64,11 +62,13 @@ class _MyProduceScreenState extends State<MyProduceScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey[400]),
+                          Icon(Icons.inventory_2_outlined,
+                              size: 80, color: Colors.grey[400]),
                           const SizedBox(height: 16),
                           Text(
                             'No produce in storage',
-                            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.grey[600]),
                           ),
                         ],
                       ),
@@ -78,8 +78,10 @@ class _MyProduceScreenState extends State<MyProduceScreen> {
                       itemCount: _produce.length,
                       itemBuilder: (context, index) {
                         final item = _produce[index];
-                        final daysDuration = DateTime.now().difference(item['storedDate']).inDays;
-                        
+                        final daysDuration = DateTime.now()
+                            .difference(item['storedDate'])
+                            .inDays;
+
                         return Card(
                           margin: const EdgeInsets.only(bottom: 16),
                           elevation: 2,
@@ -105,7 +107,8 @@ class _MyProduceScreenState extends State<MyProduceScreen> {
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             item['crop'],
@@ -175,11 +178,13 @@ class _MyProduceScreenState extends State<MyProduceScreen> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       const Text(
                                         'Estimated Storage Fee:',
-                                        style: TextStyle(fontWeight: FontWeight.w500),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w500),
                                       ),
                                       Text(
                                         '${item['estimatedFee'].toStringAsFixed(0)} RWF',
@@ -201,7 +206,15 @@ class _MyProduceScreenState extends State<MyProduceScreen> {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // TODO: Navigate to add produce screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Scaffold(
+                appBar: AppBar(title: const Text('Add Produce')),
+                body: const Center(child: Text('Form coming soon')),
+              ),
+            ),
+          );
         },
         backgroundColor: Colors.green[700],
         label: const Text('Log New Produce'),

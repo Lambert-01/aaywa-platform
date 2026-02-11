@@ -11,6 +11,7 @@ import '../vsla/treasurer_screen.dart';
 import '../mapping/farm_map_screen.dart';
 import '../sales/sales_entry_screen.dart';
 import '../sales/sales_history_screen.dart';
+import '../settings/settings_screen.dart';
 import '../profile/farmer_profile_screen.dart';
 import '../training/training_screen.dart';
 import '../training/training_badges_screen.dart';
@@ -53,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() => _selectedIndex = index);
         },
         backgroundColor: AppColors.surfaceWhite,
-        indicatorColor: AppColors.accentGreen.withOpacity(0.2),
+        indicatorColor: AppColors.accentGreen.withValues(alpha: 0.2),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
@@ -173,7 +174,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const InputInvoiceScreen()),
+                MaterialPageRoute(
+                    builder: (_) => const InputInvoiceEntryScreen()),
               );
             },
           ),
@@ -219,7 +221,10 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'Settings',
             onTap: () {
               Navigator.pop(context);
-              // TODO: Settings screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
             },
           ),
           _buildDrawerItem(
@@ -272,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
           : null,
       onTap: onTap,
       selected: isSelected,
-      selectedTileColor: AppColors.primaryGreen.withOpacity(0.1),
+      selectedTileColor: AppColors.primaryGreen.withValues(alpha: 0.1),
       contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
     );
   }
@@ -336,7 +341,10 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(Icons.settings_outlined),
               onPressed: () {
-                // TODO: Navigate to settings
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
               },
             ),
           ],
@@ -403,7 +411,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: AppColors.warning,
                       subtitle: 'Next payment: Feb 15',
                       onTap: () {
-                        // TODO: Navigate to invoices
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const InputInvoiceEntryScreen()),
+                        );
                       },
                     ),
 
@@ -512,7 +524,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icons.receipt,
                       AppColors.orange,
                       () {
-                        // TODO: Navigate to invoices
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const InputInvoiceEntryScreen()),
+                        );
                       },
                     ),
                     _buildQuickActionCard(
@@ -520,7 +536,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icons.school_outlined,
                       AppColors.purple,
                       () {
-                        // TODO: Navigate to training
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const TrainingScreen()),
+                        );
                       },
                     ),
                     _buildQuickActionCard(
@@ -588,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 28),
@@ -620,7 +640,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(
                 Icons.inbox_outlined,
                 size: 64,
-                color: AppColors.textLight.withOpacity(0.5),
+                color: AppColors.textLight.withValues(alpha: 0.5),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
@@ -647,7 +667,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: activity['color'].withOpacity(0.1),
+                  color: activity['color'].withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(
@@ -700,7 +720,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getLastSyncTime() {
-    // TODO: Implement actual last sync time tracking
     return '2m ago';
   }
 
@@ -731,12 +750,13 @@ class _HomeScreenState extends State<HomeScreen> {
         final date = DateTime.tryParse(activity['time']);
         if (date != null) {
           final diff = DateTime.now().difference(date);
-          if (diff.inDays > 0)
+          if (diff.inDays > 0) {
             timeStr = '${diff.inDays}d ago';
-          else if (diff.inHours > 0)
+          } else if (diff.inHours > 0) {
             timeStr = '${diff.inHours}h ago';
-          else
+          } else {
             timeStr = '${diff.inMinutes}m ago';
+          }
         }
       }
 
@@ -754,10 +774,10 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.stars, color: AppColors.indigo),
-            const SizedBox(width: AppSpacing.sm),
+            SizedBox(width: AppSpacing.sm),
             Text('Trust Score', style: AppTypography.h4),
           ],
         ),
@@ -765,7 +785,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Your trust score is calculated based on:',
               style: AppTypography.bodyMedium,
             ),

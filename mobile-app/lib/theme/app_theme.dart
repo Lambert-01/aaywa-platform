@@ -15,17 +15,13 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primaryGreen,
         secondary: AppColors.secondaryGreen,
         tertiary: AppColors.accentGreen,
         surface: AppColors.surfaceWhite,
-        background: AppColors.backgroundGray,
-        error: AppColors.error,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: AppColors.textDark,
-        onBackground: AppColors.textDark,
+        // background: AppColors.backgroundGray, // Deprecated
+        // onBackground: AppColors.textDark, // Deprecated
         onError: Colors.white,
       ),
 
@@ -33,13 +29,13 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.backgroundGray,
 
       // AppBar Theme
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surfaceWhite,
         foregroundColor: AppColors.textDark,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: AppTypography.h3,
-        iconTheme: const IconThemeData(color: AppColors.textDark),
+        iconTheme: IconThemeData(color: AppColors.textDark),
         scrolledUnderElevation: 1,
         shadowColor: AppColors.shadowLight,
       ),
@@ -152,9 +148,9 @@ class AppTheme {
       // NavigationBar Theme (Material 3)
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surfaceWhite,
-        indicatorColor: AppColors.accentGreen.withOpacity(0.2),
-        labelTextStyle: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        indicatorColor: AppColors.accentGreen.withValues(alpha: 0.2),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return AppTypography.labelSmall.copyWith(
               color: AppColors.primaryGreen,
               fontWeight: FontWeight.w600,
@@ -164,8 +160,8 @@ class AppTheme {
             color: AppColors.textMedium,
           );
         }),
-        iconTheme: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.primaryGreen);
           }
           return const IconThemeData(color: AppColors.textMedium);

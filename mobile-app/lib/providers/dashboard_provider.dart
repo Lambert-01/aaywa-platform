@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
 
 class DashboardProvider with ChangeNotifier {
@@ -13,10 +13,10 @@ class DashboardProvider with ChangeNotifier {
   int _farmPlotsCount = 0;
 
   // New properties for mobile redesign
-  double _vslaBalance = 68500.0;
-  double _inputDebt = 20000.0;
-  double _salesTotal = 145000.0;
-  int _trustScore = 82;
+  double _vslaBalance = 0.0;
+  double _inputDebt = 0.0;
+  double _salesTotal = 0.0;
+  int _trustScore = 0;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -68,16 +68,16 @@ class DashboardProvider with ChangeNotifier {
               List<Map<String, dynamic>>.from(response['recentActivities']);
         }
 
-        print(
-            '[DASHBOARD] Stats loaded: Balance=$_vslaBalance, Sales=$_salesTotal');
+        if (kDebugMode) {
+          debugPrint(
+              '[DASHBOARD] Stats loaded: Balance=$_vslaBalance, Sales=$_salesTotal');
+        }
       }
     } catch (e) {
       _error = 'Failed to load dashboard data: $e';
-      print('[DASHBOARD] Error: $_error');
-
-      // Fallback mock data if server fails (so app is usable)
-      if (_vslaBalance == 0) _vslaBalance = 68500.0;
-      if (_inputDebt == 0) _inputDebt = 20000.0;
+      if (kDebugMode) {
+        debugPrint('[DASHBOARD] Error: $_error');
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

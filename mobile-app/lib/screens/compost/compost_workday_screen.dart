@@ -148,7 +148,7 @@ class _CompostWorkdayScreenState extends State<CompostWorkdayScreen> {
                     child: Column(
                       children: [
                         ListTile(
-                          leading: Icon(Icons.calendar_today,
+                          leading: const Icon(Icons.calendar_today,
                               color: AppColors.primaryGreen),
                           title: const Text('Date'),
                           subtitle: Text(
@@ -170,8 +170,8 @@ class _CompostWorkdayScreenState extends State<CompostWorkdayScreen> {
                         ),
                         const Divider(),
                         ListTile(
-                          leading:
-                              Icon(Icons.access_time, color: AppColors.blue),
+                          leading: const Icon(Icons.access_time,
+                              color: AppColors.blue),
                           title: const Text('Start Time'),
                           subtitle: Text(_startTime.format(context)),
                           trailing: const Icon(Icons.chevron_right),
@@ -187,7 +187,7 @@ class _CompostWorkdayScreenState extends State<CompostWorkdayScreen> {
                         ),
                         const Divider(),
                         ListTile(
-                          leading: Icon(Icons.access_time_filled,
+                          leading: const Icon(Icons.access_time_filled,
                               color: AppColors.blue),
                           title: const Text('End Time'),
                           subtitle: Text(_endTime.format(context)),
@@ -250,7 +250,8 @@ class _CompostWorkdayScreenState extends State<CompostWorkdayScreen> {
                           setState(() => _activity = activity);
                         },
                         selectedColor: AppColors.primaryGreen,
-                        backgroundColor: AppColors.accentGreen.withOpacity(0.1),
+                        backgroundColor:
+                            AppColors.accentGreen.withValues(alpha: 0.1),
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.white : AppColors.textDark,
                           fontWeight:
@@ -391,10 +392,10 @@ class _CompostWorkdayScreenState extends State<CompostWorkdayScreen> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.1),
+                  color: AppColors.warning.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.account_balance_wallet,
                   color: AppColors.warning,
                   size: 32,

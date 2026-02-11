@@ -1,0 +1,17 @@
+Analyzing mobile-app...                                         
+
+   info - Use 'const' with the constructor to improve performance - lib\screens\auth\login_screen.dart:83:21 - prefer_const_constructors
+   info - The imported package 'aaywa_mobile_app' isn't a dependency of the importing package - lib\screens\profile\farmer_profile_screen.dart:8:8 - depend_on_referenced_packages
+  error - Target of URI doesn't exist: 'package:aaywa_mobile_app/screens/inputs/input_invoice_screen.dart' - lib\screens\profile\farmer_profile_screen.dart:8:8 - uri_does_not_exist
+  error - The name 'InputInvoiceEntryScreen' isn't a class - lib\screens\profile\farmer_profile_screen.dart:377:39 - creation_with_non_type
+   info - Use 'const' with the constructor to improve performance - lib\screens\training\training_badges_screen.dart:312:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\training\training_screen.dart:345:26 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\training\training_screen.dart:359:17 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\training\training_screen.dart:374:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\training\training_screen.dart:416:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\vsla\meeting_mode_screen.dart:419:9 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\screens\vsla\meeting_mode_screen.dart:420:18 - prefer_const_constructors
+   info - Use 'const' literals as arguments to constructors of '@immutable' classes - lib\screens\vsla\meeting_mode_screen.dart:422:23 - prefer_const_literals_to_create_immutables
+  error - Undefined name 'valueColor' - lib\widgets\common\state_widgets.dart:141:13 - undefined_identifier
+  error - Expected to find ']' - lib\widgets\common\state_widgets.dart:141:23 - expected_token
+

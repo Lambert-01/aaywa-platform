@@ -184,6 +184,35 @@ const trainingController = {
     }
   },
 
+  // Get farmer badges
+  getFarmerBadges: async (req, res) => {
+    try {
+      // TODO: Implement real badge logic based on completed trainings/quizzes
+      // For now returning mock badges to unblock the app
+      const badges = [
+        {
+          id: 1,
+          title: 'Training Initiate',
+          description: 'Completed first training',
+          date: new Date().toISOString(),
+          icon: 'school'
+        },
+        {
+          id: 2,
+          title: 'Fast Learner',
+          description: 'Passed a quiz with 100%',
+          date: new Date().toISOString(),
+          icon: 'star'
+        }
+      ];
+
+      res.json(badges);
+    } catch (error) {
+      console.error('Get badges error:', error);
+      res.status(500).json({ error: 'Failed to fetch badges' });
+    }
+  },
+
   // ==================== QUIZZES ====================
 
   // Create quiz

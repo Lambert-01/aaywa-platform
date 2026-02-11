@@ -24,7 +24,7 @@ class ConnectivityService extends ChangeNotifier {
       final result = await _connectivity.checkConnectivity();
       _updateConnectionStatus(result);
     } catch (e) {
-      print('[CONNECTIVITY] Error checking connectivity: $e');
+      debugPrint('[CONNECTIVITY] Error checking connectivity: $e');
       _isOnline = false;
       _hasChecked = true;
       notifyListeners();
@@ -37,7 +37,7 @@ class ConnectivityService extends ChangeNotifier {
     _hasChecked = true;
 
     if (wasOnline != _isOnline) {
-      print(
+      debugPrint(
           '[CONNECTIVITY] Status changed: ${_isOnline ? "Online" : "Offline"}');
       notifyListeners();
     }
@@ -71,7 +71,7 @@ class OfflineIndicator extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
       ),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.warning,
         boxShadow: [AppShadows.sm],
       ),
@@ -132,8 +132,8 @@ class ConnectivityBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: isOnline
-            ? AppColors.success.withOpacity(0.1)
-            : AppColors.warning.withOpacity(0.1),
+            ? AppColors.success.withValues(alpha: 0.1)
+            : AppColors.warning.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.full),
         border: Border.all(
           color: isOnline ? AppColors.success : AppColors.warning,

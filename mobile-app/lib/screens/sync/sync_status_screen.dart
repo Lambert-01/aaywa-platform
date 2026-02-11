@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/database_service.dart';
@@ -76,7 +77,9 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
           await dbService.markSalesAsSynced([sale.id]);
           syncedSalesCount++;
         } catch (e) {
-          print('[SYNC] Failed to sync sale: $e');
+          if (kDebugMode) {
+            debugPrint('[SYNC] Failed to sync sale: $e');
+          }
         }
       }
 
@@ -96,7 +99,9 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
           await dbService.markVSLATransactionsAsSynced([transaction.id]);
           syncedTransactionsCount++;
         } catch (e) {
-          print('[SYNC] Failed to sync transaction: $e');
+          if (kDebugMode) {
+            debugPrint('[SYNC] Failed to sync transaction: $e');
+          }
         }
       }
 
@@ -249,7 +254,7 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
                 decoration: BoxDecoration(
                   color:
                       (totalPending > 0 ? AppColors.warning : AppColors.success)
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -298,7 +303,7 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -319,8 +324,8 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
             ),
             decoration: BoxDecoration(
               color: count > 0
-                  ? AppColors.warning.withOpacity(0.1)
-                  : AppColors.success.withOpacity(0.1),
+                  ? AppColors.warning.withValues(alpha: 0.1)
+                  : AppColors.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
             child: Text(

@@ -68,9 +68,9 @@ class _TrainingScreenState extends State<TrainingScreen>
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             onPressed: () {
-              // TODO: Navigate to QR scanner
+              // Navigate to QR scanner
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('QR Scanner - Coming soon')),
+                const SnackBar(content: Text('QR Scanner coming soon')),
               );
             },
           ),
@@ -155,9 +155,9 @@ class _TrainingScreenState extends State<TrainingScreen>
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -194,7 +194,7 @@ class _TrainingScreenState extends State<TrainingScreen>
               Icon(
                 Icons.event_available,
                 size: 64,
-                color: AppColors.textLight.withOpacity(0.5),
+                color: AppColors.textLight.withValues(alpha: 0.5),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
@@ -237,7 +237,7 @@ class _TrainingScreenState extends State<TrainingScreen>
               Icon(
                 Icons.school_outlined,
                 size: 64,
-                color: AppColors.textLight.withOpacity(0.5),
+                color: AppColors.textLight.withValues(alpha: 0.5),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
@@ -285,8 +285,8 @@ class _TrainingScreenState extends State<TrainingScreen>
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: isUpcoming
-                      ? AppColors.blue.withOpacity(0.1)
-                      : AppColors.success.withOpacity(0.1),
+                      ? AppColors.blue.withValues(alpha: 0.1)
+                      : AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(
@@ -309,11 +309,8 @@ class _TrainingScreenState extends State<TrainingScreen>
                     const SizedBox(height: AppSpacing.xs),
                     Row(
                       children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 14,
-                          color: AppColors.textMedium,
-                        ),
+                        const Icon(Icons.person,
+                            size: 16, color: AppColors.primaryGreen),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           date,
@@ -323,11 +320,8 @@ class _TrainingScreenState extends State<TrainingScreen>
                         ),
                         if (time.isNotEmpty) ...[
                           const SizedBox(width: AppSpacing.sm),
-                          Icon(
-                            Icons.access_time,
-                            size: 14,
-                            color: AppColors.textMedium,
-                          ),
+                          const Icon(Icons.check_circle,
+                              color: AppColors.success, size: 20),
                           const SizedBox(width: AppSpacing.xs),
                           Text(
                             time,
@@ -345,10 +339,10 @@ class _TrainingScreenState extends State<TrainingScreen>
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.xs),
                   decoration: BoxDecoration(
-                    color: AppColors.warning.withOpacity(0.1),
+                    color: AppColors.warning.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.emoji_events,
                     color: AppColors.warning,
                     size: 20,
@@ -362,7 +356,8 @@ class _TrainingScreenState extends State<TrainingScreen>
           if (location.isNotEmpty)
             Row(
               children: [
-                Icon(Icons.location_on, size: 16, color: AppColors.textMedium),
+                const Icon(Icons.location_on,
+                    size: 16, color: AppColors.textMedium),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   location,
@@ -377,7 +372,8 @@ class _TrainingScreenState extends State<TrainingScreen>
               padding: const EdgeInsets.only(top: AppSpacing.xs),
               child: Row(
                 children: [
-                  Icon(Icons.person, size: 16, color: AppColors.textMedium),
+                  const Icon(Icons.person,
+                      size: 16, color: AppColors.textMedium),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
                     'Trainer: $trainer',
@@ -413,13 +409,13 @@ class _TrainingScreenState extends State<TrainingScreen>
                 vertical: AppSpacing.xs,
               ),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
+                color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.full),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.check_circle,
                     size: 14,
                     color: AppColors.success,

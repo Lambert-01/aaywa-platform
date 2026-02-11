@@ -99,7 +99,10 @@ class _VSLATreasurerScreenState extends State<VSLATreasurerScreen> {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // TODO: Navigate to transaction entry
+          // Navigate to transaction entry
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Transaction entry coming soon')),
+          );
         },
         backgroundColor: AppColors.primaryGreen,
         icon: const Icon(Icons.add),
@@ -109,8 +112,8 @@ class _VSLATreasurerScreenState extends State<VSLATreasurerScreen> {
   }
 
   Widget _buildBalanceCard() {
-    final balance = _vslaData['current_balance'] ?? 68500.0;
-    final growth = _vslaData['monthly_growth'] ?? 12.0;
+    final balance = _vslaData['current_balance'] ?? 0.0;
+    final growth = _vslaData['monthly_growth'] ?? 0.0;
 
     return AaywaCard(
       hasAccentTop: true,
@@ -133,13 +136,14 @@ class _VSLATreasurerScreenState extends State<VSLATreasurerScreen> {
                   vertical: AppSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.1),
+                  color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.trending_up, size: 14, color: AppColors.success),
+                    const Icon(Icons.account_balance_wallet,
+                        size: 14, color: AppColors.success),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       '+${growth.toStringAsFixed(1)}%',
@@ -183,28 +187,25 @@ class _VSLATreasurerScreenState extends State<VSLATreasurerScreen> {
       children: [
         CompactKPICard(
           label: 'Total Savings',
-          value:
-              '${(_vslaData['total_savings'] ?? 68500).toStringAsFixed(0)} RWF',
+          value: '${(_vslaData['total_savings'] ?? 0).toStringAsFixed(0)} RWF',
           icon: Icons.savings,
           color: AppColors.primaryGreen,
         ),
         CompactKPICard(
           label: 'Active Loan',
-          value: '${(_vslaData['active_loan'] ?? 8500).toStringAsFixed(0)} RWF',
+          value: '${(_vslaData['active_loan'] ?? 0).toStringAsFixed(0)} RWF',
           icon: Icons.account_balance,
           color: AppColors.warning,
         ),
         CompactKPICard(
           label: 'Social Fund',
-          value:
-              '${(_vslaData['social_fund'] ?? 12000).toStringAsFixed(0)} RWF',
+          value: '${(_vslaData['social_fund'] ?? 0).toStringAsFixed(0)} RWF',
           icon: Icons.favorite,
           color: AppColors.error,
         ),
         CompactKPICard(
           label: 'Next Payment',
-          value:
-              '${(_vslaData['next_payment'] ?? 2750).toStringAsFixed(0)} RWF',
+          value: '${(_vslaData['next_payment'] ?? 0).toStringAsFixed(0)} RWF',
           icon: Icons.schedule,
           color: AppColors.info,
         ),
@@ -266,7 +267,7 @@ class _VSLATreasurerScreenState extends State<VSLATreasurerScreen> {
                   vertical: AppSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
@@ -340,7 +341,7 @@ class _VSLATreasurerScreenState extends State<VSLATreasurerScreen> {
                           decoration: BoxDecoration(
                             color: index == 11
                                 ? AppColors.primaryGreen
-                                : AppColors.accentGreen.withOpacity(0.5),
+                                : AppColors.accentGreen.withValues(alpha: 0.5),
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(4),
                             ),
@@ -381,7 +382,11 @@ class _VSLATreasurerScreenState extends State<VSLATreasurerScreen> {
             ),
             TextButton(
               onPressed: () {
-                // TODO: View all transactions
+                // View all transactions
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('All transactions view coming soon')),
+                );
               },
               child: const Text('View All'),
             ),
@@ -397,7 +402,7 @@ class _VSLATreasurerScreenState extends State<VSLATreasurerScreen> {
                   Icon(
                     Icons.receipt_long_outlined,
                     size: 48,
-                    color: AppColors.textLight.withOpacity(0.5),
+                    color: AppColors.textLight.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
@@ -441,7 +446,7 @@ class _VSLATreasurerScreenState extends State<VSLATreasurerScreen> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(icon, color: color, size: 20),

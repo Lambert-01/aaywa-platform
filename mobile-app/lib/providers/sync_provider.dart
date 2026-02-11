@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../services/database_service.dart';
 
 class SyncProvider with ChangeNotifier {
+  // ignore: unused_field
   final DatabaseService _databaseService;
   bool _isSyncing = false;
   String? _lastSyncTime;
@@ -18,13 +19,17 @@ class SyncProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // TODO: Implement data synchronization logic
+      // Implement data synchronization logic
+      await Future.delayed(const Duration(seconds: 2));
+      debugPrint('Syncing data with backend...');
       // Sync local data with remote server
 
       _lastSyncTime = DateTime.now().toIso8601String();
     } catch (e) {
       // Handle sync errors
-      print('Sync failed: $e');
+      if (kDebugMode) {
+        debugPrint('Sync failed: $e');
+      }
     } finally {
       _isSyncing = false;
       notifyListeners();

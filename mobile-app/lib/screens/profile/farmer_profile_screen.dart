@@ -5,6 +5,7 @@ import '../../services/api_service.dart';
 import '../../theme/design_system.dart';
 import '../../widgets/common/aaywa_button.dart';
 import '../../widgets/common/aaywa_card.dart';
+import 'package:aaywa_mobile/screens/inputs/input_invoice_screen.dart';
 import '../../widgets/kpi_metric_card.dart';
 
 class FarmerProfileScreen extends StatefulWidget {
@@ -130,7 +131,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                             Text(
                               'Cohort ${auth.user?['cohort'] ?? 'N/A'} • ${auth.user?['phone'] ?? ''}',
                               style: AppTypography.bodyMedium.copyWith(
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                               ),
                             ),
                           ],
@@ -303,7 +304,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
               const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.info_outline,
                     size: 16,
                     color: AppColors.textMedium,
@@ -343,7 +344,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                   Icon(
                     Icons.receipt_long_outlined,
                     size: 64,
-                    color: AppColors.textLight.withOpacity(0.5),
+                    color: AppColors.textLight.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
@@ -370,7 +371,12 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
           icon: Icons.add_circle_outline,
           type: ButtonType.secondary,
           onPressed: () {
-            // TODO: Navigate to input invoice entry
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const InputInvoiceEntryScreen(),
+              ),
+            );
           },
           fullWidth: true,
         ),
@@ -455,7 +461,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
           Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -536,8 +542,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                 ),
                 decoration: BoxDecoration(
                   color: remaining > 0
-                      ? AppColors.warning.withOpacity(0.1)
-                      : AppColors.success.withOpacity(0.1),
+                      ? AppColors.warning.withValues(alpha: 0.1)
+                      : AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
@@ -616,7 +622,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
               value: progress,
               minHeight: 6,
               backgroundColor: AppColors.divider,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.success),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.success),
             ),
           ),
         ],

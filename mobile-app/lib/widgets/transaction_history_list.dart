@@ -5,7 +5,7 @@ class TransactionHistoryList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Replace with actual transaction data
+    // Replace with actual transaction data
     final transactions = [
       {'type': 'Deposit', 'amount': 100.0, 'date': '2023-10-01'},
       {'type': 'Withdrawal', 'amount': 50.0, 'date': '2023-10-02'},

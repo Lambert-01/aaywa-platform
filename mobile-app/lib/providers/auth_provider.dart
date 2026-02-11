@@ -34,10 +34,10 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      print('[AUTH] Attempting login for: $email'); // Debug log
+      debugPrint('[AUTH] Attempting login for: $email'); // Debug log
       final data = await _apiService.login(email, password);
 
-      print('[AUTH] Login response: $data'); // Debug log
+      debugPrint('[AUTH] Login response: $data'); // Debug log
 
       _token = data['token'];
       _user = data['user'];
@@ -46,11 +46,11 @@ class AuthProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', _token!);
 
-      print('[AUTH] Login successful, token saved'); // Debug log
+      debugPrint('[AUTH] Login successful, token saved'); // Debug log
 
       notifyListeners();
     } catch (e) {
-      print('[AUTH] Login error: $e'); // Debug log
+      debugPrint('[AUTH] Login error: $e'); // Debug log
       rethrow;
     } finally {
       _isLoading = false;

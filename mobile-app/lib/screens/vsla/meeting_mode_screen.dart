@@ -44,10 +44,11 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
 
       if (vslaId == null) {
         // If no VSLA Group, maybe show error or empty
-        if (mounted)
+        if (mounted) {
           setState(() {
             _isLoading = false;
           });
+        }
         return;
       }
 
@@ -70,8 +71,10 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
         });
       }
     } catch (e) {
-      print('Error loading members: $e');
-      if (mounted) setState(() => _isLoading = false);
+      debugPrint('Error loading members: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -135,11 +138,18 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
       body: Column(
         children: [
           // Progress bar
-          LinearProgressIndicator(
-            value: (_currentStep + 1) / _steps.length,
-            backgroundColor: AppColors.divider,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
-          ),
+          if (_isLoading)
+            const LinearProgressIndicator(
+              backgroundColor: AppColors.divider,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+            )
+          else
+            LinearProgressIndicator(
+              value: (_currentStep + 1) / _steps.length,
+              backgroundColor: AppColors.divider,
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+            ),
 
           Expanded(
             child: PageView(
@@ -158,7 +168,7 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.surfaceWhite,
           boxShadow: [AppShadows.md],
         ),
@@ -233,8 +243,8 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+        const Padding(
+          padding: EdgeInsets.only(bottom: AppSpacing.md),
           child: Text(
             'Record savings for present members (Share value: 500 RWF)',
             style: AppTypography.bodyMedium,
@@ -298,8 +308,8 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+        const Padding(
+          padding: EdgeInsets.only(bottom: AppSpacing.md),
           child: Text(
             'Members scheduled for repayment today',
             style: AppTypography.bodyMedium,
@@ -341,7 +351,8 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.request_quote, size: 64, color: AppColors.textLight),
+            const Icon(Icons.request_quote,
+                size: 64, color: AppColors.textLight),
             const SizedBox(height: AppSpacing.md),
             Text(
               'No new loan requests',
@@ -353,7 +364,20 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
               icon: Icons.add,
               type: ButtonType.secondary,
               onPressed: () {
-                // TODO: Show loan request dialog
+                // Show loan request dialog
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('New Loan Request'),
+                    content: const Text('Loan request form coming soon.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           ],
@@ -392,7 +416,7 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
-        AaywaCard(
+        const AaywaCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -400,7 +424,7 @@ class _VSLAMeetingScreenState extends State<VSLAMeetingScreen> {
                 'MEETING NOTES',
                 style: AppTypography.overline,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              SizedBox(height: AppSpacing.sm),
               AaywaInput(
                 label: 'Secretary Notes',
                 hint: 'Record key decisions or issues...',

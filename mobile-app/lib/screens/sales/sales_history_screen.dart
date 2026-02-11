@@ -101,35 +101,41 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.sm),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: const Icon(Icons.shopping_bag,
+                            color: AppColors.primaryGreen, size: 20),
                       ),
-                      child: Icon(Icons.shopping_bag,
-                          color: AppColors.primaryGreen, size: 20),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          sale['crop'],
-                          style: AppTypography.labelLarge
-                              .copyWith(fontWeight: FontWeight.w600),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              sale['crop'],
+                              style: AppTypography.labelLarge
+                                  .copyWith(fontWeight: FontWeight.w600),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              sale['date'],
+                              style: AppTypography.caption
+                                  .copyWith(color: AppColors.textMedium),
+                            ),
+                          ],
                         ),
-                        Text(
-                          sale['date'],
-                          style: AppTypography.caption
-                              .copyWith(color: AppColors.textMedium),
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.md),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -165,9 +171,10 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(Icons.check_circle, color: AppColors.success, size: 48),
+              const Icon(Icons.check_circle,
+                  color: AppColors.success, size: 48),
               const SizedBox(height: AppSpacing.md),
-              Text('Transaction Receipt', style: AppTypography.h3),
+              const Text('Transaction Receipt', style: AppTypography.h3),
               const SizedBox(height: AppSpacing.xs),
               Text('ID: ${sale['id']}', style: AppTypography.caption),
               const Divider(height: 32),
@@ -187,7 +194,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: () {}, // TODO: Share functionality
+                    onPressed: () {
+                      // Share functionality
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sharing coming soon')),
+                      );
+                    },
                     icon: const Icon(Icons.share, size: 18),
                     label: const Text('Share'),
                   ),

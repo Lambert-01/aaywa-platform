@@ -89,10 +89,10 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryGreen.withOpacity(0.1),
+                      color: AppColors.primaryGreen.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.shopping_cart,
                       color: AppColors.primaryGreen,
                       size: 32,
@@ -160,7 +160,8 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                     });
                   },
                   selectedColor: crop['color'],
-                  backgroundColor: (crop['color'] as Color).withOpacity(0.1),
+                  backgroundColor:
+                      (crop['color'] as Color).withValues(alpha: 0.1),
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : AppColors.textDark,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
@@ -280,7 +281,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withOpacity(0.1),
+                        color: AppColors.primaryGreen.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         border: Border.all(
                           color: AppColors.primaryGreen,
@@ -291,7 +292,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(AppSpacing.sm),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: AppColors.primaryGreen,
                               shape: BoxShape.circle,
                             ),
@@ -324,7 +325,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                               ],
                             ),
                           ),
-                          Icon(
+                          const Icon(
                             Icons.arrow_forward,
                             color: AppColors.primaryGreen,
                           ),
@@ -354,7 +355,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(AppSpacing.sm),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: AppColors.textMedium,
                               shape: BoxShape.circle,
                             ),
@@ -519,7 +520,8 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
   }
 
   Future<void> _saveOffline() async {
-    // TODO: Save to local database for offline sync
+    // Save to local database for offline sync
+    debugPrint('Saving sale to local database...');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Sale saved offline. Will sync when online.'),

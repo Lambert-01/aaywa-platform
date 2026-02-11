@@ -55,7 +55,7 @@ class _TrainingBadgesScreenState extends State<TrainingBadgesScreen> {
         });
       }
     } catch (e) {
-      print('Error loading badges: $e');
+      debugPrint('Error loading badges: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -147,10 +147,10 @@ class _TrainingBadgesScreenState extends State<TrainingBadgesScreen> {
                           Container(
                             padding: const EdgeInsets.all(AppSpacing.md),
                             decoration: BoxDecoration(
-                              color: AppColors.warning.withOpacity(0.1),
+                              color: AppColors.warning.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
+                            child: const Icon(
                               Icons.emoji_events,
                               color: AppColors.warning,
                               size: 32,
@@ -165,8 +165,8 @@ class _TrainingBadgesScreenState extends State<TrainingBadgesScreen> {
                           value: progress,
                           minHeight: 8,
                           backgroundColor: AppColors.divider,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(AppColors.warning),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.warning),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
@@ -250,7 +250,7 @@ class _BadgeCard extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
               color: badge.isEarned
-                  ? badge.color.withOpacity(0.1)
+                  ? badge.color.withValues(alpha: 0.1)
                   : AppColors.backgroundGray,
               shape: BoxShape.circle,
               border: Border.all(
@@ -296,7 +296,7 @@ class _BadgeCard extends StatelessWidget {
                 vertical: 2,
               ),
               decoration: BoxDecoration(
-                color: badge.color.withOpacity(0.1),
+                color: badge.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
               child: Text(
@@ -309,8 +309,8 @@ class _BadgeCard extends StatelessWidget {
               ),
             ),
           ] else
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xs),
+            const Padding(
+              padding: EdgeInsets.only(top: AppSpacing.xs),
               child: Icon(Icons.lock, size: 14, color: AppColors.textLight),
             ),
         ],

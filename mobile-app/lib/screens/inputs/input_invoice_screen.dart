@@ -5,14 +5,15 @@ import '../../widgets/common/aaywa_button.dart';
 import '../../widgets/common/aaywa_card.dart';
 import '../../widgets/common/aaywa_input.dart';
 
-class InputInvoiceScreen extends StatefulWidget {
-  const InputInvoiceScreen({super.key});
+class InputInvoiceEntryScreen extends StatefulWidget {
+  const InputInvoiceEntryScreen({super.key});
 
   @override
-  State<InputInvoiceScreen> createState() => _InputInvoiceScreenState();
+  State<InputInvoiceEntryScreen> createState() =>
+      _InputInvoiceEntryScreenState();
 }
 
-class _InputInvoiceScreenState extends State<InputInvoiceScreen> {
+class _InputInvoiceEntryScreenState extends State<InputInvoiceEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
 
@@ -112,7 +113,7 @@ class _InputInvoiceScreenState extends State<InputInvoiceScreen> {
               accentColor: AppColors.info,
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppColors.info),
+                  const Icon(Icons.info_outline, color: AppColors.info),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
@@ -188,8 +189,8 @@ class _InputInvoiceScreenState extends State<InputInvoiceScreen> {
             // Purchase Date
             AaywaCard(
               child: ListTile(
-                leading:
-                    Icon(Icons.calendar_today, color: AppColors.primaryGreen),
+                leading: const Icon(Icons.calendar_today,
+                    color: AppColors.primaryGreen),
                 title: const Text('Purchase Date'),
                 subtitle: Text(
                   '${_purchaseDate.day}/${_purchaseDate.month}/${_purchaseDate.year}',
@@ -243,7 +244,8 @@ class _InputInvoiceScreenState extends State<InputInvoiceScreen> {
                           setState(() => _installments = count);
                         },
                         selectedColor: AppColors.primaryGreen,
-                        backgroundColor: AppColors.accentGreen.withOpacity(0.1),
+                        backgroundColor:
+                            AppColors.accentGreen.withValues(alpha: 0.1),
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.white : AppColors.textDark,
                           fontWeight:

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/env.dart';
@@ -19,8 +20,8 @@ class ApiService {
   Future<dynamic> login(String email, String password) async {
     try {
       final url = '$baseUrl/auth/login';
-      print('[API] Login URL: $url'); // Debug
-      print('[API] Login email: $email'); // Debug
+      debugPrint('[API] Login URL: $url'); // Debug
+      debugPrint('[API] Login email: $email'); // Debug
 
       final response = await http.post(
         Uri.parse(url),
@@ -28,8 +29,8 @@ class ApiService {
         body: jsonEncode({'email': email, 'password': password}),
       );
 
-      print('[API] Response status: ${response.statusCode}'); // Debug
-      print('[API] Response body: ${response.body}'); // Debug
+      debugPrint('[API] Response status: ${response.statusCode}'); // Debug
+      debugPrint('[API] Response body: ${response.body}'); // Debug
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -38,7 +39,7 @@ class ApiService {
         throw Exception(error['message'] ?? 'Login failed');
       }
     } catch (e) {
-      print('[API] Network error: $e'); // Debug
+      debugPrint('[API] Network error: $e'); // Debug
       throw Exception('Network error: $e');
     }
   }
@@ -47,7 +48,7 @@ class ApiService {
   Future<dynamic> get(String endpoint) async {
     try {
       final url = '$baseUrl$endpoint';
-      print('[API] GET $url');
+      debugPrint('[API] GET $url');
 
       // Get token from SharedPreferences for authenticated requests
       final prefs = await SharedPreferences.getInstance();
@@ -63,7 +64,7 @@ class ApiService {
         headers: headers,
       );
 
-      print('[API] Response status: ${response.statusCode}');
+      debugPrint('[API] Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -72,7 +73,7 @@ class ApiService {
         throw Exception(error['message'] ?? 'Request failed');
       }
     } catch (e) {
-      print('[API] GET error: $e');
+      debugPrint('[API] GET error: $e');
       throw Exception('Network error: $e');
     }
   }
@@ -81,8 +82,8 @@ class ApiService {
   Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
     try {
       final url = '$baseUrl$endpoint';
-      print('[API] POST $url');
-      print('[API] POST data: $data');
+      debugPrint('[API] POST $url');
+      debugPrint('[API] POST data: $data');
 
       // Get token from SharedPreferences for authenticated requests
       final prefs = await SharedPreferences.getInstance();
@@ -99,8 +100,8 @@ class ApiService {
         body: jsonEncode(data),
       );
 
-      print('[API] Response status: ${response.statusCode}');
-      print('[API] Response body: ${response.body}');
+      debugPrint('[API] Response status: ${response.statusCode}');
+      debugPrint('[API] Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
@@ -109,7 +110,7 @@ class ApiService {
         throw Exception(error['message'] ?? 'Request failed');
       }
     } catch (e) {
-      print('[API] POST error: $e');
+      debugPrint('[API] POST error: $e');
       throw Exception('Network error: $e');
     }
   }
