@@ -19,11 +19,11 @@ class User {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     const query = `
-      INSERT INTO users (phone, full_name, email, password_hash, role, language)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, phone, full_name, email, role, language, is_active, created_at
+      INSERT INTO users (phone, full_name, email, password_hash, role, language, preferences)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id, phone, full_name, email, role, language, preferences, is_active, created_at
     `;
-    const values = [phone, full_name, email || null, passwordHash, role, language || 'rw'];
+    const values = [phone, full_name, email || null, passwordHash, role, language || 'en', userData.preferences || {}];
     const result = await pool.query(query, values);
     return result.rows[0];
   }
@@ -57,7 +57,7 @@ class User {
    */
   static async findById(id) {
     const query = `
-      SELECT id, phone, full_name, email, role, language, is_active, created_at, last_login 
+      SELECT id, phone, full_name, email, role, language, preferences, is_active, created_at, last_login 
       FROM users 
       WHERE id = $1 AND is_active = true
     `;
@@ -104,7 +104,7 @@ class User {
    * @returns {Promise<object|null>} Updated user or null if not found
    */
   static async update(id, updateData) {
-    const allowedFields = ['full_name', 'email', 'language', 'role'];
+    const allowedFields = ['full_name', 'email', 'language', 'role', 'preferences'];
     const fields = [];
     const values = [];
     let paramIndex = 1;

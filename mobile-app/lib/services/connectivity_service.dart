@@ -5,7 +5,7 @@ import '../theme/design_system.dart';
 
 class ConnectivityService extends ChangeNotifier {
   final Connectivity _connectivity = Connectivity();
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   bool _isOnline = true;
   bool _hasChecked = false;
@@ -31,9 +31,10 @@ class ConnectivityService extends ChangeNotifier {
     }
   }
 
-  void _updateConnectionStatus(ConnectivityResult result) {
+  void _updateConnectionStatus(List<ConnectivityResult> result) {
     final wasOnline = _isOnline;
-    _isOnline = result != ConnectivityResult.none;
+    // Consider online if any interface has connection (wifi, mobile, ethernet, etc.)
+    _isOnline = result.any((r) => r != ConnectivityResult.none);
     _hasChecked = true;
 
     if (wasOnline != _isOnline) {

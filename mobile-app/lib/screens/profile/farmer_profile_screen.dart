@@ -199,27 +199,28 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
             CompactKPICard(
               label: 'VSLA Balance',
               value:
-                  '${(_profileData['vsla_balance'] ?? 68500).toStringAsFixed(0)} RWF',
+                  '${(_profileData['vsla_balance'] ?? 0).toStringAsFixed(0)} RWF',
               icon: Icons.account_balance_wallet,
               color: AppColors.primaryGreen,
             ),
             CompactKPICard(
               label: 'Input Debt',
               value:
-                  '${(_profileData['input_debt'] ?? 20000).toStringAsFixed(0)} RWF',
+                  '${(_profileData['input_debt'] ?? 0).toStringAsFixed(0)} RWF',
               icon: Icons.receipt_long,
               color: AppColors.warning,
             ),
             CompactKPICard(
               label: 'Total Sales',
               value:
-                  '${(_profileData['total_sales'] ?? 145000).toStringAsFixed(0)} RWF',
+                  '${(_profileData['total_sales'] ?? 0).toStringAsFixed(0)} RWF',
               icon: Icons.trending_up,
               color: AppColors.success,
             ),
             CompactKPICard(
               label: 'Trust Score',
-              value: '${_profileData['trust_score'] ?? 82}/100',
+              value:
+                  '${(_profileData['trust_score'] ?? 0).toStringAsFixed(0)}/100',
               icon: Icons.stars,
               color: AppColors.indigo,
             ),
@@ -238,33 +239,37 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
         const SizedBox(height: AppSpacing.sm),
 
         AaywaCard(
-          child: Column(
-            children: [
-              _buildActivityItem(
-                'Last Payment',
-                '5,000 RWF to Input Supplier',
-                '3 days ago',
-                Icons.payment,
-                AppColors.success,
-              ),
-              const Divider(),
-              _buildActivityItem(
-                'Last Sale',
-                '40,000 RWF Avocado',
-                '1 week ago',
-                Icons.shopping_bag,
-                AppColors.primaryGreen,
-              ),
-              const Divider(),
-              _buildActivityItem(
-                'Last Contribution',
-                '2,500 RWF to VSLA',
-                '2 weeks ago',
-                Icons.account_balance_wallet,
-                AppColors.blue,
-              ),
-            ],
-          ),
+          child: _profileData['recent_activities'] == null ||
+                  (_profileData['recent_activities'] as List).isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(AppSpacing.md),
+                  child: Center(
+                      child: Text('No recent activities',
+                          style: AppTypography.bodySmall)),
+                )
+              : Column(
+                  children: List.generate(
+                      (_profileData['recent_activities'] as List).length,
+                      (index) {
+                    final activity = _profileData['recent_activities'][index];
+                    final isSale = activity['type'] == 'sale';
+                    return Column(
+                      children: [
+                        _buildActivityItem(
+                          isSale ? 'Sale' : 'Input Purchase',
+                          '${activity['amount'].toStringAsFixed(0)} RWF ${activity['description']}',
+                          _getRelativeTime(activity['date']),
+                          isSale ? Icons.shopping_bag : Icons.payment,
+                          isSale ? AppColors.primaryGreen : AppColors.warning,
+                        ),
+                        if (index <
+                            (_profileData['recent_activities'] as List).length -
+                                1)
+                          const Divider(),
+                      ],
+                    );
+                  }),
+                ),
         ),
 
         const SizedBox(height: AppSpacing.xxl),
@@ -401,20 +406,20 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              _buildInfoRow(
-                  'Farm Size', '${_profileData['farm_size'] ?? 2.5} hectares'),
+              _buildInfoRow('Farm Size',
+                  '${_profileData['plot_size_hectares'] ?? 0} hectares'),
               const Divider(),
               _buildInfoRow(
-                  'Primary Crop', _profileData['primary_crop'] ?? 'Avocado'),
-              const Divider(),
-              _buildInfoRow('Secondary Crops',
-                  _profileData['secondary_crops'] ?? 'Maize, Beans'),
+                  'Primary Crop', _profileData['primary_crop'] ?? 'Not set'),
               const Divider(),
               _buildInfoRow(
-                  'Location', _profileData['location'] ?? 'Rulindo District'),
+                  'Secondary Crops', _profileData['secondary_crops'] ?? 'None'),
+              const Divider(),
+              _buildInfoRow(
+                  'Location', _profileData['location_name'] ?? 'Not set'),
               const Divider(),
               _buildInfoRow('Years Farming',
-                  '${_profileData['years_farming'] ?? 8} years'),
+                  '${_profileData['years_farming'] ?? 0} years'),
             ],
           ),
         ),
@@ -430,9 +435,14 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              _buildTrainingItem('Avocado Pruning Techniques', 'Completed'),
-              _buildTrainingItem('Organic Fertilizer Production', 'Completed'),
-              _buildTrainingItem('Pest Management', 'In Progress'),
+              if (_profileData['completed_trainings'] == null ||
+                  (_profileData['completed_trainings'] as List).isEmpty)
+                const Text('No training records found',
+                    style: AppTypography.bodySmall)
+              else
+                ...(_profileData['completed_trainings'] as List).map((t) =>
+                    _buildTrainingItem(
+                        t['title'] ?? 'Training', t['status'] ?? 'Completed')),
               const SizedBox(height: AppSpacing.sm),
               AaywaButton(
                 label: 'View All Trainings',
@@ -445,6 +455,24 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
         const SizedBox(height: AppSpacing.xxl),
       ],
     );
+  }
+
+  String _getRelativeTime(dynamic dateStr) {
+    if (dateStr == null) return 'N/A';
+    try {
+      final date = DateTime.parse(dateStr.toString());
+      final now = DateTime.now();
+      final diff = now.difference(date);
+
+      if (diff.inDays > 365) return '${(diff.inDays / 365).floor()}y ago';
+      if (diff.inDays > 30) return '${(diff.inDays / 30).floor()}mo ago';
+      if (diff.inDays > 0) return '${diff.inDays}d ago';
+      if (diff.inHours > 0) return '${diff.inHours}h ago';
+      if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
+      return 'Just now';
+    } catch (e) {
+      return dateStr.toString();
+    }
   }
 
   Widget _buildActivityItem(

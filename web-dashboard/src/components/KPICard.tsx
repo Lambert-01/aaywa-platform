@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/solid';
 
 interface KPICardProps {
@@ -23,6 +24,7 @@ const KPICard: React.FC<KPICardProps> = ({
     color = 'blue',
     children
 }) => {
+    const { t } = useTranslation();
 
     const colorMap: Record<string, { bg: string; text: string; border: string }> = {
         blue: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
@@ -70,7 +72,7 @@ const KPICard: React.FC<KPICardProps> = ({
                             <ArrowTrendingDownIcon className="w-4 h-4 mr-1.5" />
                         )}
                         <span>{Math.abs(trend.value)}%</span>
-                        <span className="ml-1.5 text-slate-400 font-normal text-xs">vs last month</span>
+                        <span className="ml-1.5 text-slate-400 font-normal text-xs">{t('common.vs_last_month')}</span>
                     </div>
                 )}
 

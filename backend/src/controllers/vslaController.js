@@ -353,6 +353,34 @@ const vslaController = {
       res.status(500).json({ error: 'Failed to fetch balance' });
     }
   },
+
+  // Record Attendance
+  recordAttendance: async (req, res) => {
+    try {
+      const { id } = req.params; // vsla_id
+      const { farmer_id, status, date } = req.body;
+
+      if (!farmer_id || !date) {
+        return res.status(400).json({ error: 'Farmer ID and date are required' });
+      }
+
+      const attendance = await VSLA.recordAttendance({
+        vsla_id: id,
+        farmer_id,
+        status,
+        date
+      });
+
+      res.status(201).json({
+        message: 'Attendance recorded successfully',
+        attendance
+      });
+    } catch (error) {
+      console.error('Record attendance error:', error);
+      res.status(500).json({ error: 'Failed to record attendance' });
+    }
+  },
+
   // --- Quick Actions ---
 
   // Generate Member Statements

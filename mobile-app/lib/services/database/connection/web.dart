@@ -4,6 +4,6 @@ import 'package:drift/web.dart';
 
 LazyDatabase openConnection() {
   return LazyDatabase(() async {
-    return WebDatabase.withStorage(DriftWebStorage.indexedDb('aaywa_db'));
+    return WebDatabase.withStorage(DriftWebStorage.indexedDb('db'));
   });
 }

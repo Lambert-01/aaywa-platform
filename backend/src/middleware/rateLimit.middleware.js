@@ -67,10 +67,23 @@ const strictLimiter = rateLimit({
     }
 });
 
+// Login limiter - 5 attempts per minute
+const loginLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 5,
+    message: {
+        error: 'Too many login attempts',
+        message: 'Please wait a minute before trying again.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
 module.exports = {
     otpRequestLimiter,
     otpVerifyLimiter,
     registrationLimiter,
     generalLimiter,
-    strictLimiter
+    strictLimiter,
+    loginLimiter
 };

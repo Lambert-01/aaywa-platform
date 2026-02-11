@@ -26,6 +26,7 @@ router.put('/:id/officers', authorizeRoles('project_manager', 'field_facilitator
 
 // Transactions
 router.post('/:id/transactions', authorizeRoles('project_manager', 'field_facilitator'), vslaController.createTransaction);
+router.post('/:id/attendance', authorizeRoles('project_manager', 'field_facilitator'), vslaController.recordAttendance);
 router.get('/:id/transactions', vslaController.getTransactions);
 router.get('/:id/balance', vslaController.getBalance);
 

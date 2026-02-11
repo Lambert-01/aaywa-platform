@@ -163,6 +163,86 @@ const authController = {
     },
 
     /**
+     * Mobile Specific Login
+     * POST /api/auth/login-mobile
+     * Higher security logging and rate-limited via routes
+     */
+    loginMobile: async (req, res) => {
+        try {
+            const { email, password } = req.body;
+
+            // Verify credentials
+            const user = await User.verifyPassword(email, password);
+
+            if (!user) {
+                console.warn(`[SECURITY] Mobile login failed: Invalid credentials for ${email}`);
+                return res.status(401).json({
+                    error: 'Authentication failed',
+                    message: 'Invalid email or password'
+                });
+            }
+
+            if (!user.is_active) {
+                console.warn(`[SECURITY] Mobile login blocked: Account inactive for ${email}`);
+                return res.status(403).json({
+                    error: 'Account disabled',
+                    message: 'Your account has been deactivated. Please contact an administrator.'
+                });
+            }
+
+            // Update last login timestamp
+            await User.updateLastLogin(user.id);
+
+            // Generate JWT token
+            const token = generateToken(user);
+
+            // Log successful mobile login
+            console.log(`[SECURITY] Successful mobile login: ${user.id} - ${user.email}`);
+
+            // Fetch details (cohort, vsla) for mobile context
+            let mobileProfile = {
+                id: user.id,
+                full_name: user.full_name,
+                email: user.email,
+                role: user.role,
+                phone: user.phone,
+                language: user.language,
+                last_login: new Date()
+            };
+
+            // Include associated farmer data for relevant roles
+            if (['farmer', 'champion', 'agronomist', 'field_facilitator'].includes(user.role)) {
+                try {
+                    const pool = require('../config/database');
+                    const farmerRes = await pool.query('SELECT id, cohort_id, vsla_id FROM farmers WHERE user_id = $1', [user.id]);
+                    if (farmerRes.rows.length > 0) {
+                        const f = farmerRes.rows[0];
+                        mobileProfile.farmer_id = f.id;
+                        mobileProfile.cohort_id = f.cohort_id;
+                        mobileProfile.vsla_id = f.vsla_id;
+                    }
+                } catch (e) {
+                    console.warn('[AUTH] Failed to attach farmer context:', e.message);
+                }
+            }
+
+            res.json({
+                success: true,
+                message: 'Login successful',
+                user: mobileProfile,
+                token
+            });
+
+        } catch (error) {
+            console.error('Mobile login error:', error);
+            res.status(500).json({
+                error: 'Login failed',
+                message: 'An error occurred during mobile login'
+            });
+        }
+    },
+
+    /**
      * Get current user profile
      * GET /api/auth/me
      */

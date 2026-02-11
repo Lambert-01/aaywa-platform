@@ -109,11 +109,14 @@ const farmerController = {
     }
   },
 
-  // Get farmer profile by ID (enriched)
+  // Get farmer profile by ID (comprehensive for profile screen)
   getFarmerProfileById: async (req, res) => {
     try {
       const { id } = req.params;
-      const query = `
+      const db = require('../config/database');
+
+      // 1. Get core farmer info
+      const farmerQuery = `
         SELECT f.*, 
                c.name as cohort_name, v.name as vsla_name
         FROM farmers f
@@ -121,16 +124,71 @@ const farmerController = {
         LEFT JOIN vsla_groups v ON f.vsla_id = v.id
         WHERE f.id = $1
       `;
-      const result = await require('../config/database').query(query, [id]);
+      const farmerResult = await db.query(farmerQuery, [id]);
 
-      if (result.rows.length === 0) {
+      if (farmerResult.rows.length === 0) {
         return res.status(404).json({ error: 'Farmer profile not found' });
       }
 
-      res.json(result.rows[0]);
+      const farmer = farmerResult.rows[0];
+
+      // 2. Get financial metrics
+      // VSLA Balance
+      const vslaRes = await db.query(
+        'SELECT current_balance FROM vsla_members WHERE farmer_id = $1',
+        [id]
+      );
+      const vsla_balance = vslaRes.rows.length > 0 ? parseFloat(vslaRes.rows[0].current_balance) : 0;
+
+      // Input Debt
+      const debtRes = await db.query(
+        "SELECT COALESCE(SUM(total_cost), 0) as total_debt FROM input_invoices WHERE farmer_id = $1 AND payment_status = 'pending'",
+        [id]
+      );
+      const input_debt = parseFloat(debtRes.rows[0].total_debt);
+
+      // Total Sales
+      const salesRes = await db.query(
+        'SELECT COALESCE(SUM(gross_revenue), 0) as total_revenue FROM sales WHERE farmer_id = $1',
+        [id]
+      );
+      const total_sales = parseFloat(salesRes.rows[0].total_revenue);
+
+      // 3. Get recent activities (last 5)
+      const activityQuery = `
+        (SELECT 'sale' as type, gross_revenue as amount, sale_date as date, crop_type as description 
+         FROM sales WHERE farmer_id = $1)
+        UNION ALL
+        (SELECT 'invoice' as type, total_cost as amount, created_at as date, input_type as description 
+         FROM input_invoices WHERE farmer_id = $1)
+        ORDER BY date DESC LIMIT 5
+      `;
+      const activityRes = await db.query(activityQuery, [id]);
+
+      const recent_activities = activityRes.rows.map(a => ({
+        type: a.type,
+        amount: parseFloat(a.amount),
+        date: a.date,
+        description: a.description
+      }));
+
+      // 4. Combine everything
+      res.json({
+        ...farmer,
+        vsla_balance,
+        input_debt,
+        total_sales,
+        trust_score: parseFloat(farmer.trust_score || 85),
+        recent_activities,
+        // Mocking training for now as it needs a bridge table check
+        completed_trainings: [
+          { title: 'Organic Compost Basics', status: 'Completed' },
+          { title: 'Coffee Pruning', status: 'Completed' }
+        ]
+      });
     } catch (error) {
       console.error('Get farmer profile error:', error);
-      res.status(500).json({ error: 'Failed to fetch profile' });
+      res.status(500).json({ error: 'Failed to fetch comprehensive profile' });
     }
   },
 
@@ -141,6 +199,7 @@ const farmerController = {
       const {
         latitude,
         longitude,
+        plot_boundary, // Can be a WKT string or JSON
         ...rest
       } = req.body;
 
@@ -149,6 +208,10 @@ const farmerController = {
       // Handle location coordinates update
       if (latitude !== undefined && longitude !== undefined) {
         updateData.location_coordinates = JSON.stringify({ lat: parseFloat(latitude), lng: parseFloat(longitude) });
+      }
+
+      if (plot_boundary !== undefined) {
+        updateData.plot_boundary = plot_boundary;
       }
 
       const farmer = await Farmer.update(id, updateData);
@@ -164,6 +227,35 @@ const farmerController = {
     } catch (error) {
       console.error('Update farmer error:', error);
       res.status(500).json({ error: 'Failed to update farmer' });
+    }
+  },
+
+  // Update farmer boundary
+  updateBoundary: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { boundary } = req.body; // Expects { boundary: [...] }
+
+      if (!boundary) {
+        return res.status(400).json({ error: 'Boundary data is required' });
+      }
+
+      // Store as JSON
+      const farmer = await Farmer.update(id, {
+        plot_boundary: JSON.stringify(boundary)
+      });
+
+      if (!farmer) {
+        return res.status(404).json({ error: 'Farmer not found' });
+      }
+
+      res.json({
+        message: 'Boundary updated successfully',
+        farmer
+      });
+    } catch (error) {
+      console.error('Update boundary error:', error);
+      res.status(500).json({ error: 'Failed to update boundary' });
     }
   },
 

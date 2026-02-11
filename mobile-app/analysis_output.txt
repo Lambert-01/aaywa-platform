@@ -1,0 +1,7 @@
+Analyzing mobile-app...                                         
+
+warning - Unused import: 'dart:convert' - lib\services\api_service.dart:1:8 - unused_import
+warning - Unused import: '../config/env.dart' - lib\services\api_service.dart:4:8 - unused_import
+   info - Use 'const' with the constructor to improve performance - lib\services\sync\sync_queue_service.dart:96:23 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\services\sync\sync_queue_service.dart:114:23 - prefer_const_constructors
+

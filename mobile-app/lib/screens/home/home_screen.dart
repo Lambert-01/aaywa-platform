@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../theme/design_system.dart';
-import '../../widgets/kpi_metric_card.dart';
 import '../../widgets/common/aaywa_card.dart';
 
 import '../vsla/treasurer_screen.dart';
@@ -19,6 +18,10 @@ import '../compost/compost_workday_screen.dart';
 import '../inputs/input_invoice_screen.dart';
 import '../vsla/meeting_mode_screen.dart';
 import '../sync/sync_status_screen.dart';
+
+import '../../widgets/dashboards/farmer_dashboard.dart';
+import '../../widgets/dashboards/staff_dashboard.dart';
+import '../../widgets/dashboards/manager_dashboard.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -285,6 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDashboard() {
     final auth = Provider.of<AuthProvider>(context);
     final dashboard = Provider.of<DashboardProvider>(context);
+    final userRole = auth.user?['role']?.toString().toLowerCase() ?? 'farmer';
 
     return CustomScrollView(
       slivers: [
@@ -304,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Text(
-                'Cohort ${auth.user?['cohort'] ?? 'N/A'} · Last sync: ${_getLastSyncTime()}',
+                '${userRole.toUpperCase()} · Last sync: ${_getLastSyncTime()}',
                 style: AppTypography.caption.copyWith(
                   color: AppColors.textMedium,
                 ),
@@ -364,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'OVERVIEW',
+                      'OPERATIONAL OVERVIEW',
                       style: AppTypography.overline.copyWith(
                         color: AppColors.textMedium,
                       ),
@@ -374,83 +378,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // KPI Cards Grid (2x2)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: AppSpacing.md,
-                  crossAxisSpacing: AppSpacing.md,
-                  childAspectRatio: 1.1,
-                  children: [
-                    // VSLA Balance
-                    KPIMetricCard(
-                      title: 'VSLA Balance',
-                      value: _formatCurrency(dashboard.vslaBalance),
-                      icon: Icons.account_balance_wallet,
-                      color: AppColors.primaryGreen,
-                      trendValue: 12.5,
-                      trendIsPositive: true,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const VSLATreasurerScreen(),
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Input Debt
-                    KPIMetricCard(
-                      title: 'Input Debt',
-                      value: _formatCurrency(dashboard.inputDebt),
-                      icon: Icons.receipt_long,
-                      color: AppColors.warning,
-                      subtitle: 'Next payment: Feb 15',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const InputInvoiceEntryScreen()),
-                        );
-                      },
-                    ),
-
-                    // Sales Total
-                    KPIMetricCard(
-                      title: 'Sales Total',
-                      value: _formatCurrency(dashboard.salesTotal),
-                      icon: Icons.trending_up,
-                      color: AppColors.success,
-                      trendValue: 8.3,
-                      trendIsPositive: true,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SalesEntryScreen(),
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Trust Score
-                    KPIMetricCard(
-                      title: 'Trust Score',
-                      value: '${dashboard.trustScore}/100',
-                      icon: Icons.stars,
-                      color: AppColors.indigo,
-                      subtitle: 'Good Standing',
-                      onTap: () {
-                        _showTrustScoreDialog();
-                      },
-                    ),
-                  ],
-                ),
-              ),
+              // Dynamic Dashboard based on Role
+              _getDashboardByRole(userRole, auth, dashboard),
 
               const SizedBox(height: AppSpacing.xl),
 
@@ -710,17 +639,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _formatCurrency(double amount) {
-    if (amount >= 1000000) {
-      return '${(amount / 1000000).toStringAsFixed(1)}M RWF';
-    } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(1)}K RWF';
+  Widget _getDashboardByRole(
+      String role, AuthProvider auth, DashboardProvider dashboard) {
+    if (['agronomist', 'field_facilitator'].contains(role)) {
+      return StaffDashboard(auth: auth, dashboard: dashboard);
+    } else if (['project_manager', 'admin'].contains(role)) {
+      return ManagerDashboard(auth: auth, dashboard: dashboard);
+    } else {
+      return FarmerDashboard(auth: auth, dashboard: dashboard);
     }
-    return '${amount.toStringAsFixed(0)} RWF';
   }
 
   String _getLastSyncTime() {
-    return '2m ago';
+    return 'Just now';
   }
 
   List<Map<String, dynamic>> _getRecentActivities(DashboardProvider dashboard) {
@@ -768,54 +699,5 @@ class _HomeScreenState extends State<HomeScreen> {
         'color': color,
       };
     }).toList();
-  }
-
-  void _showTrustScoreDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.stars, color: AppColors.indigo),
-            SizedBox(width: AppSpacing.sm),
-            Text('Trust Score', style: AppTypography.h4),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Your trust score is calculated based on:',
-              style: AppTypography.bodyMedium,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _buildScoreItem('Payment history', '40 points'),
-            _buildScoreItem('Attendance', '30 points'),
-            _buildScoreItem('VSLA participation', '20 points'),
-            _buildScoreItem('Training completion', '10 points'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScoreItem(String label, String points) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('• $label', style: AppTypography.bodySmall),
-          Text(points, style: AppTypography.labelSmall),
-        ],
-      ),
-    );
   }
 }

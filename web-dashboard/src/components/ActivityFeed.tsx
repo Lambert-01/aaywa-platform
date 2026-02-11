@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow } from 'date-fns';
+import { fr, enUS } from 'date-fns/locale';
 import {
     BanknotesIcon,
     UserGroupIcon,
@@ -16,6 +18,7 @@ interface Activity {
 }
 
 const ActivityFeed: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const [activities, setActivities] = useState<Activity[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAll, setShowAll] = useState(false);
@@ -88,8 +91,8 @@ const ActivityFeed: React.FC = () => {
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <UserGroupIcon className="w-8 h-8 text-gray-400" />
                     </div>
-                    <p className="text-gray-500 font-medium">No recent activity</p>
-                    <p className="text-gray-400 text-sm mt-1">Activity will appear here as it happens</p>
+                    <p className="text-gray-500 font-medium">{t('dashboard.no_activity')}</p>
+                    <p className="text-gray-400 text-sm mt-1">{t('dashboard.activity_hint')}</p>
                 </div>
             ) : (
                 <>
@@ -114,7 +117,10 @@ const ActivityFeed: React.FC = () => {
                                                     </p>
                                                     <div className="text-right text-xs whitespace-nowrap text-gray-500 font-medium">
                                                         <time dateTime={activity.timestamp}>
-                                                            {formatDistanceToNow(new Date(activity.timestamp))} ago
+                                                            {formatDistanceToNow(new Date(activity.timestamp), {
+                                                                addSuffix: true,
+                                                                locale: i18n.language === 'fr' ? fr : enUS
+                                                            })}
                                                         </time>
                                                     </div>
                                                 </div>
@@ -131,7 +137,7 @@ const ActivityFeed: React.FC = () => {
                         <div className="pt-4 border-t border-gray-100">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm text-gray-600">
-                                    Showing <span className="font-semibold text-gray-900">{displayedActivities.length}</span> of <span className="font-semibold text-gray-900">{activities.length}</span> activities
+                                    {t('dashboard.showing_activities', { count: displayedActivities.length, total: activities.length })}
                                 </p>
                                 <button
                                     onClick={() => setShowAll(!showAll)}
@@ -139,14 +145,14 @@ const ActivityFeed: React.FC = () => {
                                 >
                                     {showAll ? (
                                         <>
-                                            Show Less
+                                            {t('common.show_less')}
                                             <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                                             </svg>
                                         </>
                                     ) : (
                                         <>
-                                            View All
+                                            {t('common.view_all')}
                                             <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                             </svg>

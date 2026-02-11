@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:drift/drift.dart' as drift; // Import Drift
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../services/api_service.dart';
+import '../../services/database_service.dart'; // Import DB Service
 import '../../theme/design_system.dart';
 import '../../widgets/common/aaywa_button.dart';
 import '../../widgets/common/aaywa_card.dart';
@@ -63,8 +65,10 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
   double get _grossRevenue => _weightKg * _pricePerKg;
   double get _netRevenue =>
       (_grossRevenue - _inputDeduction).clamp(0.0, double.infinity);
-  double get _farmerShare => _netRevenue * 0.5;
-  double get _sanzaShare => _netRevenue * 0.5;
+
+  // UPDATED: 70/30 Split
+  double get _farmerShare => _netRevenue * 0.70;
+  double get _sanzaShare => _netRevenue * 0.30;
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +115,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          'Enter sale details to see your 50/50 profit split',
+                          'Enter sale details to see your 70/30 profit split',
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.textMedium,
                           ),
@@ -267,9 +271,9 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
 
                     const Divider(height: AppSpacing.lg),
 
-                    // 50/50 Split
+                    // 70/30 Split
                     Text(
-                      '50/50 PROFIT SPLIT',
+                      '70/30 PROFIT SPLIT',
                       style: AppTypography.overline.copyWith(
                         color: AppColors.textMedium,
                       ),
@@ -277,7 +281,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
 
                     const SizedBox(height: AppSpacing.md),
 
-                    // Your Share
+                    // Your Share (70%)
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
@@ -308,7 +312,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'YOUR SHARE (50%)',
+                                  'YOUR SHARE (70%)',
                                   style: AppTypography.labelSmall.copyWith(
                                     color: AppColors.darkGreen,
                                     fontWeight: FontWeight.w700,
@@ -343,7 +347,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
 
                     const SizedBox(height: AppSpacing.sm),
 
-                    // Sanza Share
+                    // Sanza Share (30%)
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
@@ -371,7 +375,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'SANZA SHARE (50%)',
+                                  'SANZA SHARE (30%)',
                                   style: AppTypography.labelSmall.copyWith(
                                     color: AppColors.textMedium,
                                     fontWeight: FontWeight.w600,
@@ -466,6 +470,7 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
   }
 
   Future<void> _submitSale() async {
+    // Online submission (Try online first)
     if (!_formKey.currentState!.validate() || !_canSubmit()) return;
 
     setState(() => _isSubmitting = true);
@@ -476,11 +481,9 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
 
       final saleData = {
         'crop_type': _selectedCrop,
-        'quantity': _weightKg, // Backend expects 'quantity'
+        'quantity': _weightKg,
         'unit_price': _pricePerKg,
-        'farmer_id': auth.user?['farmer_id'] ??
-            auth.user?['id'], // Best effort if farmer_id missing
-        // Backend calculates shares, but sending these doesn't hurt if ignored
+        'farmer_id': auth.user?['farmer_id'] ?? auth.user?['id'],
       };
 
       await apiService.post('/sales', saleData);
@@ -520,15 +523,53 @@ class _SalesEntryScreenState extends State<SalesEntryScreen> {
   }
 
   Future<void> _saveOffline() async {
-    // Save to local database for offline sync
-    debugPrint('Saving sale to local database...');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Sale saved offline. Will sync when online.'),
-        backgroundColor: AppColors.info,
-      ),
-    );
-    Navigator.of(context).pop();
+    // Save to local Drift database
+    if (!_formKey.currentState!.validate() || !_canSubmit()) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final db = Provider.of<DatabaseService>(context, listen: false);
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+
+      final entry = SalesCompanion(
+        cropType: drift.Value(_selectedCrop!),
+        quantityKg: drift.Value(_weightKg),
+        pricePerKg: drift.Value(_pricePerKg),
+        grossAmount: drift.Value(_grossRevenue),
+        farmerSplitAmount: drift.Value(_farmerShare),
+        sanzaSplitAmount: drift.Value(_sanzaShare),
+        inputDeductionAmount: drift.Value(_inputDeduction),
+        transactionDate: drift.Value(DateTime.now()),
+        farmerId: drift.Value(auth.user?['farmer_id'] ?? 'unknown'),
+        // SyncStatus defaults to pending in schema
+      );
+
+      await db.insertSale(entry);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sale saved offline. Will sync when online.'),
+            backgroundColor: AppColors.info,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Offline Save Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   String _formatCurrency(double amount) {

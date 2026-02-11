@@ -7,6 +7,7 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 router.use(authenticateToken);
 
 // CRUD operations
+router.post('/invoices/batch', authorizeRoles('agronomist', 'project_manager', 'admin', 'field_facilitator'), inputController.createBatchInvoices);
 router.post('/', authorizeRoles('agronomist', 'project_manager', 'admin', 'field_facilitator'), inputController.createInvoice);
 router.get('/', authorizeRoles('agronomist', 'project_manager', 'admin', 'field_facilitator'), inputController.getAllInvoices);
 router.get('/farmer/:farmerId', inputController.getInvoicesByFarmer);

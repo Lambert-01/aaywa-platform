@@ -333,18 +333,15 @@ const getMobileDashboard = async (req, res) => {
         }
 
         // Input Debt (Outstanding Invoices)
-        // Assume input_invoices table exists and has 'status' or 'remaining_balance'
-        // Checking input_invoices schema via query might be safer, but assuming generic structure
-        // If table doesn't exist, this might fail, so wrap in try/catch or simple query
         let inputDebt = 0;
         try {
             const debtRes = await db.query(
-                "SELECT COALESCE(SUM(total_amount), 0) as total FROM input_invoices WHERE farmer_id = $1 AND status != 'paid'",
+                "SELECT COALESCE(SUM(total_cost), 0) as total FROM input_invoices WHERE farmer_id = $1 AND payment_status = 'pending'",
                 [farmerId]
             );
             inputDebt = parseFloat(debtRes.rows[0].total || 0);
         } catch (e) {
-            console.warn('Input invoices query failed (table might be missing):', e.message);
+            console.warn('Input invoices summary failed:', e.message);
         }
 
         // Sales Total
@@ -355,14 +352,17 @@ const getMobileDashboard = async (req, res) => {
         const salesTotal = parseFloat(salesRes.rows[0].total || 0);
         const salesCount = parseInt(salesRes.rows[0].count || 0);
 
-        // Trainings Count (Attendance)
-        // Assuming training_attendance table or similar
+        // Trainings Count (from attendance sessions)
         let trainingsCount = 0;
-        // Mock for now until table confirmed
-
-        // Farm Plots
-        // Assuming farm_plots table
-        let plotsCount = 0; // Mock
+        try {
+            const trainingRes = await db.query(
+                "SELECT COUNT(*)::int as count FROM training_sessions ts JOIN cohorts c ON ts.cohort_id = c.id JOIN farmers f ON f.cohort_id = c.id WHERE f.id = $1 AND ts.status = 'completed'",
+                [farmerId]
+            );
+            trainingsCount = trainingRes.rows[0].count;
+        } catch (e) {
+            console.warn('Trainings count failed:', e.message);
+        }
 
         // 3. Recent Activity (Personalized)
         const recentActivity = await db.query(`
@@ -378,8 +378,8 @@ const getMobileDashboard = async (req, res) => {
             
             SELECT 'invoice' as type,
                    CONCAT('Input Purchase: ', input_type) as title,
-                   CONCAT('Amount: ', total_amount, ' RWF') as subtitle,
-                   purchase_date as created_at,
+                   CONCAT('Amount: ', total_cost, ' RWF') as subtitle,
+                   invoice_date as created_at,
                    'warning' as status
             FROM input_invoices
             WHERE farmer_id = $1
@@ -392,11 +392,11 @@ const getMobileDashboard = async (req, res) => {
             farmers: 1, // Self
             sales: salesCount,
             trainings: trainingsCount,
-            plots: plotsCount,
+            plots: 1, // Plot mapping usually one per farmer
             vslaBalance: vslaBalance,
             inputDebt: inputDebt,
             salesTotal: salesTotal,
-            trustScore: 85, // Mock score
+            trustScore: parseFloat(farmer.trust_score || 85),
             recentActivities: recentActivity.rows.map(a => ({
                 type: a.type,
                 title: a.title,

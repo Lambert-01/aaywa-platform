@@ -126,10 +126,27 @@ const Layout: React.FC = () => {
 
             {/* User dropdown menu */}
             {showUserMenu && (
-              <div className="absolute bottom-full left-3 right-3 mb-2 bg-slate-800 rounded-lg shadow-xl border border-slate-700">
+              <div className="absolute bottom-full left-3 right-3 mb-2 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden">
+                <Link
+                  to="/dashboard/profile"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center w-full px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+                >
+                  <UserCircleIcon className="w-4 h-4 mr-2" />
+                  Profile
+                </Link>
+                <Link
+                  to="/dashboard/settings"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center w-full px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+                >
+                  <CogIcon className="w-4 h-4 mr-2" />
+                  Settings
+                </Link>
+                <div className="h-px bg-slate-700 my-1" />
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+                  className="flex items-center w-full px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-slate-700/50 transition-colors"
                 >
                   <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2" />
                   Logout

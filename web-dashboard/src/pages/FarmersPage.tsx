@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     PlusIcon,
     MagnifyingGlassIcon,
@@ -34,6 +35,7 @@ interface Farmer {
 }
 
 const FarmersPage: React.FC = () => {
+    const { t } = useTranslation();
     const [farmers, setFarmers] = useState<Farmer[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
@@ -152,14 +154,14 @@ const FarmersPage: React.FC = () => {
                     className="w-full py-3 bg-brand-blue-600 hover:bg-brand-blue-700 text-white rounded-lg font-bold shadow-md flex items-center justify-center gap-2 transition-all"
                 >
                     <PlusIcon className="w-5 h-5" />
-                    Add New Farmer
+                    {t('farmers.add_new')}
                 </button>
 
                 <div className="space-y-4">
-                    <KPICard title="Total Farmers" value={totalFarmers} icon={<UsersIcon />} color="blue" />
-                    <KPICard title="Champions" value={champions} icon={<UserGroupIcon />} color="purple" />
-                    <KPICard title="Teen Mothers" value={teenMothers} icon={<HeartIcon />} color="red" />
-                    <KPICard title="Avg. Income" value={formatCurrency(avgIncome)} icon={<CurrencyDollarIcon />} color="green" />
+                    <KPICard title={t('farmers.total')} value={totalFarmers} icon={<UsersIcon />} color="blue" />
+                    <KPICard title={t('farmers.champions')} value={champions} icon={<UserGroupIcon />} color="purple" />
+                    <KPICard title={t('farmers.teen_mothers')} value={teenMothers} icon={<HeartIcon />} color="red" />
+                    <KPICard title={t('farmers.avg_income')} value={formatCurrency(avgIncome)} icon={<CurrencyDollarIcon />} color="green" />
                 </div>
             </div>
 
@@ -174,7 +176,7 @@ const FarmersPage: React.FC = () => {
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
-                        All Farmers
+                        {t('farmers.all_tab')}
                         <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
                             {farmers.length}
                         </span>
@@ -186,7 +188,7 @@ const FarmersPage: React.FC = () => {
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
-                        🏆 Champions
+                        🏆 {t('farmers.champions')}
                         <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
                             {champions}
                         </span>
@@ -198,7 +200,7 @@ const FarmersPage: React.FC = () => {
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
-                        ❤️ Teen Mothers
+                        ❤️ {t('farmers.teen_mothers')}
                         <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
                             {teenMothers}
                         </span>
@@ -212,7 +214,7 @@ const FarmersPage: React.FC = () => {
                             <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search farmers..."
+                                placeholder={t('farmers.search_placeholder')}
                                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-blue-500/20 focus:border-brand-blue-500"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
@@ -226,7 +228,7 @@ const FarmersPage: React.FC = () => {
                             value={cohortFilter}
                             onChange={e => setCohortFilter(e.target.value)}
                         >
-                            <option value="all">All Cohorts</option>
+                            <option value="all">{t('farmers.all_cohorts')}</option>
                             <option value="1">Cohort 1</option>
                             <option value="2">Cohort 2</option>
                             <option value="3">Cohort 3</option>
@@ -237,7 +239,7 @@ const FarmersPage: React.FC = () => {
                             value={householdFilter}
                             onChange={e => setHouseholdFilter(e.target.value)}
                         >
-                            <option value="all">All Households</option>
+                            <option value="all">{t('farmers.all_households')}</option>
                             <option value="teen_mother">Teen Mother</option>
                             <option value="female_headed">Female Headed</option>
                             <option value="land_poor">Land Poor</option>
@@ -247,7 +249,7 @@ const FarmersPage: React.FC = () => {
                             value={statusFilter}
                             onChange={e => setStatusFilter(e.target.value)}
                         >
-                            <option value="all">All Status</option>
+                            <option value="all">{t('farmers.all_status')}</option>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
@@ -259,19 +261,19 @@ const FarmersPage: React.FC = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50 sticky top-0 z-10">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cohort</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Household</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crops</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_farmer')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_cohort')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_household')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_crops')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_status')}</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
-                                <tr><td colSpan={6} className="p-8 text-center text-gray-500">Loading farmers...</td></tr>
+                                <tr><td colSpan={6} className="p-8 text-center text-gray-500">{t('farmers.loading')}</td></tr>
                             ) : filteredFarmers.length === 0 ? (
-                                <tr><td colSpan={6} className="p-8 text-center text-gray-500">No farmers found.</td></tr>
+                                <tr><td colSpan={6} className="p-8 text-center text-gray-500">{t('farmers.none_found')}</td></tr>
                             ) : (
                                 filteredFarmers.map((farmer) => (
                                     <tr key={farmer.id} className="hover:bg-blue-50/50 transition-colors group">
@@ -314,13 +316,13 @@ const FarmersPage: React.FC = () => {
                                                 onClick={() => { setSelectedFarmer(farmer); setIsDetailsOpen(true); }}
                                                 className="text-brand-blue-600 hover:text-brand-blue-900 mr-3 font-semibold"
                                             >
-                                                View
+                                                {t('common.view')}
                                             </button>
                                             <button
                                                 onClick={() => { setEditingFarmer(farmer); setIsFormOpen(true); }}
                                                 className="text-gray-400 hover:text-gray-600"
                                             >
-                                                Edit
+                                                {t('common.edit')}
                                             </button>
                                         </td>
                                     </tr>
@@ -330,7 +332,7 @@ const FarmersPage: React.FC = () => {
                     </table>
                 </div>
                 <div className="p-4 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 flex justify-between">
-                    <span>Showing {filteredFarmers.length} records</span>
+                    <span>{t('farmers.records_count', { count: filteredFarmers.length })}</span>
                     <span>Page 1 of 1</span>
                 </div>
             </div>
@@ -357,7 +359,7 @@ const FarmersPage: React.FC = () => {
                 <ModalLayout
                     isOpen={isFormOpen}
                     onClose={() => setIsFormOpen(false)}
-                    title={editingFarmer ? "Edit Farmer" : "Add New Farmer"}
+                    title={editingFarmer ? t('common.edit') + " " + t('farmers.table_farmer') : t('farmers.add_new')}
                     size="2xl"
                     footer={null}
                 >

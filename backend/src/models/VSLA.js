@@ -231,6 +231,21 @@ class VSLA {
     const result = await pool.query(query, [vslaId]);
     return result.rows;
   }
+
+  // VSLA Attendance
+  static async recordAttendance(attendanceData) {
+    const { vsla_id, farmer_id, status, date } = attendanceData;
+    const query = `
+      INSERT INTO vsla_attendance (vsla_id, farmer_id, status, date)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (vsla_id, farmer_id, date) 
+      DO UPDATE SET status = EXCLUDED.status, updated_at = NOW()
+      RETURNING *
+    `;
+    const values = [vsla_id, farmer_id, status || 'present', date];
+    const result = await pool.query(query, values);
+    return result.rows[0];
+  }
 }
 
 module.exports = VSLA;

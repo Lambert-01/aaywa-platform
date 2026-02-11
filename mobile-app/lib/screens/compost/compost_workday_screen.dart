@@ -51,7 +51,7 @@ class _CompostWorkdayScreenState extends State<CompostWorkdayScreen> {
 
     try {
       final apiService = ApiService();
-      final response = await apiService.get('/compost/stipend');
+      final response = await apiService.get('/compost/summary');
 
       setState(() {
         _stipendData = response;
@@ -81,7 +81,7 @@ class _CompostWorkdayScreenState extends State<CompostWorkdayScreen> {
         'notes': _notesController.text,
       };
 
-      await apiService.post('/compost/workday', data);
+      await apiService.post('/compost/workdays', data);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

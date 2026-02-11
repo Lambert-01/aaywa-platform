@@ -10,6 +10,7 @@ interface User {
     email: string;
     role: 'project_manager' | 'agronomist' | 'field_facilitator';
     language: string;
+    preferences?: any;
 }
 
 // Login response interface
@@ -24,6 +25,7 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     logout: () => void;
     updateProfile: (updates: Partial<User>) => Promise<void>;
+    changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
 }
 
 // Create context
@@ -151,7 +153,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Logout
     const logout = () => {
-        // Call logout endpoint (optional, for logging)
         if (token) {
             fetch(`${API_URL}/api/auth/logout`, {
                 method: 'POST',
@@ -161,11 +162,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }).catch(err => console.error('Logout error:', err));
         }
 
-        // Clear local state
         localStorage.removeItem('aaywa_token');
         setToken(null);
         setUser(null);
         navigate('/login');
+    };
+
+    // Change password
+    const changePassword = async (oldPassword: string, newPassword: string) => {
+        if (!token) throw new Error('Not authenticated');
+
+        try {
+            const response = await fetch(`${API_URL}/api/auth/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to change password');
+            }
+        } catch (error: any) {
+            throw new Error(error.message || 'Password change failed');
+        }
     };
 
     const value: AuthContextType = {
@@ -175,7 +199,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!user && !!token,
         login,
         logout,
-        updateProfile
+        updateProfile,
+        changePassword
     };
 
     return (

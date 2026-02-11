@@ -44,6 +44,19 @@ router.post(
     authController.login
 );
 
+/**
+ * @route   POST /api/auth/login-mobile
+ * @desc    Dedicated mobile login for better JSON response and profile data
+ * @access  Public
+ */
+const { loginLimiter } = require('../middleware/rateLimit.middleware');
+router.post(
+    '/login-mobile',
+    loginLimiter,
+    validateLogin,
+    authController.loginMobile
+);
+
 
 // Protected routes (require authentication)
 

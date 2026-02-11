@@ -1,6 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
+import '../../providers/auth_provider.dart';
 import '../../services/database_service.dart';
 import '../../services/api_service.dart';
 import '../../theme/design_system.dart';
@@ -34,13 +35,19 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
       // Get pending items count
       final pendingSales = await dbService.getUnsyncedSales();
       final pendingTransactions = await dbService.getUnsyncedVSLATransactions();
+      final pendingPlots = await dbService.getUnsyncedPlotBoundaries();
       final lastSyncDate = await dbService.getLastSyncTimestamp();
+
+      // Count unique farmers for plot sync
+      final pendingFarmersWithPlots =
+          pendingPlots.map((e) => e.read<String>('farmer_id')).toSet().length;
 
       if (mounted) {
         setState(() {
           _syncStatus = {
             'pending_sales': pendingSales.length,
             'pending_transactions': pendingTransactions.length,
+            'pending_plots': pendingFarmersWithPlots,
             'last_sync': lastSyncDate,
             'sync_enabled': true,
           };
@@ -58,50 +65,83 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
     try {
       final dbService = Provider.of<DatabaseService>(context, listen: false);
       final apiService = ApiService();
+      int syncedItemsCount = 0;
 
       // Sync pending sales
       final pendingSales = await dbService.getUnsyncedSales();
-      int syncedSalesCount = 0;
       for (var sale in pendingSales) {
         try {
-          // Convert Drift row to Map for API
           final saleMap = {
             'farmer_id': sale.farmerId,
             'crop_type': sale.cropType,
             'quantity_kg': sale.quantityKg,
             'price_per_kg': sale.pricePerKg,
-            'total_amount': sale.totalAmount,
-            'date': sale.date,
+            'total_amount': sale.grossAmount,
+            'date': sale.transactionDate.toIso8601String(),
           };
           await apiService.post('/sales', saleMap);
           await dbService.markSalesAsSynced([sale.id]);
-          syncedSalesCount++;
+          syncedItemsCount++;
         } catch (e) {
-          if (kDebugMode) {
-            debugPrint('[SYNC] Failed to sync sale: $e');
-          }
+          debugPrint('[SYNC] Failed to sync sale: $e');
         }
       }
 
       // Sync pending transactions
       final pendingTransactions = await dbService.getUnsyncedVSLATransactions();
-      int syncedTransactionsCount = 0;
       for (var transaction in pendingTransactions) {
         try {
-          // Convert row to map
           final txMap = {
             'farmer_id': transaction.farmerId,
             'amount': transaction.amount,
             'transaction_type': transaction.type,
-            'transaction_date': transaction.date,
+            'transaction_date': transaction.transactionDate.toIso8601String(),
           };
-          await apiService.post('/vsla/transactions', txMap);
+          if (!mounted) return;
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final vslaId = auth.user?['vsla_id'];
+
+          if (vslaId == null) continue;
+
+          await apiService.post('/vsla/$vslaId/transactions', txMap);
           await dbService.markVSLATransactionsAsSynced([transaction.id]);
-          syncedTransactionsCount++;
+          syncedItemsCount++;
         } catch (e) {
-          if (kDebugMode) {
-            debugPrint('[SYNC] Failed to sync transaction: $e');
-          }
+          debugPrint('[SYNC] Failed to sync transaction: $e');
+        }
+      }
+
+      // Sync Plot Boundaries
+      final pendingPlots = await dbService.getUnsyncedPlotBoundaries();
+      final farmerGroups =
+          <String, List<dynamic>>{}; // Using dynamic due to generation issues
+      for (var p in pendingPlots) {
+        final farmerId = p.read<String>('farmer_id');
+        farmerGroups.putIfAbsent(farmerId, () => []).add(p);
+      }
+
+      for (var farmerId in farmerGroups.keys) {
+        try {
+          final coords = farmerGroups[farmerId]!;
+          // Sort by orderIndex
+          coords.sort((a, b) => (a.read<int>('order_index'))
+              .compareTo(b.read<int>('order_index')));
+
+          final plotData = coords
+              .map((c) => {
+                    'lat': c.read<double>('latitude'),
+                    'lng': c.read<double>('longitude'),
+                  })
+              .toList();
+
+          await apiService.put('/farmers/$farmerId', {
+            'plot_boundary': jsonEncode(plotData),
+          });
+
+          await dbService.markPlotBoundariesAsSynced(farmerId);
+          syncedItemsCount++;
+        } catch (e) {
+          debugPrint('[SYNC] Failed to sync plot for $farmerId: $e');
         }
       }
 
@@ -110,8 +150,7 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Synced ${syncedSalesCount + syncedTransactionsCount} items'),
+            content: Text('Synced $syncedItemsCount items'),
             backgroundColor: AppColors.success,
           ),
         );

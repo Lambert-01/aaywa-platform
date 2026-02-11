@@ -1,0 +1,5 @@
+Analyzing mobile-app...                                         
+
+   info - Don't use 'BuildContext's across async gaps - lib\screens\vsla\meeting_mode_screen.dart:183:46 - use_build_context_synchronously
+   info - Use 'const' with the constructor to improve performance - lib\services\database_service.dart:253:7 - prefer_const_constructors
+

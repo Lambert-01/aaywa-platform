@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import 'package:drift/drift.dart' as drift;
+import '../../models/sync_status.dart';
 import '../../services/database_service.dart';
 
 class AttendanceScreen extends StatefulWidget {
@@ -69,7 +70,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Future<void> _processBarcode(String code) async {
     setState(() => _isProcessing = true);
-    
+
     try {
       // Expecting QR code format: "FARMER:<ID>"
       if (!code.startsWith('FARMER:')) {
@@ -81,25 +82,29 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       final db = Provider.of<DatabaseService>(context, listen: false);
 
       // Find farmer in local DB
-      final farmer = await (db.select(db.farmers)..where((tbl) => tbl.remoteId.equals(farmerRemoteId))).getSingleOrNull();
-      
+      final farmer = await (db.select(db.farmers)
+            ..where((tbl) => tbl.remoteId.equals(farmerRemoteId)))
+          .getSingleOrNull();
+
       if (farmer == null) {
         _showError('Farmer not found in local database. Sync required?');
         return;
       }
 
       // Record Attendance
-      await db.recordAttendance(AttendanceCompanion(
-        trainingId: drift.Value(widget.trainingId),
-        farmerId: drift.Value(farmer.id),
-        timestamp: drift.Value(DateTime.now().toIso8601String()),
-        isSynced: const drift.Value(false),
+      await db.insertAttendance(AttendanceCompanion(
+        trainingIds: drift.Value(
+            widget.trainingId.toString()), // Schema uses trainingIds (text)
+        farmerId: drift.Value(farmer.remoteId ?? farmer.id.toString()),
+        timestamp: drift.Value(DateTime.now()),
+        syncStatus: const drift.Value(SyncStatus.pending),
       ));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Attendance recorded for ${farmer.fullName}'),
+            content: Text(
+                'Attendance recorded for ${farmer.firstName} ${farmer.lastName}'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -107,7 +112,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         // Pause briefly to avoid double scanning
         await Future.delayed(const Duration(seconds: 2));
       }
-
     } catch (e) {
       _showError('Error processing scan: $e');
     } finally {

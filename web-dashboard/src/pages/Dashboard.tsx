@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     UserGroupIcon,
     ChartBarIcon,
@@ -127,6 +128,7 @@ interface AggregationCenter {
 }
 
 const Dashboard = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [kpiData, setKpiData] = useState<DashboardKPIData | null>(null);
     const [chartData, setChartData] = useState<any>(null);
@@ -393,9 +395,9 @@ const Dashboard = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Project Overview</h1>
+                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t('dashboard.project_overview')}</h1>
                     <p className="text-slate-500 text-sm mt-1">
-                        Last updated: {lastUpdated.toLocaleTimeString()}
+                        {t('dashboard.last_updated')}: {lastUpdated.toLocaleTimeString()}
                     </p>
                 </div>
 
@@ -430,7 +432,7 @@ const Dashboard = () => {
                     </button>
                     <button className="bg-brand-blue-600 hover:bg-brand-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 transition-all shadow-md shadow-brand-blue-600/20 font-medium text-sm">
                         <FunnelIcon className="w-4 h-4" />
-                        <span>Filters</span>
+                        <span>{t('dashboard.filters')}</span>
                     </button>
                 </div>
             </div>
@@ -451,42 +453,42 @@ const Dashboard = () => {
             {/* 1. KPI Summary Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <KPICard
-                    title="Active Farmers"
+                    title={t('dashboard.active_farmers')}
                     value={kpiData?.farmers.toString() || '0'}
                     subtitle="+4% this week"
                     icon={<UserGroupIcon />}
                     color="blue"
                 />
                 <KPICard
-                    title="Active Cohorts"
+                    title={t('dashboard.active_cohorts')}
                     value={kpiData?.cohorts.toString() || '0'}
                     subtitle="100% Operational"
                     icon={<ChartBarIcon />}
                     color="purple"
                 />
                 <KPICard
-                    title="VSLA Savings"
+                    title={t('dashboard.vsla_savings')}
                     value={`RWF ${((kpiData?.vslaSavings || 0) / 1000).toFixed(0)}K`}
                     subtitle="↑ 12% vs last month"
                     icon={<CurrencyDollarIcon />}
                     color="green"
                 />
                 <KPICard
-                    title="Compost (Kg)"
+                    title={t('dashboard.compost_produced')}
                     value={((kpiData?.compostProduced || 0)).toString()}
                     subtitle="850kg Sold"
                     icon={<GlobeAltIcon />}
                     color="amber"
                 />
                 <KPICard
-                    title="Revenue"
+                    title={t('dashboard.revenue')}
                     value={`RWF ${((kpiData?.totalRevenue || 0) / 1000000).toFixed(1)}M`}
-                    subtitle="Net Income"
+                    subtitle={t('dashboard.net_income')}
                     icon={<CurrencyDollarIcon />}
                     color="emerald"
                 />
                 <KPICard
-                    title="Attendance"
+                    title={t('dashboard.attendance')}
                     value={`${((kpiData?.trainingSessions || 0) % 20) + 80}%`}
                     subtitle="Avg Rate"
                     icon={<AcademicCapIcon />}
@@ -511,7 +513,7 @@ const Dashboard = () => {
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                 <ShoppingCartIcon className="w-5 h-5 text-brand-blue-600" />
-                                Recent Orders
+                                {t('dashboard.recent_orders')}
                             </h3>
                             <span className="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-full">
                                 Last 5 orders
@@ -551,7 +553,7 @@ const Dashboard = () => {
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                 <BuildingStorefrontIcon className="w-5 h-5 text-brand-blue-600" />
-                                Warehouse Utilization
+                                {t('dashboard.warehouse_utilization')}
                             </h3>
                         </div>
                         {warehouseStats ? (
@@ -607,7 +609,7 @@ const Dashboard = () => {
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                 <BuildingStorefrontIcon className="w-5 h-5 text-brand-blue-600" />
-                                All Warehouses
+                                {t('nav.warehouse', 'All Warehouses')}
                             </h3>
                             <span className="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-full">
                                 {warehouses.length} facilities
@@ -668,28 +670,28 @@ const Dashboard = () => {
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
                             <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
                                 <GlobeAltIcon className="w-4 h-4 text-brand-blue-600" />
-                                Geographic Overview
+                                {t('dashboard.geographic_overview')}
                             </h3>
                             {mapStats && (
                                 <div className="grid grid-cols-2 gap-2 text-xs">
                                     <div className="bg-slate-50 rounded-lg p-2">
-                                        <p className="text-slate-500">Cohorts</p>
+                                        <p className="text-slate-500">{t('dashboard.geo_cohorts')}</p>
                                         <p className="font-bold text-slate-800">{mapStats.total_cohorts || 0}</p>
                                     </div>
                                     <div className="bg-slate-50 rounded-lg p-2">
-                                        <p className="text-slate-500">Farmers</p>
+                                        <p className="text-slate-500">{t('dashboard.geo_farmers')}</p>
                                         <p className="font-bold text-slate-800">{mapStats.total_farmers || 0}</p>
                                     </div>
                                     <div className="bg-slate-50 rounded-lg p-2">
-                                        <p className="text-slate-500">Warehouses</p>
+                                        <p className="text-slate-500">{t('dashboard.geo_warehouses')}</p>
                                         <p className="font-bold text-slate-800">{mapStats.total_warehouses || 0}</p>
                                     </div>
                                     <div className="bg-slate-50 rounded-lg p-2">
-                                        <p className="text-slate-500">Aggregation Centers</p>
+                                        <p className="text-slate-500">{t('dashboard.geo_aggregation')}</p>
                                         <p className="font-bold text-slate-800">{mapStats.total_aggregation_centers || 0}</p>
                                     </div>
                                     <div className="bg-slate-50 rounded-lg p-2">
-                                        <p className="text-slate-500">Total Area</p>
+                                        <p className="text-slate-500">{t('dashboard.geo_area')}</p>
                                         <p className="font-bold text-slate-800">{(mapStats.total_area_hectares || 0).toFixed(1)} ha</p>
                                     </div>
                                 </div>
@@ -706,9 +708,9 @@ const Dashboard = () => {
                     {/* 3. Real-Time Activity Feed */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-slate-800">Recent Activity</h3>
+                            <h3 className="text-lg font-bold text-slate-800">{t('dashboard.recent_activity')}</h3>
                             <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Live
+                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> {t('common.live', 'Live')}
                             </span>
                         </div>
                         <ActivityFeed />

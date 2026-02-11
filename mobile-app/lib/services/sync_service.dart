@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:drift/drift.dart'; // For QueryRow
 import 'database_service.dart';
 
 class SyncService {
@@ -46,6 +47,37 @@ class SyncService {
     if (unsyncedVSLATransactions.isNotEmpty) {
       await _sendVSLATransactionsToServer(unsyncedVSLATransactions);
     }
+
+    final unsyncedInvoices = await _databaseService.getUnsyncedInputInvoices();
+    if (unsyncedInvoices.isNotEmpty) {
+      await _sendInputInvoicesToServer(unsyncedInvoices);
+    }
+
+    // Sync Attendance
+    final unsyncedAttendance = await _databaseService.getUnsyncedAttendance();
+    if (unsyncedAttendance.isNotEmpty) {
+      await _sendAttendanceToServer(unsyncedAttendance);
+    }
+
+    // Sync Plot Boundaries
+    final unsyncedBoundaries =
+        await _databaseService.getUnsyncedPlotBoundaries();
+    if (unsyncedBoundaries.isNotEmpty) {
+      // Group by farmer_id
+      final groupedBoundaries = <String, List<QueryRow>>{};
+      for (var row in unsyncedBoundaries) {
+        final farmerId = row.read<String>('farmer_id');
+        if (!groupedBoundaries.containsKey(farmerId)) {
+          groupedBoundaries[farmerId] = [];
+        }
+        groupedBoundaries[farmerId]!.add(row);
+      }
+
+      for (var farmerId in groupedBoundaries.keys) {
+        await _sendPlotBoundariesToServer(
+            farmerId, groupedBoundaries[farmerId]!);
+      }
+    }
   }
 
   Future<void> _syncServerChangesToLocal() async {
@@ -56,18 +88,20 @@ class SyncService {
     final newSales = await _fetchSalesFromServer(lastSync);
     final newVSLATransactions =
         await _fetchVSLATransactionsFromServer(lastSync);
+    final newInvoices = await _fetchInputInvoicesFromServer(lastSync);
 
     // Save to local database
     await _databaseService.saveFarmers(newFarmers);
     await _databaseService.saveSales(newSales);
     await _databaseService.saveVSLATransactions(newVSLATransactions);
+    await _databaseService.saveInputInvoices(newInvoices);
   }
 
   Future<void> _sendFarmersToServer(List<Farmer> farmers) async {
     final farmersMap = farmers
         .map((f) => {
               'id': f.remoteId,
-              'name': f.fullName,
+              'name': '${f.firstName} ${f.lastName}',
               'national_id': f.nationalId,
               'land_size': f.landSizeHa,
               'location': f.locationStr
@@ -96,8 +130,8 @@ class SyncService {
               'crop_type': s.cropType,
               'quantity_kg': s.quantityKg,
               'price_per_kg': s.pricePerKg,
-              'total_amount': s.totalAmount,
-              'date': s.date
+              'total_amount': s.grossAmount,
+              'date': s.transactionDate.toIso8601String()
             })
         .toList();
 
@@ -121,7 +155,8 @@ class SyncService {
               'farmer_id': t.farmerId,
               'amount': t.amount,
               'type': t.type,
-              'date': t.date
+              'date': t.transactionDate.toIso8601String(),
+              'notes': t.notes // Added notes
             })
         .toList();
 
@@ -136,6 +171,100 @@ class SyncService {
           .markVSLATransactionsAsSynced(transactions.map((t) => t.id).toList());
     } else {
       throw Exception('Failed to sync VSLA transactions');
+    }
+  }
+
+  Future<void> _sendInputInvoicesToServer(List<InputInvoice> invoices) async {
+    final invoicesMap = invoices
+        .map((i) => {
+              'farmer_id': i.farmerId,
+              'supplier': i.supplier,
+              'input_type': i.inputType,
+              'quantity': i.quantity,
+              'unit_price': i.unitPrice,
+              'total_cost': i.totalCost,
+              'installments': i.installments,
+              'date': i.purchaseDate.toIso8601String(),
+              'notes': i.notes
+            })
+        .toList();
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/inputs/invoices/batch'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'invoices': invoicesMap}),
+    );
+
+    if (response.statusCode == 200) {
+      await _databaseService
+          .markInputInvoicesAsSynced(invoices.map((i) => i.id).toList());
+    } else {
+      throw Exception('Failed to sync input invoices');
+    }
+  }
+
+  Future<void> _sendAttendanceToServer(
+      List<AttendanceData> attendanceList) async {
+    // Group by VSLA or just batch send? API supports batch?
+    // Current backend route is per-VSLA: POST /:id/attendance
+    // We need to group by relatedId (VSLA ID)
+    final grouped = <String, List<AttendanceData>>{};
+    for (var a in attendanceList) {
+      if (a.type == 'VSLA_MEETING' && a.relatedId != null) {
+        if (!grouped.containsKey(a.relatedId)) {
+          grouped[a.relatedId!] = [];
+        }
+        grouped[a.relatedId!]!.add(a);
+      }
+    }
+
+    for (var vslaId in grouped.keys) {
+      final list = grouped[vslaId]!;
+      for (var item in list) {
+        // Current API is single item per request
+        final response = await http.post(
+          Uri.parse('$baseUrl/api/vsla/$vslaId/attendance'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'farmer_id': item.farmerId,
+            'status':
+                'present', // We only save present ones in mobile app currently
+            'date': item.timestamp.toIso8601String(),
+          }),
+        );
+
+        if (response.statusCode == 201) {
+          await _databaseService.markAttendanceAsSynced([item.id]);
+        } else {
+          debugPrint(
+              'Failed to sync attendance for ${item.id}: ${response.body}');
+        }
+      }
+    }
+  }
+
+  Future<void> _sendPlotBoundariesToServer(
+      String farmerId, List<QueryRow> points) async {
+    final pointsMap = points
+        .map((p) => {
+              'lat': p.read<double>('latitude'),
+              'lng': p.read<double>('longitude'),
+              'order': p.read<int>('order_index')
+            })
+        .toList();
+
+    // Assuming we have an endpoint for this
+    // POST /api/farmers/:id/boundary
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/farmers/$farmerId/boundary'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'boundary': pointsMap}),
+    );
+
+    if (response.statusCode == 200) {
+      await _databaseService.markPlotBoundariesAsSynced(farmerId);
+    } else {
+      debugPrint('Failed to sync boundary for $farmerId: ${response.body}');
     }
   }
 
@@ -184,6 +313,22 @@ class SyncService {
       return List<Map<String, dynamic>>.from(data['transactions']);
     } else {
       throw Exception('Failed to fetch VSLA transactions');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchInputInvoicesFromServer(
+      DateTime? lastSync) async {
+    final url = lastSync != null
+        ? '$baseUrl/api/inputs/invoices?since=${lastSync.toIso8601String()}'
+        : '$baseUrl/api/inputs/invoices';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(data['invoices']);
+    } else {
+      throw Exception('Failed to fetch input invoices');
     }
   }
 

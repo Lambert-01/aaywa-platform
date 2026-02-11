@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
+import 'package:provider/provider.dart';
+import 'package:drift/drift.dart' as drift;
+import '../../services/database_service.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/design_system.dart';
 import '../../widgets/common/aaywa_button.dart';
 import '../../widgets/common/aaywa_card.dart';
@@ -19,6 +22,7 @@ class _InputInvoiceEntryScreenState extends State<InputInvoiceEntryScreen> {
 
   final _supplierController = TextEditingController();
   final _amountController = TextEditingController();
+  final _quantityController = TextEditingController(text: '1');
   final _notesController = TextEditingController();
 
   String _inputType = 'Fertilizer';
@@ -37,6 +41,7 @@ class _InputInvoiceEntryScreenState extends State<InputInvoiceEntryScreen> {
   void dispose() {
     _supplierController.dispose();
     _amountController.dispose();
+    _quantityController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -47,25 +52,34 @@ class _InputInvoiceEntryScreenState extends State<InputInvoiceEntryScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final apiService = ApiService();
+      final db = Provider.of<DatabaseService>(context, listen: false);
+      final auth = Provider.of<AuthProvider>(context, listen: false);
       final amount = double.parse(_amountController.text);
+      final qty = double.tryParse(_quantityController.text) ?? 1.0;
 
-      final data = {
-        'supplier': _supplierController.text,
-        'input_type': _inputType,
-        'total_amount': amount,
-        'installments': _installments,
-        'monthly_payment': amount / _installments,
-        'purchase_date': _purchaseDate.toIso8601String(),
-        'notes': _notesController.text,
-      };
+      final farmerId = auth.user?['farmer_id']?.toString() ?? 'unknown';
 
-      await apiService.post('/inputs/invoice', data);
+      final invoice = InputInvoicesCompanion(
+        farmerId: drift.Value(farmerId),
+        supplier: drift.Value(_supplierController.text),
+        inputType: drift.Value(_inputType),
+        quantity: drift.Value(qty),
+        unitPrice: drift.Value(amount / qty),
+        totalCost: drift.Value(amount),
+        installments: drift.Value(_installments),
+        paymentStatus: const drift.Value('pending'),
+        purchaseDate: drift.Value(_purchaseDate),
+        notes: drift.Value(
+            _notesController.text.isNotEmpty ? _notesController.text : null),
+      );
+
+      await db.insertInputInvoice(invoice);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Invoice recorded: ${amount.toStringAsFixed(0)} RWF'),
+            content:
+                Text('Invoice saved offline: ${amount.toStringAsFixed(0)} RWF'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -75,7 +89,7 @@ class _InputInvoiceEntryScreenState extends State<InputInvoiceEntryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('Error saving invoice: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -145,22 +159,43 @@ class _InputInvoiceEntryScreenState extends State<InputInvoiceEntryScreen> {
 
             const SizedBox(height: AppSpacing.md),
 
-            // Input Type
-            AaywaDropdown(
-              value: _inputType,
-              label: 'Input Type',
-              items: _inputTypes
-                  .map((type) => DropdownMenuItem(
-                        value: type,
-                        child: Text(type),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _inputType = value);
-                }
-              },
-              prefixIcon: Icons.category,
+            // Input Type & Quantity
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: AaywaDropdown(
+                    value: _inputType,
+                    label: 'Input Type',
+                    items: _inputTypes
+                        .map((type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(type),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _inputType = value);
+                      }
+                    },
+                    prefixIcon: Icons.category,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: AaywaInput(
+                    controller: _quantityController,
+                    label: 'Qty',
+                    hint: '1',
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Ex: 1';
+                      if (double.tryParse(value) == null) return 'Error';
+                      return null;
+                    },
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: AppSpacing.md),

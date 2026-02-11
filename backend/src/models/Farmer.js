@@ -12,6 +12,7 @@ class Farmer {
       household_type,
       location_coordinates,  // JSONB - stores {lat, lng}
       plot_size_hectares,
+      plot_boundary, // Added for Geospatial Phase
       crops,
       co_crops,
       photo_url
@@ -21,9 +22,9 @@ class Farmer {
       INSERT INTO farmers (
         cohort_id, vsla_id, full_name, phone, date_of_birth, 
         gender, household_type, location_coordinates, plot_size_hectares,
-        crops, co_crops, photo_url
+        plot_boundary, crops, co_crops, photo_url
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *
     `;
 
@@ -37,6 +38,7 @@ class Farmer {
       household_type || null,
       location_coordinates || null,
       plot_size_hectares || null,
+      plot_boundary || null,
       crops || null,
       co_crops || null,
       photo_url || null

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     TruckIcon,
     AcademicCapIcon,
@@ -6,6 +7,7 @@ import {
     BeakerIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+import { fr, enUS } from 'date-fns/locale';
 
 interface Event {
     id: number;
@@ -16,6 +18,8 @@ interface Event {
 }
 
 const UpcomingEvents = ({ events }: { events: Event[] }) => {
+    const { t, i18n } = useTranslation();
+    const locale = i18n.language === 'fr' ? fr : enUS;
 
     // Sort events by date if not already sorted
     const sortedEvents = [...(events || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -43,12 +47,12 @@ const UpcomingEvents = ({ events }: { events: Event[] }) => {
     return (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center justify-between">
-                <span>Upcoming Events</span>
-                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full">Next 7 Days</span>
+                <span>{t('dashboard.upcoming_events_title')}</span>
+                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{t('dashboard.next_7_days')}</span>
             </h3>
             <div className="space-y-4">
                 {sortedEvents.length === 0 ? (
-                    <p className="text-slate-500 text-center py-4 text-sm">No upcoming events.</p>
+                    <p className="text-slate-500 text-center py-4 text-sm">{t('dashboard.no_events')}</p>
                 ) : (
                     sortedEvents.map((event) => (
                         <div key={event.id} className="flex items-start space-x-3 p-3 rounded-xl hover:bg-slate-50 transition-colors duration-150 cursor-pointer">
@@ -61,10 +65,10 @@ const UpcomingEvents = ({ events }: { events: Event[] }) => {
                             </div>
                             <div className="text-right">
                                 <p className="text-xs font-bold text-slate-700">
-                                    {format(new Date(event.date), 'MMM d')}
+                                    {format(new Date(event.date), 'MMM d', { locale })}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                    {format(new Date(event.date), 'h:mm a')}
+                                    {format(new Date(event.date), 'h:mm a', { locale })}
                                 </p>
                             </div>
                         </div>
@@ -72,7 +76,7 @@ const UpcomingEvents = ({ events }: { events: Event[] }) => {
                 )}
             </div>
             <button className="w-full mt-4 py-2 text-sm text-brand-blue-600 font-medium hover:bg-brand-blue-50 rounded-lg transition-colors">
-                View Full Calendar
+                {t('dashboard.view_calendar')}
             </button>
         </div>
     );

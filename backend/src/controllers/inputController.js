@@ -26,6 +26,26 @@ const inputController = {
     }
   },
 
+  // Create batch invoices (for offline sync)
+  createBatchInvoices: async (req, res) => {
+    try {
+      const { invoices } = req.body;
+      if (!invoices || !Array.isArray(invoices)) {
+        return res.status(400).json({ error: 'Invoices array is required' });
+      }
+
+      const createdInvoices = await InputInvoice.createBatch(invoices);
+
+      res.status(201).json({
+        message: 'Batch invoices created successfully',
+        invoices: createdInvoices
+      });
+    } catch (error) {
+      console.error('Create batch invoices error:', error);
+      res.status(500).json({ error: 'Failed to create batch invoices' });
+    }
+  },
+
   // Get all invoices
   getAllInvoices: async (req, res) => {
     try {
@@ -42,7 +62,7 @@ const inputController = {
     try {
       const { id } = req.params;
       const invoice = await InputInvoice.findById(id);
-      
+
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
       }
@@ -73,7 +93,7 @@ const inputController = {
       const { status } = req.body;
 
       const invoice = await InputInvoice.updateStatus(id, status);
-      
+
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
       }
@@ -105,7 +125,7 @@ const inputController = {
     try {
       const { id } = req.params;
       const invoice = await InputInvoice.delete(id);
-      
+
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
       }

@@ -17,6 +17,8 @@ import TrainingPage from './pages/TrainingPage';
 import MapsPage from './pages/MapsPage';
 import OrdersPage from './pages/OrdersPage';
 import UsersPage from './pages/UsersPage';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 import './App.css';
 
 /**
@@ -117,6 +119,12 @@ function App() {
                 <OrdersPage />
               </ProtectedRoute>
             } />
+
+            {/* Profile - all roles */}
+            <Route path="profile" element={<ProfilePage />} />
+
+            {/* Settings - all roles */}
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
       </AuthProvider>

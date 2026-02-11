@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     UserPlusIcon,
     CalendarDaysIcon,
@@ -11,40 +12,41 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const QuickActions = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
 
     const actions = [
         {
-            title: 'Add New Farmer',
+            title: t('dashboard.quick_add_farmer'),
             icon: <UserPlusIcon className="w-8 h-8 text-white" />,
             color: 'bg-green-500',
             path: '/farmers/new',
             role: 'all'
         },
         {
-            title: 'Schedule Training',
+            title: t('dashboard.quick_schedule_training'),
             icon: <CalendarDaysIcon className="w-8 h-8 text-white" />,
             color: 'bg-blue-500',
             path: '/training/schedule',
             role: 'all'
         },
         {
-            title: 'Create Compost Batch',
+            title: t('dashboard.quick_create_compost'),
             icon: <BeakerIcon className="w-8 h-8 text-white" />,
             color: 'bg-amber-500',
             path: '/compost/new',
             role: 'all'
         },
         {
-            title: 'Record Sale',
+            title: t('dashboard.quick_record_sale'),
             icon: <BanknotesIcon className="w-8 h-8 text-white" />,
             color: 'bg-purple-500',
             path: '/sales/new',
             role: 'all'
         },
         {
-            title: 'View Orders',
+            title: t('dashboard.quick_view_orders'),
             icon: <ShoppingCartIcon className="w-8 h-8 text-white" />,
             color: 'bg-indigo-500',
             path: '/market-access',
@@ -54,7 +56,7 @@ const QuickActions = () => {
 
     if (user?.role === 'project_manager') {
         actions.push({
-            title: 'Manage Users',
+            title: t('dashboard.quick_manage_users'),
             icon: <UsersIcon className="w-8 h-8 text-white" />,
             color: 'bg-slate-700',
             path: '/users',
