@@ -348,6 +348,223 @@ const farmerController = {
       console.error('Get farmers by cohort error:', error);
       res.status(500).json({ error: 'Failed to fetch farmers' });
     }
+  },
+
+  /**
+   * Calculate and return Trust Score for authenticated farmer
+   * GET /api/farmers/me/trust-score
+   */
+  getTrustScore: async (req, res) => {
+    try {
+      const db = require('../config/database');
+      const farmerId = req.user.farmer_id;
+
+      if (!farmerId) {
+        return res.status(400).json({
+          error: 'Not a farmer',
+          message: 'This endpoint is only available for farmer accounts'
+        });
+      }
+
+      // 1. VSLA Participation Score
+      const vslaResult = await db.query(`
+        SELECT 
+          COUNT(DISTINCT CAST(transaction_date AS DATE)) as meetings,
+          COALESCE(SUM(CASE WHEN transaction_type = 'savings' THEN amount ELSE 0 END), 0) as savings
+        FROM vsla_transactions
+        WHERE farmer_id = $1
+        AND transaction_date >= NOW() - INTERVAL '6 months'
+      `, [farmerId]);
+
+      const meetings = parseInt(vslaResult.rows[0].meetings) || 0;
+      const savings = parseFloat(vslaResult.rows[0].savings) || 0;
+      const vslaScore = Math.min(100, (meetings / 24) * 50 + (savings / 100000) * 50);
+
+      // 2. Repayment History Score
+      const repaymentResult = await db.query(`
+        SELECT 
+          COALESCE(SUM(CASE WHEN transaction_type = 'loan_repayment' THEN amount ELSE 0 END), 0) as repayments,
+          COALESCE(SUM(CASE WHEN transaction_type = 'loan' THEN amount ELSE 0 END), 0) as loans
+        FROM vsla_transactions
+        WHERE farmer_id = $1
+      `, [farmerId]);
+
+      const repayments = parseFloat(repaymentResult.rows[0].repayments) || 0;
+      const loans = parseFloat(repaymentResult.rows[0].loans) || 0;
+      const repaymentScore = loans > 0 ? (repayments / loans) * 100 : 100;
+
+      // 3. Agronomic Performance Score
+      const trainingResult = await db.query(`
+        SELECT COUNT(DISTINCT training_id) as count
+        FROM attendance WHERE farmer_id = $1
+      `, [farmerId]);
+
+      const salesResult = await db.query(`
+        SELECT COALESCE(SUM(quantity_kg), 0) as kg
+        FROM sales
+        WHERE farmer_id = $1 AND sale_date >= NOW() - INTERVAL '1 year'
+      `, [farmerId]);
+
+      const trainings = parseInt(trainingResult.rows[0].count) || 0;
+      const salesKg = parseFloat(salesResult.rows[0].kg) || 0;
+      const agronomicScore = Math.min(100, (trainings / 10) * 40 + (salesKg / 1000) * 60);
+
+      // Calculate final score
+      const trustScore = Math.round((vslaScore * 0.4) + (repaymentScore * 0.4) + (agronomicScore * 0.2));
+
+      // Update and save
+      await db.query('UPDATE  farmers SET trust_score = $1 WHERE id = $2', [trustScore, farmerId]);
+      await db.query(
+        'INSERT INTO trust_score_history (farmer_id, trust_score, vsla_score, repayment_score, agronomic_score) VALUES ($1, $2, $3, $4, $5)',
+        [farmerId, trustScore, vslaScore, repaymentScore, agronomicScore]
+      );
+
+      res.json({
+        success: true,
+        trust_score: trustScore,
+        breakdown: {
+          vsla: Math.round(vslaScore),
+          repayment: Math.round(repaymentScore),
+          agronomic: Math.round(agronomicScore)
+        }
+      });
+    } catch (error) {
+      console.error('Trust score error:', error);
+      res.status(500).json({ error: 'Failed to calculate trust score', message: error.message });
+    }
+  },
+
+  /**
+   * Get personalized learning path
+   * GET /api/farmers/me/learning-path
+   */
+  getLearningPath: async (req, res) => {
+    try {
+      const db = require('../config/database');
+      const farmerId = req.user.farmer_id;
+      const cohortId = req.user.cohort_id;
+
+      if (!farmerId) {
+        return res.status(400).json({ error: 'Not a farmer' });
+      }
+
+      const cohortRes = await db.query('SELECT cropping_system FROM cohorts WHERE id = $1', [cohortId]);
+      const croppingSystem = cohortRes.rows[0]?.cropping_system || 'avocado';
+
+      const completedRes = await db.query(
+        'SELECT DISTINCT t.topic FROM training_sessions t INNER JOIN attendance a ON t.id = a.training_id WHERE a.farmer_id = $1',
+        [farmerId]
+      );
+      const completed = completedRes.rows.map(r => r.topic);
+
+      const paths = {
+        avocado: [
+          { topic: 'land_preparation', priority: 1 },
+          { topic: 'planting_techniques', priority: 2 },
+          { topic: 'irrigation_management', priority: 3 },
+          { topic: 'pest_disease_management', priority: 4 },
+          { topic: 'harvesting_techniques', priority: 5 }
+        ],
+        macadamia: [
+          { topic: 'land_preparation', priority: 1 },
+          { topic: 'grafting_techniques', priority: 2 },
+          { topic: 'irrigation_management', priority: 3 },
+          { topic: 'harvesting_techniques', priority: 4 }
+        ]
+      };
+
+      const path = paths[croppingSystem] || paths.avocado;
+      const recommendations = path.filter(m => !completed.includes(m.topic)).slice(0, 5);
+
+      res.json({
+        success: true,
+        cropping_system: croppingSystem,
+        completion_percentage: Math.round((completed.length / path.length) * 100),
+        recommendations
+      });
+    } catch (error) {
+      console.error('Learning path error:', error);
+      res.status(500).json({ error: 'Failed to get learning path' });
+    }
+  },
+
+  /**
+   * Get market intelligence
+   * GET /api/farmers/me/market-intel
+   */
+  getMarketIntel: async (req, res) => {
+    try {
+      const db = require('../config/database');
+      const farmerId = req.user.farmer_id;
+
+      if (!farmerId) return res.status(400).json({ error: 'Not a farmer' });
+
+      const farmerRes = await db.query(
+        'SELECT c.cropping_system FROM farmers f INNER JOIN cohorts c ON f.cohort_id = c.id WHERE f.id = $1',
+        [farmerId]
+      );
+      const cropType = farmerRes.rows[0]?.cropping_system || 'avocado';
+
+      const pricesRes = await db.query(
+        'SELECT * FROM market_prices WHERE crop_type = $1 AND price_date >= CURRENT_DATE - INTERVAL \'7 days\' ORDER BY quality_grade, price_date DESC',
+        [cropType]
+      );
+
+      res.json({
+        success: true,
+        crop_type: cropType,
+        current_prices: pricesRes.rows
+      });
+    } catch (error) {
+      console.error('Market intel error:', error);
+      res.status(500).json({ error: 'Failed to get market intel' });
+    }
+  },
+
+  /**
+   * Get resource qualification
+   * GET /api/farmers/me/resource-qualification
+   */
+  getResourceQualification: async (req, res) => {
+    try {
+      const db = require('../config/database');
+      const farmerId = req.user.farmer_id;
+      const trustScore = req.user.trust_score || 0;
+
+      if (!farmerId) return res.status(400).json({ error: 'Not a farmer' });
+
+      const farmerRes = await db.query(
+        'SELECT plot_size_hectares, household_type FROM farmers WHERE id = $1',
+        [farmerId]
+      );
+      const plotSize = parseFloat(farmerRes.rows[0]?.plot_size_hectares) || 0;
+      const householdType = farmerRes.rows[0]?.household_type;
+
+      const qualifications = [
+        {
+          program: 'Input Credit Program',
+          qualified: trustScore >= 60 && plotSize >= 0.25,
+          requirements: { min_trust_score: 60, min_plot_size: 0.25 }
+        },
+        {
+          program: 'Premium Training',
+          qualified: trustScore >= 70,
+          requirements: { min_trust_score: 70 }
+        }
+      ];
+
+      res.json({
+        success: true,
+        qualifications,
+        summary: {
+          qualified_programs: qualifications.filter(q => q.qualified).length,
+          total_programs: qualifications.length
+        }
+      });
+    } catch (error) {
+      console.error('Resource qualification error:', error);
+      res.status(500).json({ error: 'Failed to get qualification' });
+    }
   }
 };
 

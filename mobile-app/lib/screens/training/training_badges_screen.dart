@@ -30,7 +30,7 @@ class _TrainingBadgesScreenState extends State<TrainingBadgesScreen> {
         setState(() {
           _badges = (response as List)
               .map((b) => _BadgeData(
-                    id: b['id'] ?? '',
+                    id: (b['id'] ?? '').toString(), // Convert int to string
                     name: b['name'] ?? '',
                     description: b['description'] ?? '',
                     icon: _getIconForBadge(b['icon']),

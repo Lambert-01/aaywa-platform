@@ -11,14 +11,15 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
   Map<String, dynamic>? get user => _user;
+  String? get token => _token;
 
   final ApiService _apiService = ApiService();
 
   AuthProvider() {
-    _checkAuthStatus();
+    checkAuthStatus();
   }
 
-  Future<void> _checkAuthStatus() async {
+  Future<void> checkAuthStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     if (token != null) {

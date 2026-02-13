@@ -57,6 +57,16 @@ router.post(
     authController.loginMobile
 );
 
+/**
+ * @route   POST /api/auth/refresh-token
+ * @desc    Refresh access token using refresh token
+ * @access  Public
+ */
+router.post(
+    '/refresh-token',
+    authController.refreshToken
+);
+
 
 // Protected routes (require authentication)
 

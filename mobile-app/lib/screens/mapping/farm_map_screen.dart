@@ -4,7 +4,9 @@ import 'package:latlong2/latlong.dart' as ll;
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import '../../services/database_service.dart';
+
 import '../../theme/design_system.dart';
 
 class FarmMapScreen extends StatefulWidget {
@@ -29,6 +31,15 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
   bool _isRecording = false;
   bool _isDigitizing = false;
   StreamSubscription<Position>? _positionStream;
+
+  // GPS Accuracy tracking
+  double? _currentAccuracy;
+
+  // Area calculation
+  double _calculatedAreaHa = 0.0;
+
+  // Resource qualification
+  static const double _minAreaForPrograms = 0.25; // hectares
 
   @override
   void initState() {
@@ -55,6 +66,7 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
             .map((c) => ll.LatLng(
                 c.read<double>('latitude'), c.read<double>('longitude')))
             .toList());
+        _calculateArea();
       });
 
       // Zoom to first point
@@ -66,11 +78,40 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
     }
   }
 
+  /// Calculate area in hectares using Shoelace formula
+  void _calculateArea() {
+    if (_polygonPoints.length < 3) {
+      setState(() => _calculatedAreaHa = 0.0);
+      return;
+    }
+
+    double area = 0.0;
+    for (int i = 0; i < _polygonPoints.length; i++) {
+      int j = (i + 1) % _polygonPoints.length;
+
+      // Convert lat/lng to meters (approximate)
+      double x1 = _polygonPoints[i].longitude *
+          111320 *
+          math.cos(_polygonPoints[i].latitude * math.pi / 180);
+      double y1 = _polygonPoints[i].latitude * 110540;
+      double x2 = _polygonPoints[j].longitude *
+          111320 *
+          math.cos(_polygonPoints[j].latitude * math.pi / 180);
+      double y2 = _polygonPoints[j].latitude * 110540;
+
+      area += (x1 * y2) - (x2 * y1);
+    }
+
+    area = area.abs() / 2.0; // m²
+    setState(() => _calculatedAreaHa = area / 10000); // Convert to hectares
+  }
+
   void _onMapTap(TapPosition tapPosition, ll.LatLng point) {
     if (!_isDigitizing) return;
 
     setState(() {
       _polygonPoints.add(point);
+      _calculateArea();
     });
   }
 
@@ -78,6 +119,7 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
     if (_polygonPoints.isNotEmpty) {
       setState(() {
         _polygonPoints.removeLast();
+        _calculateArea();
       });
     }
   }
@@ -140,6 +182,8 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
           final point = ll.LatLng(position.latitude, position.longitude);
           setState(() {
             _polygonPoints.add(point);
+            _currentAccuracy = position.accuracy;
+            _calculateArea();
           });
           _mapController.move(point, _mapController.camera.zoom);
         },
@@ -184,6 +228,36 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
       // In standalone mode, just return the points
       Navigator.pop(context, _polygonPoints);
     }
+  }
+
+  Color _getAccuracyColor() {
+    if (_currentAccuracy == null) {
+      return Colors.grey;
+    }
+    if (_currentAccuracy! <= 5) {
+      return AppColors.success;
+    }
+    if (_currentAccuracy! <= 10) {
+      return AppColors.warning;
+    }
+    return AppColors.error;
+  }
+
+  String _getAccuracyLabel() {
+    if (_currentAccuracy! <= 5) {
+      return 'Excellent (±${_currentAccuracy!.toStringAsFixed(1)}m)';
+    }
+    if (_currentAccuracy! <= 10) {
+      return 'Good (±${_currentAccuracy!.toStringAsFixed(1)}m)';
+    }
+    if (_currentAccuracy! <= 20) {
+      return 'Fair (±${_currentAccuracy!.toStringAsFixed(1)}m)';
+    }
+    return 'Poor (±${_currentAccuracy!.toStringAsFixed(1)}m)';
+  }
+
+  bool _meetsResourceQualification() {
+    return _calculatedAreaHa >= _minAreaForPrograms;
   }
 
   @override
@@ -259,32 +333,149 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
             ],
           ),
 
-          // Instruction Overlay
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _isRecording
-                    ? 'Recording GPS path...'
-                    : _isDigitizing
-                        ? 'Tap map to add boundary points'
-                        : 'Select a mode to start mapping',
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                textAlign: TextAlign.center,
+          // GPS Accuracy Indicator
+          if (_isRecording && _currentAccuracy != null)
+            Positioned(
+              top: 16,
+              left: 16,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _getAccuracyColor(),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    )
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.gps_fixed, color: Colors.white, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      _getAccuracyLabel(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+
+          // Area and Qualification Display
+          if (_polygonPoints.length >= 3)
+            Positioned(
+              top: _isRecording && _currentAccuracy != null ? 60 : 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    )
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.landscape,
+                            size: 16, color: AppColors.textMedium),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${_calculatedAreaHa.toStringAsFixed(2)} ha',
+                          style: AppTypography.h4.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _meetsResourceQualification()
+                            ? AppColors.success.withValues(alpha: 0.1)
+                            : AppColors.warning.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _meetsResourceQualification()
+                                ? Icons.check_circle
+                                : Icons.info,
+                            size: 12,
+                            color: _meetsResourceQualification()
+                                ? AppColors.success
+                                : AppColors.warning,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _meetsResourceQualification()
+                                ? 'Qualifies'
+                                : 'Below min',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: _meetsResourceQualification()
+                                  ? AppColors.success
+                                  : AppColors.warning,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Instruction Overlay
+          if (_polygonPoints.length < 3)
+            Positioned(
+              bottom: 100,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _isRecording
+                      ? 'Walk along the boundary...'
+                      : _isDigitizing
+                          ? 'Tap map to add boundary points'
+                          : 'Select a mode to start mapping',
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
 
           // My Location Button
           Positioned(
-            bottom: 30,
+            bottom: 100,
             right: 16,
             child: FloatingActionButton(
               mini: true,

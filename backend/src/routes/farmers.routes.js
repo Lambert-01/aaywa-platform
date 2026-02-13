@@ -9,6 +9,12 @@ router.use(authenticateToken);
 // Farmer profile (for logged-in farmer)
 router.get('/me', authorizeRoles('farmer', 'champion'), farmerController.getMyProfile);
 
+// Farmer-specific mobile endpoints
+router.get('/me/trust-score', authorizeRoles('farmer', 'champion'), farmerController.getTrustScore);
+router.get('/me/learning-path', authorizeRoles('farmer', 'champion'), farmerController.getLearningPath);
+router.get('/me/market-intel', authorizeRoles('farmer', 'champion'), farmerController.getMarketIntel);
+router.get('/me/resource-qualification', authorizeRoles('farmer', 'champion'), farmerController.getResourceQualification);
+
 // CRUD operations
 // CRUD operations
 router.post('/batch', authorizeRoles('project_manager', 'agronomist', 'field_facilitator'), farmerController.createBatchFarmers);

@@ -4,6 +4,10 @@ import 'services/database_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/sync_provider.dart';
+import 'providers/staff_kpi_provider.dart';
+import 'providers/resource_provider.dart';
+import 'providers/agricultural_provider.dart';
+import 'providers/admin_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
@@ -21,6 +25,10 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => SyncProvider(databaseService)),
+        ChangeNotifierProvider(create: (_) => StaffKPIProvider()),
+        ChangeNotifierProvider(create: (_) => ResourceProvider()),
+        ChangeNotifierProvider(create: (_) => AgriculturalProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
         Provider(create: (_) => databaseService),
       ],
       child: const AAYWAApp(),

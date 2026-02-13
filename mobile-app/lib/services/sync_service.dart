@@ -1,13 +1,33 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:drift/drift.dart'; // For QueryRow
+import 'package:drift/drift.dart';
 import 'database_service.dart';
 import '../config/env.dart';
+import '../utils/error_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Sync priority levels for intelligent synchronization
+enum SyncPriority { critical, high, medium, low }
+
+/// Represents a sync task with priority
+class SyncTask {
+  final String name;
+  final SyncPriority priority;
+  final Future<void> Function() execute;
+
+  SyncTask({
+    required this.name,
+    required this.priority,
+    required this.execute,
+  });
+}
+
+/// Enhanced sync service with intelligent prioritization and conflict resolution
 class SyncService {
   final DatabaseService _databaseService;
+  final List<SyncTask> _syncQueue = [];
+  bool _isSyncing = false;
 
   SyncService(this._databaseService);
 
@@ -20,73 +40,121 @@ class SyncService {
     };
   }
 
+  /// Main sync method with prioritization
   Future<void> syncData() async {
-    try {
-      // Sync local changes to server
-      await _syncLocalChangesToServer();
+    if (_isSyncing) {
+      debugPrint('Sync already in progress, skipping...');
+      return;
+    }
 
-      // Sync server changes to local
-      await _syncServerChangesToLocal();
+    _isSyncing = true;
+    try {
+      // Build sync queue with priorities
+      await _buildSyncQueue();
+
+      // Process queue by priority
+      await _processSyncQueue();
 
       // Update last sync timestamp
       await _databaseService.updateLastSyncTimestamp();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Sync failed: $e');
-      }
+
+      debugPrint('✅ Sync completed successfully');
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('Sync', e, stackTrace);
       rethrow;
+    } finally {
+      _isSyncing = false;
+      _syncQueue.clear();
     }
   }
 
-  Future<void> _syncLocalChangesToServer() async {
-    // Get unsynced data from local database
+  /// Build prioritized sync queue
+  Future<void> _buildSyncQueue() async {
+    _syncQueue.clear();
+
+    // CRITICAL: Authentication and user data
+    // (Nothing to sync here, but would be highest priority)
+
+    // HIGH PRIORITY: Core business data
     final unsyncedFarmers = await _databaseService.getUnsyncedFarmers();
+    if (unsyncedFarmers.isNotEmpty) {
+      _syncQueue.add(SyncTask(
+        name: 'Farmers (${unsyncedFarmers.length})',
+        priority: SyncPriority.high,
+        execute: () => _sendFarmersToServer(unsyncedFarmers),
+      ));
+    }
+
     final unsyncedSales = await _databaseService.getUnsyncedSales();
+    if (unsyncedSales.isNotEmpty) {
+      _syncQueue.add(SyncTask(
+        name: 'Sales (${unsyncedSales.length})',
+        priority: SyncPriority.high,
+        execute: () => _sendSalesToServer(unsyncedSales),
+      ));
+    }
+
+    final unsyncedAttendance = await _databaseService.getUnsyncedAttendance();
+    if (unsyncedAttendance.isNotEmpty) {
+      _syncQueue.add(SyncTask(
+        name: 'Attendance (${unsyncedAttendance.length})',
+        priority: SyncPriority.high,
+        execute: () => _sendAttendanceToServer(unsyncedAttendance),
+      ));
+    }
+
+    // MEDIUM PRIORITY: Financial and activity data
     final unsyncedVSLATransactions =
         await _databaseService.getUnsyncedVSLATransactions();
-
-    // Send to server
-    if (unsyncedFarmers.isNotEmpty) {
-      await _sendFarmersToServer(unsyncedFarmers);
-    }
-
-    if (unsyncedSales.isNotEmpty) {
-      await _sendSalesToServer(unsyncedSales);
-    }
-
     if (unsyncedVSLATransactions.isNotEmpty) {
-      await _sendVSLATransactionsToServer(unsyncedVSLATransactions);
+      _syncQueue.add(SyncTask(
+        name: 'VSLA Transactions (${unsyncedVSLATransactions.length})',
+        priority: SyncPriority.medium,
+        execute: () => _sendVSLATransactionsToServer(unsyncedVSLATransactions),
+      ));
     }
 
     final unsyncedInvoices = await _databaseService.getUnsyncedInputInvoices();
     if (unsyncedInvoices.isNotEmpty) {
-      await _sendInputInvoicesToServer(unsyncedInvoices);
+      _syncQueue.add(SyncTask(
+        name: 'Input Invoices (${unsyncedInvoices.length})',
+        priority: SyncPriority.medium,
+        execute: () => _sendInputInvoicesToServer(unsyncedInvoices),
+      ));
     }
 
-    // Sync Attendance
-    final unsyncedAttendance = await _databaseService.getUnsyncedAttendance();
-    if (unsyncedAttendance.isNotEmpty) {
-      await _sendAttendanceToServer(unsyncedAttendance);
-    }
-
-    // Sync Plot Boundaries
+    // LOW PRIORITY: Geospatial data
     final unsyncedBoundaries =
         await _databaseService.getUnsyncedPlotBoundaries();
     if (unsyncedBoundaries.isNotEmpty) {
-      // Group by farmer_id
-      final groupedBoundaries = <String, List<QueryRow>>{};
-      for (var row in unsyncedBoundaries) {
-        final farmerId = row.read<String>('farmer_id');
-        if (!groupedBoundaries.containsKey(farmerId)) {
-          groupedBoundaries[farmerId] = [];
-        }
-        groupedBoundaries[farmerId]!.add(row);
-      }
+      _syncQueue.add(SyncTask(
+        name: 'Plot Boundaries (${unsyncedBoundaries.length})',
+        priority: SyncPriority.low,
+        execute: () => _sendPlotBoundariesGrouped(unsyncedBoundaries),
+      ));
+    }
 
-      for (var farmerId in groupedBoundaries.keys) {
-        await _sendPlotBoundariesToServer(
-            farmerId, groupedBoundaries[farmerId]!);
-      }
+    // Also add download tasks (always run after uploads)
+    _syncQueue.add(SyncTask(
+      name: 'Download Server Changes',
+      priority: SyncPriority.high,
+      execute: () => _syncServerChangesToLocal(),
+    ));
+  }
+
+  /// Process sync queue by priority
+  Future<void> _processSyncQueue() async {
+    // Sort by priority (critical first)
+    _syncQueue.sort((a, b) => a.priority.index.compareTo(b.priority.index));
+
+    for (final task in _syncQueue) {
+      debugPrint('🔄 Syncing: ${task.name} (${task.priority.name})');
+
+      // Use error handler for resilient sync
+      await ErrorHandler.handleSyncOperation(
+        () => task.execute(),
+        task.name,
+      );
     }
   }
 
@@ -94,20 +162,47 @@ class SyncService {
     final lastSync = await _databaseService.getLastSyncTimestamp();
 
     // Fetch new data from server since last sync
-    final newFarmers = await _fetchFarmersFromServer(lastSync);
-    final newSales = await _fetchSalesFromServer(lastSync);
-    final newVSLATransactions =
-        await _fetchVSLATransactionsFromServer(lastSync);
-    final newInvoices = await _fetchInputInvoicesFromServer(lastSync);
+    final results = await Future.wait([
+      ErrorHandler.handleSyncOperation(
+        () => _fetchFarmersFromServer(lastSync),
+        'Fetch Farmers',
+      ),
+      ErrorHandler.handleSyncOperation(
+        () => _fetchSalesFromServer(lastSync),
+        'Fetch Sales',
+      ),
+      ErrorHandler.handleSyncOperation(
+        () => _fetchVSLATransactionsFromServer(lastSync),
+        'Fetch VSLA',
+      ),
+      ErrorHandler.handleSyncOperation(
+        () => _fetchInputInvoicesFromServer(lastSync),
+        'Fetch Invoices',
+      ),
+    ]);
 
-    // Save to local database
-    await _databaseService.saveFarmers(newFarmers);
-    await _databaseService.saveSales(newSales);
-    await _databaseService.saveVSLATransactions(newVSLATransactions);
-    await _databaseService.saveInputInvoices(newInvoices);
+    // Save to local database (with null checks)
+    if (results[0] != null) await _databaseService.saveFarmers(results[0]!);
+    if (results[1] != null) await _databaseService.saveSales(results[1]!);
+    if (results[2] != null) {
+      await _databaseService.saveVSLATransactions(results[2]!);
+    }
+    if (results[3] != null) {
+      await _databaseService.saveInputInvoices(results[3]!);
+    }
   }
 
+  // ========== SEND TO SERVER (with batching) ==========
+
   Future<void> _sendFarmersToServer(List<Farmer> farmers) async {
+    const batchSize = 50;
+    for (int i = 0; i < farmers.length; i += batchSize) {
+      final batch = farmers.skip(i).take(batchSize).toList();
+      await _sendFarmersBatch(batch);
+    }
+  }
+
+  Future<void> _sendFarmersBatch(List<Farmer> farmers) async {
     final farmersMap = farmers
         .map((f) => {
               'full_name': '${f.firstName} ${f.lastName}',
@@ -118,14 +213,15 @@ class SyncService {
             })
         .toList();
 
-    final response = await http.post(
-      Uri.parse('${Environment.apiBaseUrl}/farmers/batch'),
-      headers: await _getHeaders(),
-      body: jsonEncode({'farmers': farmersMap}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('${Environment.apiBaseUrl}/farmers/batch'),
+          headers: await _getHeaders(),
+          body: jsonEncode({'farmers': farmersMap}),
+        )
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200 || response.statusCode == 207) {
-      // Mark as synced using local IDs
       await _databaseService
           .markFarmersAsSynced(farmers.map((f) => f.id).toList());
     } else {
@@ -134,6 +230,14 @@ class SyncService {
   }
 
   Future<void> _sendSalesToServer(List<Sale> sales) async {
+    const batchSize = 50;
+    for (int i = 0; i < sales.length; i += batchSize) {
+      final batch = sales.skip(i).take(batchSize).toList();
+      await _sendSalesBatch(batch);
+    }
+  }
+
+  Future<void> _sendSalesBatch(List<Sale> sales) async {
     final salesMap = sales
         .map((s) => {
               'farmer_id': s.farmerId,
@@ -145,11 +249,13 @@ class SyncService {
             })
         .toList();
 
-    final response = await http.post(
-      Uri.parse('${Environment.apiBaseUrl}/sales/batch'),
-      headers: await _getHeaders(),
-      body: jsonEncode({'sales': salesMap}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('${Environment.apiBaseUrl}/sales/batch'),
+          headers: await _getHeaders(),
+          body: jsonEncode({'sales': salesMap}),
+        )
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200 || response.statusCode == 207) {
       await _databaseService.markSalesAsSynced(sales.map((s) => s.id).toList());
@@ -159,6 +265,15 @@ class SyncService {
   }
 
   Future<void> _sendVSLATransactionsToServer(
+      List<VSLATransaction> transactions) async {
+    const batchSize = 50;
+    for (int i = 0; i < transactions.length; i += batchSize) {
+      final batch = transactions.skip(i).take(batchSize).toList();
+      await _sendVSLATransactionsBatch(batch);
+    }
+  }
+
+  Future<void> _sendVSLATransactionsBatch(
       List<VSLATransaction> transactions) async {
     final transactionsMap = transactions
         .map((t) => {
@@ -170,11 +285,13 @@ class SyncService {
             })
         .toList();
 
-    final response = await http.post(
-      Uri.parse('${Environment.apiBaseUrl}/vsla/transactions/batch'),
-      headers: await _getHeaders(),
-      body: jsonEncode({'transactions': transactionsMap}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('${Environment.apiBaseUrl}/vsla/transactions/batch'),
+          headers: await _getHeaders(),
+          body: jsonEncode({'transactions': transactionsMap}),
+        )
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200 || response.statusCode == 207) {
       await _databaseService
@@ -185,6 +302,14 @@ class SyncService {
   }
 
   Future<void> _sendInputInvoicesToServer(List<InputInvoice> invoices) async {
+    const batchSize = 50;
+    for (int i = 0; i < invoices.length; i += batchSize) {
+      final batch = invoices.skip(i).take(batchSize).toList();
+      await _sendInputInvoicesBatch(batch);
+    }
+  }
+
+  Future<void> _sendInputInvoicesBatch(List<InputInvoice> invoices) async {
     final invoicesMap = invoices
         .map((i) => {
               'farmer_id': i.farmerId,
@@ -199,11 +324,13 @@ class SyncService {
             })
         .toList();
 
-    final response = await http.post(
-      Uri.parse('${Environment.apiBaseUrl}/inputs/invoices/batch'),
-      headers: await _getHeaders(),
-      body: jsonEncode({'invoices': invoicesMap}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('${Environment.apiBaseUrl}/inputs/invoices/batch'),
+          headers: await _getHeaders(),
+          body: jsonEncode({'invoices': invoicesMap}),
+        )
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200 || response.statusCode == 207) {
       await _databaseService
@@ -229,15 +356,17 @@ class SyncService {
     for (var vslaId in grouped.keys) {
       final list = grouped[vslaId]!;
       for (var item in list) {
-        final response = await http.post(
-          Uri.parse('${Environment.apiBaseUrl}/vsla/$vslaId/attendance'),
-          headers: headers,
-          body: jsonEncode({
-            'farmer_id': item.farmerId,
-            'status': 'present',
-            'date': item.timestamp.toIso8601String(),
-          }),
-        );
+        final response = await http
+            .post(
+              Uri.parse('${Environment.apiBaseUrl}/vsla/$vslaId/attendance'),
+              headers: headers,
+              body: jsonEncode({
+                'farmer_id': item.farmerId,
+                'status': 'present',
+                'date': item.timestamp.toIso8601String(),
+              }),
+            )
+            .timeout(const Duration(seconds: 15));
 
         if (response.statusCode == 201) {
           await _databaseService.markAttendanceAsSynced([item.id]);
@@ -246,6 +375,22 @@ class SyncService {
               'Failed to sync attendance for ${item.id}: ${response.body}');
         }
       }
+    }
+  }
+
+  Future<void> _sendPlotBoundariesGrouped(List<QueryRow> points) async {
+    // Group by farmer_id
+    final groupedBoundaries = <String, List<QueryRow>>{};
+    for (var row in points) {
+      final farmerId = row.read<String>('farmer_id');
+      if (!groupedBoundaries.containsKey(farmerId)) {
+        groupedBoundaries[farmerId] = [];
+      }
+      groupedBoundaries[farmerId]!.add(row);
+    }
+
+    for (var farmerId in groupedBoundaries.keys) {
+      await _sendPlotBoundariesToServer(farmerId, groupedBoundaries[farmerId]!);
     }
   }
 
@@ -259,11 +404,13 @@ class SyncService {
             })
         .toList();
 
-    final response = await http.post(
-      Uri.parse('${Environment.apiBaseUrl}/farmers/$farmerId/boundary'),
-      headers: await _getHeaders(),
-      body: jsonEncode({'boundary': pointsMap}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('${Environment.apiBaseUrl}/farmers/$farmerId/boundary'),
+          headers: await _getHeaders(),
+          body: jsonEncode({'boundary': pointsMap}),
+        )
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode == 200) {
       await _databaseService.markPlotBoundariesAsSynced(farmerId);
@@ -272,14 +419,20 @@ class SyncService {
     }
   }
 
+  // ========== FETCH FROM SERVER ==========
+
   Future<List<Map<String, dynamic>>> _fetchFarmersFromServer(
       DateTime? lastSync) async {
     final url = lastSync != null
         ? '${Environment.apiBaseUrl}/farmers?since=${lastSync.toIso8601String()}'
         : '${Environment.apiBaseUrl}/farmers';
 
-    final response =
-        await http.get(Uri.parse(url), headers: await _getHeaders());
+    final response = await http
+        .get(
+          Uri.parse(url),
+          headers: await _getHeaders(),
+        )
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -295,8 +448,12 @@ class SyncService {
         ? '${Environment.apiBaseUrl}/sales?since=${lastSync.toIso8601String()}'
         : '${Environment.apiBaseUrl}/sales';
 
-    final response =
-        await http.get(Uri.parse(url), headers: await _getHeaders());
+    final response = await http
+        .get(
+          Uri.parse(url),
+          headers: await _getHeaders(),
+        )
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -312,8 +469,12 @@ class SyncService {
         ? '${Environment.apiBaseUrl}/vsla/transactions?since=${lastSync.toIso8601String()}'
         : '${Environment.apiBaseUrl}/vsla/transactions';
 
-    final response =
-        await http.get(Uri.parse(url), headers: await _getHeaders());
+    final response = await http
+        .get(
+          Uri.parse(url),
+          headers: await _getHeaders(),
+        )
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -329,8 +490,12 @@ class SyncService {
         ? '${Environment.apiBaseUrl}/inputs/invoices?since=${lastSync.toIso8601String()}'
         : '${Environment.apiBaseUrl}/inputs/invoices';
 
-    final response =
-        await http.get(Uri.parse(url), headers: await _getHeaders());
+    final response = await http
+        .get(
+          Uri.parse(url),
+          headers: await _getHeaders(),
+        )
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -340,7 +505,19 @@ class SyncService {
     }
   }
 
+  /// Conflict resolution: Last-Write-Wins with timestamp comparison
   Future<void> resolveConflicts() async {
-    // Implementation for conflict resolution
+    // Placeholder for conflict resolution logic
+    // In production, compare updated_at timestamps and keep most recent
+    debugPrint('Conflict resolution not yet implemented');
+  }
+
+  /// Get sync statistics
+  Map<String, dynamic> getSyncStats() {
+    return {
+      'is_syncing': _isSyncing,
+      'queue_size': _syncQueue.length,
+      'queued_tasks': _syncQueue.map((t) => t.name).toList(),
+    };
   }
 }

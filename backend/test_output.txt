@@ -1,0 +1,90 @@
+  console.log
+    Connected to PostgreSQL database
+
+      at BoundPool.log (src/config/database.js:30:11)
+
+  console.log
+    [SECURITY] Successful login: 23 - integration_1770997180459@test.com
+
+      at log (src/controllers/authController.js:219:21)
+
+::ffff:127.0.0.1 - - [13/Feb/2026:15:39:40 +0000] "POST /api/auth/login HTTP/1.1" 200 662 "-" "-"
+  console.log
+    Login Success Body: {
+      token: 'Present',
+      refreshToken: 'eyJhbGciOiJIUzI1NiIs...',
+      refreshTokenType: 'string'
+    }
+
+      at Object.log (tests/integration/auth.test.js:61:25)
+
+::ffff:127.0.0.1 - - [13/Feb/2026:15:39:41 +0000] "POST /api/auth/login HTTP/1.1" 401 71 "-" "-"
+  console.log
+    Refreshing with token: eyJhbGciOiJIUzI1NiIs...
+
+      at Object.log (tests/integration/auth.test.js:91:21)
+
+::ffff:127.0.0.1 - - [13/Feb/2026:15:39:41 +0000] "POST /api/auth/refresh-token HTTP/1.1" 200 265 "-" "-"
+  console.error
+    Refresh token error: JsonWebTokenError {
+      name: 'JsonWebTokenError',
+      message: 'jwt malformed'
+    }
+
+    [0m [90m 87 |[39m
+     [90m 88 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 89 |[39m             console[33m.[39merror([32m'Refresh token error:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                     [31m[1m^[22m[39m
+     [90m 90 |[39m             [36mif[39m (error[33m.[39mname [33m===[39m [32m'TokenExpiredError'[39m) {
+     [90m 91 |[39m                 [36mreturn[39m res[33m.[39mstatus([35m401[39m)[33m.[39mjson({
+     [90m 92 |[39m                     error[33m:[39m [32m'token_expired'[39m[33m,[39m[0m
+
+      at error (src/controllers/authController.js:89:21)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at next (node_modules/express/lib/router/route.js:149:13)
+      at Route.dispatch (node_modules/express/lib/router/route.js:119:3)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at node_modules/express/lib/router/index.js:284:15
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Function.handle (node_modules/express/lib/router/index.js:175:3)
+      at router (node_modules/express/lib/router/index.js:47:12)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at logger (node_modules/morgan/index.js:144:5)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at urlencodedParser (node_modules/body-parser/lib/types/urlencoded.js:82:7)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/body-parser/lib/read.js:137:5
+      at invokeCallback (node_modules/raw-body/index.js:238:16)
+      at done (node_modules/raw-body/index.js:227:7)
+      at IncomingMessage.onEnd (node_modules/raw-body/index.js:287:7)
+
+::ffff:127.0.0.1 - - [13/Feb/2026:15:39:41 +0000] "POST /api/auth/refresh-token HTTP/1.1" 401 59 "-" "-"
+PASS tests/integration/auth.test.js
+  Auth Integration Tests
+    POST /api/auth/register
+      ΓêÜ should register a new user (121 ms)
+    POST /api/auth/login
+      ΓêÜ should login and return tokens (172 ms)
+      ΓêÜ should fail with wrong password (90 ms)
+    POST /api/auth/refresh-token
+      ΓêÜ should refresh access token (11 ms)
+      ΓêÜ should fail with invalid refresh token (17 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Snapshots:   0 total
+Time:        2.382 s, estimated 3 s
+Ran all test suites matching tests/integration/auth.test.js.

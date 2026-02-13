@@ -19,6 +19,7 @@ const mapsRoutes = require('./routes/maps.routes');
 const alertRoutes = require('./routes/alerts.routes');
 const unifiedRoutes = require('./routes/unified.routes');
 const searchRoutes = require('./routes/search.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 
@@ -119,6 +120,7 @@ app.use('/api/maps', mapsRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/unified', unifiedRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Static file serving for uploads
 // Static file serving for uploads
@@ -289,9 +291,11 @@ async function initializeDatabase() {
 }
 
 // Initialize DB then start server
-initializeDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`
+// Initialize DB then start server
+if (process.env.NODE_ENV !== 'test') {
+  initializeDatabase().then(() => {
+    app.listen(PORT, () => {
+      console.log(`
       ╔═══════════════════════════════════════════════════════╗
       ║  AAYWA & PARTNERS API SERVER                          ║
       ╠═══════════════════════════════════════════════════════╣
@@ -300,8 +304,9 @@ initializeDatabase().then(() => {
       ║  Environment: ${process.env.NODE_ENV || 'development'}                    ║
       ║  Database: PostgreSQL                                 ║
       ╚═══════════════════════════════════════════════════════╝
-    `);
+      `);
+    });
   });
-});
+}
 
 module.exports = app;

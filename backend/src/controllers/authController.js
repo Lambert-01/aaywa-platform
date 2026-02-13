@@ -21,7 +21,85 @@ const generateToken = (user) => {
     );
 };
 
+/**
+ * Generate Refresh Token
+ * @param {object} user - User object
+ * @returns {string} Refresh token
+ */
+const generateRefreshToken = (user) => {
+    const expiresIn = '7d'; // 7 days
+
+    return jwt.sign(
+        {
+            id: user.id,
+            type: 'refresh'
+        },
+        process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret',
+        { expiresIn }
+    );
+};
+
 const authController = {
+    /**
+     * Refresh Access Token
+     * POST /api/auth/refresh-token
+     */
+    refreshToken: async (req, res) => {
+        try {
+            const { refreshToken } = req.body;
+
+            if (!refreshToken) {
+                return res.status(400).json({
+                    error: 'refresh_token_required',
+                    message: 'Refresh token is required'
+                });
+            }
+
+            // Verify refresh token
+            const decoded = jwt.verify(
+                refreshToken,
+                process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret'
+            );
+
+            if (decoded.type !== 'refresh') {
+                return res.status(401).json({
+                    error: 'invalid_token_type',
+                    message: 'Invalid token type'
+                });
+            }
+
+            // Check if user still exists and is active
+            const user = await User.findById(decoded.id);
+            if (!user || !user.is_active) {
+                return res.status(401).json({
+                    error: 'user_inactive',
+                    message: 'User is no longer active'
+                });
+            }
+
+            // Generate new access token
+            const accessToken = generateToken(user);
+
+            res.json({
+                success: true,
+                accessToken
+            });
+
+        } catch (error) {
+            console.error('Refresh token error:', error);
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    error: 'token_expired',
+                    message: 'Refresh token has expired, please login again'
+                });
+            }
+            res.status(401).json({
+                error: 'invalid_token',
+                message: 'Invalid refresh token'
+            });
+        }
+    },
+
     /**
      * Register new user (admin only - middleware enforces this)
      * POST /api/auth/register
@@ -133,8 +211,9 @@ const authController = {
             // Update last login timestamp
             await User.updateLastLogin(user.id);
 
-            // Generate JWT token
-            const token = generateToken(user);
+            // Generate JWT tokens
+            const accessToken = generateToken(user);
+            const refreshToken = generateRefreshToken(user);
 
             // Log successful login
             console.log(`[SECURITY] Successful login: ${user.id} - ${user.email}`);
@@ -171,7 +250,8 @@ const authController = {
                     last_login: new Date(),
                     ...farmerDetails
                 },
-                token
+                token: accessToken,
+                refreshToken
             });
 
         } catch (error) {
@@ -238,8 +318,9 @@ const authController = {
             // Update last login timestamp
             await User.updateLastLogin(user.id);
 
-            // Generate JWT token
-            const token = generateToken(user);
+            // Generate JWT tokens
+            const accessToken = generateToken(user);
+            const refreshToken = generateRefreshToken(user);
 
             // Log successful mobile login
             console.log(`[SECURITY] Successful mobile login: ${user.id} - ${user.email}`);
@@ -275,7 +356,8 @@ const authController = {
                 success: true,
                 message: 'Login successful',
                 user: mobileProfile,
-                token
+                token: accessToken,
+                refreshToken
             });
 
         } catch (error) {

@@ -14,7 +14,7 @@ dependencies:
   provider: ^6.1.1
   dio: ^5.4.1
   http: ^1.2.0
-  drift: ^2.16.0
+  drift: 2.16.0
   sqlite3_flutter_libs: ^0.5.20
   path_provider: ^2.1.2
   path: ^1.9.0
@@ -28,6 +28,13 @@ dependencies:
   uuid: ^4.3.3
   workmanager: ^0.5.2
   flutter_secure_storage: ^9.0.0
+  image_picker: ^1.0.7
+  qr_code_scanner: ^1.0.1
+  qr_flutter: ^4.1.0
+  fl_chart: ^0.66.0
+  pdf: ^3.10.0
+  csv: ^6.0.0
+  share_plus: ^7.2.1
   
   flutter_localizations:
     sdk: flutter
@@ -37,8 +44,11 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^3.0.0
-  drift_dev: ^2.16.0
+  mockito: ^5.4.4
+  drift_dev: 2.16.0
   build_runner: ^2.4.8
+
+
 
 flutter:
   uses-material-design: true
