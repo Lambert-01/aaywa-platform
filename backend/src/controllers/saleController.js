@@ -137,6 +137,75 @@ const saleController = {
     }
   },
 
+  // Create batch sales
+  createBatchSales: async (req, res) => {
+    try {
+      const { sales } = req.body;
+      if (!Array.isArray(sales)) {
+        return res.status(400).json({ error: 'Sales must be an array' });
+      }
+
+      const results = [];
+      const errors = [];
+
+      for (const saleData of sales) {
+        try {
+          // Map fields from mobile sync if necessary
+          const mappedData = {
+            farmer_id: saleData.farmer_id,
+            input_invoice_id: saleData.input_invoice_id,
+            crop_type: saleData.crop_type,
+            quantity: saleData.quantity || saleData.quantity_kg,
+            unit_price: saleData.unit_price || saleData.price_per_kg,
+            buyer_id: saleData.buyer_id,
+            sale_date: saleData.date || saleData.sale_date
+          };
+
+          // Reuse the creation logic or model direct?
+          // To ensure profit sharing logic remains consistent, we'd ideally call a service method
+          // For now, mirroring createSale logic:
+          const inputCost = mappedData.input_invoice_id ?
+            await InputInvoice.getOutstandingBalance(mappedData.farmer_id) : 0;
+
+          const calculation = ProfitShareCalculator.calculate(
+            mappedData.quantity,
+            mappedData.unit_price,
+            inputCost
+          );
+
+          const sale = await Sale.create({
+            ...mappedData,
+            gross_revenue: calculation.grossRevenue,
+            input_cost: calculation.inputCost,
+            net_revenue: calculation.netRevenue,
+            farmer_share: calculation.farmerShare,
+            sanza_share: calculation.sanzaShare
+          });
+
+          if (mappedData.input_invoice_id && calculation.inputCost > 0) {
+            await InputInvoice.updateStatus(mappedData.input_invoice_id, 'repaid');
+          }
+
+          results.push(sale);
+        } catch (e) {
+          console.error('Batch sale item error:', e.message);
+          errors.push({ data: saleData, error: e.message });
+        }
+      }
+
+      res.status(207).json({
+        message: 'Batch sales processing complete',
+        processedCount: results.length,
+        failedCount: errors.length,
+        results,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error) {
+      console.error('Create batch sales error:', error);
+      res.status(500).json({ error: 'Failed to process batch sales' });
+    }
+  },
+
   // Generate settlement statement
   generateStatement: async (req, res) => {
     try {

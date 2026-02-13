@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../services/database_service.dart';
+import '../services/sync_service.dart';
 
 class SyncProvider with ChangeNotifier {
   // ignore: unused_field
@@ -19,14 +20,11 @@ class SyncProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Implement data synchronization logic
-      await Future.delayed(const Duration(seconds: 2));
-      debugPrint('Syncing data with backend...');
-      // Sync local data with remote server
+      final syncService = SyncService(_databaseService);
+      await syncService.syncData();
 
       _lastSyncTime = DateTime.now().toIso8601String();
     } catch (e) {
-      // Handle sync errors
       if (kDebugMode) {
         debugPrint('Sync failed: $e');
       }

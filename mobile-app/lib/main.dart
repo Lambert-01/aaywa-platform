@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'services/database_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dashboard_provider.dart';
+import 'providers/sync_provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -18,6 +20,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => SyncProvider(databaseService)),
         Provider(create: (_) => databaseService),
       ],
       child: const AAYWAApp(),
@@ -42,6 +45,9 @@ class AAYWAApp extends StatelessWidget {
           return const LoginScreen();
         },
       ),
+      routes: {
+        '/register': (context) => const RegisterScreen(),
+      },
     );
   }
 }

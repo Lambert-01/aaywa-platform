@@ -101,11 +101,12 @@ const getCohortStats = async (req, res) => {
         c.name,
         c.cropping_system,
         COUNT(DISTINCT f.id)::int as farmer_count,
-        COUNT(DISTINCT t.id)::int as training_count,
+        COALESCE(AVG(ts.actual_attendees::float / NULLIF(ts.expected_attendees, 0) * 100), 0)::int as attendance_rate,
+        COALESCE((SELECT SUM(total_savings) FROM vsla_groups WHERE cohort_id = c.id), 0)::float as vsla_balance,
         COALESCE(SUM(s.net_revenue), 0)::float as total_revenue
       FROM cohorts c
       LEFT JOIN farmers f ON c.id = f.cohort_id AND f.is_active = true
-      LEFT JOIN training_sessions t ON c.id = t.cohort_id
+      LEFT JOIN training_sessions ts ON c.id = ts.cohort_id AND ts.status = 'completed'
       LEFT JOIN sales s ON s.farmer_id = f.id
       WHERE c.status = 'active'
       GROUP BY c.id, c.name, c.cropping_system
@@ -187,7 +188,7 @@ const getDashboardCharts = async (req, res) => {
                 FROM training_sessions t
                 JOIN cohorts c ON t.cohort_id = c.id
                 WHERE t.status = 'completed'
-                ORDER BY t.scheduled_date DESC
+                ORDER BY t.date DESC
                 LIMIT 5
             `);
         } catch (err) {
@@ -257,10 +258,10 @@ const getUpcomingEvents = async (req, res) => {
         let trainingEvents = [];
         try {
             const tRes = await db.query(`
-                SELECT id, title, 'training' as type, scheduled_date as date, location 
+                SELECT id, title, 'training' as type, date, location 
                 FROM training_sessions 
-                WHERE scheduled_date > NOW() 
-                AND scheduled_date < NOW() + INTERVAL '7 days'
+                WHERE date > NOW() 
+                AND date < NOW() + INTERVAL '7 days'
             `);
             trainingEvents = tRes.rows;
         } catch (e) {
@@ -299,11 +300,46 @@ const getUpcomingEvents = async (req, res) => {
 const getMobileDashboard = async (req, res) => {
     try {
         const userId = req.user.id;
+        const role = req.user.role;
+
+        // If Admin or Project Manager, return global stats
+        if (role === 'admin' || role === 'project_manager') {
+            const farmerCount = await db.query('SELECT COUNT(*)::int as count FROM farmers WHERE is_active = true');
+            const salesRes = await db.query('SELECT COALESCE(SUM(gross_revenue), 0)::float as total, COUNT(*)::int as count FROM sales');
+            const vslaRes = await db.query('SELECT COALESCE(SUM(total_savings), 0)::float as total FROM vsla_groups');
+            const trainingRes = await db.query("SELECT COUNT(*)::int as count FROM training_sessions WHERE status = 'completed'");
+            const plotRes = await db.query("SELECT COUNT(*)::int as count FROM farmers WHERE location_coordinates IS NOT NULL OR plot_size_hectares IS NOT NULL"); // Using farmers table as proxy for plots
+
+            const recentActivities = await db.query(`
+                SELECT 'sale' as type, crop_type as title, 
+                       CONCAT(quantity_kg, ' kg sold') as subtitle, 
+                       sale_date as created_at, 'success' as status 
+                FROM sales ORDER BY sale_date DESC LIMIT 10
+            `);
+
+            return res.json({
+                farmers: farmerCount.rows[0].count,
+                sales: salesRes.rows[0].count,
+                trainings: trainingRes.rows[0].count,
+                plots: plotRes.rows[0].count,
+                vslaBalance: vslaRes.rows[0].total,
+                inputDebt: 0, // Global debt?
+                salesTotal: salesRes.rows[0].total,
+                trustScore: 100,
+                recentActivities: recentActivities.rows.map(a => ({
+                    type: a.type,
+                    title: a.title,
+                    subtitle: a.subtitle,
+                    time: a.created_at,
+                    status: a.status
+                }))
+            });
+        }
 
         // 1. Get Farmer Profile
         const farmerRes = await db.query('SELECT * FROM farmers WHERE user_id = $1', [userId]);
 
-        // Default empty stats if no farmer profile (e.g. admin testing mobile app)
+        // Default empty stats if no farmer profile
         if (farmerRes.rows.length === 0) {
             return res.json({
                 farmers: 0,
@@ -322,7 +358,6 @@ const getMobileDashboard = async (req, res) => {
         const farmerId = farmer.id;
 
         // 2. Calculate Stats
-
         // VSLA Balance
         let vslaBalance = 0;
         if (farmer.vsla_id) {

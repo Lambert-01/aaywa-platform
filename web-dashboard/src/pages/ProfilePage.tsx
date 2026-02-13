@@ -18,6 +18,7 @@ const ProfilePage: React.FC = () => {
         full_name: '',
         email: '',
         phone: '',
+        location: '',
         language: 'en'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,6 +30,7 @@ const ProfilePage: React.FC = () => {
                 full_name: user.full_name || '',
                 email: user.email || '',
                 phone: (user as any).phone || '',
+                location: (user as any).location || '',
                 language: user.language || 'en'
             });
         }
@@ -67,8 +69,8 @@ const ProfilePage: React.FC = () => {
                 <button
                     onClick={() => setIsEditing(!isEditing)}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${isEditing
-                            ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                            : 'bg-brand-blue-600 text-white hover:bg-brand-blue-700'
+                        ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                        : 'bg-brand-blue-600 text-white hover:bg-brand-blue-700'
                         }`}
                 >
                     {isEditing ? t('common.cancel', 'Cancel') : t('profile.edit', 'Edit Profile')}
@@ -168,6 +170,17 @@ const ProfilePage: React.FC = () => {
                                             <option value="fr">Français</option>
                                             <option value="rw">Kinyarwanda</option>
                                         </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                                        <input
+                                            type="text"
+                                            name="location"
+                                            value={formData.location}
+                                            onChange={handleInputChange}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue-500"
+                                            placeholder="City, Country"
+                                        />
                                     </div>
                                 </div>
                                 <div className="pt-4">

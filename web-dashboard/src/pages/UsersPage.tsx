@@ -332,6 +332,7 @@ const UsersPage: React.FC = () => {
             case 'project_manager': return 'bg-purple-100 text-purple-800 border-purple-200';
             case 'agronomist': return 'bg-green-100 text-green-800 border-green-200';
             case 'field_facilitator': return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'farmer': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
@@ -607,6 +608,7 @@ const UsersPage: React.FC = () => {
                                     <option value="project_manager">Project Manager</option>
                                     <option value="agronomist">Agronomist</option>
                                     <option value="field_facilitator">Field Facilitator</option>
+                                    <option value="farmer">Farmer</option>
                                 </select>
                             </div>
                         </div>
@@ -786,6 +788,7 @@ const UsersPage: React.FC = () => {
                                 >
                                     <option value="field_facilitator">Field Facilitator</option>
                                     <option value="agronomist">Agronomist</option>
+                                    <option value="farmer">Farmer</option>
                                     <option value="project_manager">Project Manager</option>
                                 </select>
                             </div>
@@ -848,6 +851,7 @@ const UsersPage: React.FC = () => {
                                     >
                                         <option value="field_facilitator">Field Facilitator</option>
                                         <option value="agronomist">Agronomist</option>
+                                        <option value="farmer">Farmer</option>
                                         <option value="project_manager">Project Manager</option>
                                     </select>
                                 </div>
@@ -933,6 +937,7 @@ const UsersPage: React.FC = () => {
                                 >
                                     <option value="field_facilitator">Field Facilitator</option>
                                     <option value="agronomist">Agronomist</option>
+                                    <option value="farmer">Farmer</option>
                                     <option value="project_manager">Project Manager</option>
                                 </select>
                             </div>

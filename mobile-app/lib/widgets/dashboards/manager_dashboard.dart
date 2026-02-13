@@ -36,9 +36,9 @@ class ManagerDashboard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Column(
             children: [
-              const KPIMetricCard(
+              KPIMetricCard(
                 title: 'Total Network Revenue',
-                value: '45.2M RWF',
+                value: _formatCurrency(dashboard.salesTotal),
                 icon: Icons.payments,
                 color: AppColors.success,
               ),
@@ -50,16 +50,16 @@ class ManagerDashboard extends StatelessWidget {
                 mainAxisSpacing: AppSpacing.md,
                 crossAxisSpacing: AppSpacing.md,
                 childAspectRatio: 1.1,
-                children: const [
+                children: [
                   KPIMetricCard(
                     title: 'Total Farmers',
-                    value: '1,240',
+                    value: '${dashboard.farmersCount}',
                     icon: Icons.groups,
                     color: AppColors.primaryGreen,
                   ),
                   KPIMetricCard(
                     title: 'VSLA Total Capital',
-                    value: '15.8M',
+                    value: _formatCurrency(dashboard.vslaBalance),
                     icon: Icons.account_balance,
                     color: AppColors.blue,
                   ),
@@ -70,5 +70,14 @@ class ManagerDashboard extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _formatCurrency(double amount) {
+    if (amount >= 1000000) {
+      return '${(amount / 1000000).toStringAsFixed(1)}M RWF';
+    } else if (amount >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(1)}K RWF';
+    }
+    return '${amount.toStringAsFixed(0)} RWF';
   }
 }

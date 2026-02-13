@@ -97,6 +97,7 @@ const userController = {
       const result = await db.query(`
         SELECT id, full_name, email, role, is_active, created_at
         FROM users
+        WHERE registration_status = 'approved'
         ORDER BY created_at DESC
       `);
 
@@ -214,7 +215,11 @@ const userController = {
   // POST /api/users/register - Public registration request
   registerRequest: async (req, res) => {
     try {
-      const { full_name, email, phone, requested_role, message } = req.body;
+      console.log('[DEBUG] Registration Request Body:', JSON.stringify(req.body));
+      let { full_name, email, phone, requested_role, message } = req.body;
+
+      // Normalize role
+      const normalizedRole = requested_role ? requested_role.toLowerCase().trim() : 'field_facilitator';
 
       // Validate inputs
       if (!full_name || !email) {
@@ -222,8 +227,9 @@ const userController = {
       }
 
       // Validate requested role
-      const allowedRoles = ['field_facilitator', 'agronomist', 'project_manager'];
-      if (requested_role && !allowedRoles.includes(requested_role)) {
+      const allowedRoles = ['field_facilitator', 'agronomist', 'project_manager', 'farmer'];
+      if (!allowedRoles.includes(normalizedRole)) {
+        console.warn(`[REGISTRATION] Invalid role blocked: ${normalizedRole} (original: ${requested_role})`);
         return res.status(400).json({ error: 'Invalid role requested' });
       }
 
@@ -246,15 +252,16 @@ const userController = {
           email, 
           phone, 
           requested_role, 
+          role,
           registration_status, 
           registration_notes,
           registration_date,
           is_active
-        ) VALUES ($1, $2, $3, $4, 'pending', $5, NOW(), false)
-        RETURNING id, full_name, email, requested_role, registration_date
-      `, [full_name, email, phone || null, requested_role || 'field_facilitator', message || null]);
+        ) VALUES ($1, $2, $3, $4, $5, 'pending', $6, NOW(), false)
+        RETURNING id, full_name, email, requested_role, role, registration_date
+      `, [full_name, email, phone || null, normalizedRole, normalizedRole, message || null]);
 
-      console.log(`[REGISTRATION] New registration request: ${email} - ${requested_role}`);
+      console.log(`[REGISTRATION] New registration request: ${email} - ${normalizedRole}`);
 
       res.status(201).json({
         success: true,
@@ -262,8 +269,14 @@ const userController = {
         registration: result.rows[0]
       });
     } catch (error) {
-      console.error('Error in registration request:', error);
-      res.status(500).json({ error: 'Failed to submit registration request' });
+      console.error('Error in registration request:', error.message);
+      if (error.code) console.error('DB Error Code:', error.code);
+      if (error.detail) console.error('DB Error Detail:', error.detail);
+
+      res.status(500).json({
+        error: 'Failed to submit registration request',
+        details: error.message
+      });
     }
   },
 
@@ -304,7 +317,7 @@ const userController = {
       }
 
       // Validate role
-      const allowedRoles = ['project_manager', 'agronomist', 'field_facilitator'];
+      const allowedRoles = ['project_manager', 'agronomist', 'field_facilitator', 'farmer'];
       if (role && !allowedRoles.includes(role)) {
         return res.status(400).json({ error: 'Invalid role specified' });
       }

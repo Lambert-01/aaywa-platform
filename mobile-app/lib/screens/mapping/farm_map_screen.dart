@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as ll;
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
@@ -21,15 +22,9 @@ class FarmMapScreen extends StatefulWidget {
 }
 
 class _FarmMapScreenState extends State<FarmMapScreen> {
-  final Completer<GoogleMapController> _controller = Completer();
-  final List<LatLng> _polygonPoints = [];
-  final Set<Polygon> _polygons = {};
-  final Set<Marker> _markers = {};
-
-  static const CameraPosition _kRwanda = CameraPosition(
-    target: LatLng(-1.9441, 30.0619),
-    zoom: 14.4746,
-  );
+  final MapController _mapController = MapController();
+  final List<ll.LatLng> _polygonPoints = [];
+  final ll.LatLng _currentCenter = const ll.LatLng(-1.9441, 30.0619);
 
   bool _isRecording = false;
   bool _isDigitizing = false;
@@ -46,6 +41,7 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
   @override
   void dispose() {
     _positionStream?.cancel();
+    _mapController.dispose();
     super.dispose();
   }
 
@@ -56,46 +52,25 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
     if (coords.isNotEmpty) {
       setState(() {
         _polygonPoints.addAll(coords
-            .map((c) =>
-                LatLng(c.read<double>('latitude'), c.read<double>('longitude')))
+            .map((c) => ll.LatLng(
+                c.read<double>('latitude'), c.read<double>('longitude')))
             .toList());
-        _refreshMap();
       });
 
       // Zoom to first point
-      _updateCamera(_polygonPoints.first);
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted && _polygonPoints.isNotEmpty) {
+          _mapController.move(_polygonPoints.first, 16);
+        }
+      });
     }
   }
 
-  void _refreshMap() {
-    _markers.clear();
-    _polygons.clear();
-
-    for (int i = 0; i < _polygonPoints.length; i++) {
-      _markers.add(Marker(
-        markerId: MarkerId('point_$i'),
-        position: _polygonPoints[i],
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-      ));
-    }
-
-    if (_polygonPoints.length >= 3) {
-      _polygons.add(Polygon(
-        polygonId: const PolygonId('farm_boundary'),
-        points: _polygonPoints,
-        strokeColor: AppColors.primaryGreen,
-        strokeWidth: 2,
-        fillColor: AppColors.primaryGreen.withValues(alpha: 0.3),
-      ));
-    }
-  }
-
-  void _onMapTap(LatLng point) {
+  void _onMapTap(TapPosition tapPosition, ll.LatLng point) {
     if (!_isDigitizing) return;
 
     setState(() {
       _polygonPoints.add(point);
-      _refreshMap();
     });
   }
 
@@ -103,7 +78,6 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
     if (_polygonPoints.isNotEmpty) {
       setState(() {
         _polygonPoints.removeLast();
-        _refreshMap();
       });
     }
   }
@@ -118,13 +92,35 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
 
       serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location services are disabled')),
+          );
+        }
         return;
       }
 
       permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Location permission denied')),
+            );
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Location permissions are permanently denied.')),
+          );
+        }
+        return;
       }
 
       setState(() {
@@ -139,20 +135,24 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
 
       _positionStream =
           Geolocator.getPositionStream(locationSettings: locationSettings)
-              .listen((Position position) {
-        final point = LatLng(position.latitude, position.longitude);
-        setState(() {
-          _polygonPoints.add(point);
-          _refreshMap();
-        });
-        _updateCamera(point);
-      });
+              .listen(
+        (Position position) {
+          final point = ll.LatLng(position.latitude, position.longitude);
+          setState(() {
+            _polygonPoints.add(point);
+          });
+          _mapController.move(point, _mapController.camera.zoom);
+        },
+        onError: (e) {
+          if (mounted) {
+            setState(() => _isRecording = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Location error: $e')),
+            );
+          }
+        },
+      );
     }
-  }
-
-  Future<void> _updateCamera(LatLng point) async {
-    final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newLatLng(point));
   }
 
   Future<void> _saveFarm() async {
@@ -165,7 +165,7 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
 
     if (widget.farmerId != null) {
       final db = Provider.of<DatabaseService>(context, listen: false);
-      final pointsData = _polygonPoints
+      final List<Map<String, double>> pointsData = _polygonPoints
           .map((p) => {
                 'lat': p.latitude,
                 'lng': p.longitude,
@@ -210,15 +210,53 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
       ),
       body: Stack(
         children: [
-          GoogleMap(
-            mapType: MapType.hybrid,
-            initialCameraPosition: _kRwanda,
-            polygons: _polygons,
-            markers: _markers,
-            onMapCreated: (controller) => _controller.complete(controller),
-            onTap: _onMapTap,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _currentCenter,
+              initialZoom: 14.5,
+              onTap: _onMapTap,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.example.aaywa_mobile',
+              ),
+              if (_polygonPoints.length >= 3)
+                PolygonLayer(
+                  polygons: [
+                    Polygon(
+                      points: _polygonPoints,
+                      color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                      borderColor: AppColors.primaryGreen,
+                      borderStrokeWidth: 2,
+                      isFilled: true,
+                    ),
+                  ],
+                ),
+              MarkerLayer(
+                markers: _polygonPoints.asMap().entries.map((entry) {
+                  return Marker(
+                    point: entry.value,
+                    width: 12,
+                    height: 12,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryGreen,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
 
           // Instruction Overlay
@@ -243,35 +281,61 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
               ),
             ),
           ),
+
+          // My Location Button
+          Positioned(
+            bottom: 30,
+            right: 16,
+            child: FloatingActionButton(
+              mini: true,
+              backgroundColor: Colors.white,
+              onPressed: () async {
+                final pos = await Geolocator.getCurrentPosition();
+                _mapController.move(ll.LatLng(pos.latitude, pos.longitude), 16);
+              },
+              child:
+                  const Icon(Icons.my_location, color: AppColors.primaryGreen),
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: BottomAppBar(
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _isDigitizing = !_isDigitizing;
-                  if (_isDigitizing) {
-                    _isRecording = false;
-                    _positionStream?.cancel();
-                  }
-                });
-              },
-              icon: Icon(_isDigitizing ? Icons.edit : Icons.edit_outlined),
-              label: Text(_isDigitizing ? 'Digitizing' : 'Manual Point'),
-              style: TextButton.styleFrom(
-                foregroundColor: _isDigitizing ? Colors.green : Colors.grey,
+            Expanded(
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _isDigitizing = !_isDigitizing;
+                    if (_isDigitizing) {
+                      _isRecording = false;
+                      _positionStream?.cancel();
+                    }
+                  });
+                },
+                icon: Icon(_isDigitizing ? Icons.edit : Icons.edit_outlined),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(_isDigitizing ? 'Digitizing' : 'Manual'),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: _isDigitizing ? Colors.green : Colors.grey,
+                ),
               ),
             ),
             const VerticalDivider(width: 1),
-            TextButton.icon(
-              onPressed: _toggleRecording,
-              icon: Icon(_isRecording ? Icons.gps_fixed : Icons.gps_not_fixed),
-              label: Text(_isRecording ? 'Recording' : 'Walk Boundary'),
-              style: TextButton.styleFrom(
-                foregroundColor: _isRecording ? Colors.red : Colors.grey,
+            Expanded(
+              child: TextButton.icon(
+                onPressed: _toggleRecording,
+                icon:
+                    Icon(_isRecording ? Icons.gps_fixed : Icons.gps_not_fixed),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(_isRecording ? 'Recording' : 'Walk'),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: _isRecording ? Colors.red : Colors.grey,
+                ),
               ),
             ),
           ],

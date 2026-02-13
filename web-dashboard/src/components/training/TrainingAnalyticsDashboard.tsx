@@ -83,25 +83,32 @@ const TrainingAnalyticsDashboard: React.FC<TrainingAnalyticsDashboardProps> = ({
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Session Types Distribution</h3>
                     <div className="space-y-3">
-                        {['Master Training', 'Champion Training', 'VSLA', 'Nutrition', 'Agronomy'].map((type, index) => {
-                            const percentage = [30, 25, 20, 15, 10][index]; // Mock data - would come from real stats
-                            const colors = ['bg-green-600', 'bg-blue-600', 'bg-purple-600', 'bg-pink-600', 'bg-emerald-600'];
+                        {!stats.session_types || stats.session_types.length === 0 ? (
+                            <p className="text-sm text-gray-500 italic">No session type data available</p>
+                        ) : (
+                            stats.session_types.map((type: any, index: number) => {
+                                const percentage = stats.total_sessions > 0
+                                    ? Math.round((type.count / stats.total_sessions) * 100)
+                                    : 0;
+                                const colors = ['bg-green-600', 'bg-blue-600', 'bg-purple-600', 'bg-pink-600', 'bg-emerald-600'];
+                                const colorClass = colors[index % colors.length];
 
-                            return (
-                                <div key={type}>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-sm text-gray-600">{type}</span>
-                                        <span className="text-sm font-medium text-gray-900">{percentage}%</span>
+                                return (
+                                    <div key={type.type}>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-sm text-gray-600">{type.type}</span>
+                                            <span className="text-sm font-medium text-gray-900">{percentage}% ({type.count})</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                            <div
+                                                className={`${colorClass} h-2 rounded-full`}
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                        <div
-                                            className={`${colors[index]} h-2 rounded-full`}
-                                            style={{ width: `${percentage}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })
+                        )}
                     </div>
                 </div>
             </div>

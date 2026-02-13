@@ -51,17 +51,20 @@ const TrainingPage: React.FC = () => {
             setLoading(true);
 
             // Fetch all training data in parallel
-            const [sessionsData, participantsData, materialsData, statsData] = await Promise.all([
+            const [sessionsData, participantsData, materialsData, statsData, quizzesData] = await Promise.all([
                 apiGet('/api/training/sessions'),
                 apiGet('/api/training/participants'),
                 apiGet('/api/training/materials'),
-                apiGet('/api/training/stats')
+                apiGet('/api/training/stats'),
+                apiGet('/api/training/quizzes')
             ]);
 
             setSessions(sessionsData as any[]);
             setParticipants(participantsData as any[]);
             setMaterials(materialsData as any[]);
             setStats(statsData as any);
+            setQuizzes(quizzesData as any[]);
+            setModules(materialsData as any[]); // Using materials as modules for now
         } catch (err: any) {
             console.error('Error fetching training data:', err);
             setError('Failed to load training data');

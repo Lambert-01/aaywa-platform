@@ -73,7 +73,7 @@ class ApiService {
 
   // VSLA
   Future<dynamic> getVSLAData(int? groupId) async {
-    final url = groupId != null ? '/vsla/groups/$groupId' : '/vsla/groups';
+    final url = groupId != null ? '/vsla/$groupId' : '/vsla';
     final response = await _client.get(url);
     return response.data;
   }

@@ -8,11 +8,12 @@ router.use(authenticateToken);
 
 // VSLA groups
 router.post('/', authorizeRoles('project_manager', 'agronomist'), vslaController.createVSLA);
-router.get('/', authorizeRoles('project_manager', 'field_facilitator'), vslaController.getAllVSLAs);
+router.get('/groups', authorizeRoles('project_manager', 'field_facilitator', 'agronomist'), vslaController.getAllVSLAs);
+router.get('/', authorizeRoles('project_manager', 'field_facilitator', 'agronomist'), vslaController.getAllVSLAs);
 router.get('/cohort/:cohortId', vslaController.getVSLAsByCohort);
-router.get('/summary', authorizeRoles('farmer', 'champion', 'project_manager'), vslaController.getMemberSummary);
-router.get('/:id', vslaController.getVSLAById); // Now returns metrics too
-router.get('/:id/metrics', vslaController.getVSLAMetrics); // Explicit metrics endpoint
+router.get('/summary', authorizeRoles('farmer', 'champion', 'project_manager', 'field_facilitator', 'agronomist'), vslaController.getMemberSummary);
+router.get('/:id', authorizeRoles('project_manager', 'field_facilitator', 'agronomist'), vslaController.getVSLAById); // Now returns metrics too
+router.get('/:id/metrics', authorizeRoles('project_manager', 'field_facilitator', 'agronomist'), vslaController.getVSLAMetrics); // Explicit metrics endpoint
 
 router.put('/:id', authorizeRoles('project_manager', 'agronomist'), vslaController.updateVSLA);
 router.delete('/:id', authorizeRoles('project_manager'), vslaController.deleteVSLA);
@@ -25,6 +26,7 @@ router.get('/:id/officers', vslaController.getOfficers);
 router.put('/:id/officers', authorizeRoles('project_manager', 'field_facilitator'), vslaController.rotateOfficer); // Rotate officers
 
 // Transactions
+router.post('/transactions/batch', authorizeRoles('project_manager', 'field_facilitator'), vslaController.createBatchTransactions);
 router.post('/:id/transactions', authorizeRoles('project_manager', 'field_facilitator'), vslaController.createTransaction);
 router.post('/:id/attendance', authorizeRoles('project_manager', 'field_facilitator'), vslaController.recordAttendance);
 router.get('/:id/transactions', vslaController.getTransactions);

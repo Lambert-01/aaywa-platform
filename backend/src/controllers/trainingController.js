@@ -45,44 +45,70 @@ const trainingController = {
   // Get formatted schedule for mobile app
   getSchedule: async (req, res) => {
     try {
-      // Get all sessions
-      const sessions = await Training.getAllSessions({}); // Filter by cohort if needed
+      const db = require('../config/database');
+
+      // Get farmer_id if applicable
+      let farmerId = null;
+      if (req.user.role === 'farmer' || req.user.role === 'field_facilitator') {
+        const userRes = await db.query('SELECT f.id FROM farmers f JOIN users u ON f.phone = u.phone WHERE u.id = $1', [req.user.id]);
+        if (userRes.rows.length > 0) farmerId = userRes.rows[0].id;
+      }
+
+      // Get restricted sessions for the farmer's cohort
+      let query = `
+        SELECT 
+          ts.*, 
+          u.full_name as trainer_name
+        FROM training_sessions ts
+        LEFT JOIN users u ON ts.trainer_id = u.id
+      `;
+      const values = [];
+
+      if (farmerId) {
+        query += ` JOIN farmers f ON f.cohort_id = ts.cohort_id WHERE f.id = $1 `;
+        values.push(farmerId);
+      }
+
+      query += ` ORDER BY ts.date ASC `;
+
+      const sessions = await db.query(query, values);
 
       const now = new Date();
-      const upcoming = sessions.filter(s => new Date(s.date) >= now);
-      const completed = sessions.filter(s => new Date(s.date) < now);
+      const upcoming = sessions.rows.filter(s => new Date(s.date) >= now);
+      const completed = sessions.rows.filter(s => new Date(s.date) < now);
 
-      // Get basic stats if user is a farmer
+      // Get real stats if farmerId exists
       let badgesEarned = 0;
       let totalAttendance = 0;
 
-      if (req.user.role === 'farmer' || req.user.role === 'champion') {
-        // Try to get stats
-        // We'd need to know the farmer_id. 
-        // For now, we return 0 or mock, or try to query if we check farmers table.
-        // Since we don't have easy access to farmer_id here without querying:
-        // We can leave it 0 or standard. 
-        // Real implementation would look up farmer_id via req.user.id
+      if (farmerId) {
+        const statsRes = await db.query('SELECT sessions_attended, quizzes_passed FROM participant_training_stats WHERE farmer_id = $1', [farmerId]);
+        if (statsRes.rows.length > 0) {
+          totalAttendance = statsRes.rows[0].sessions_attended;
+          badgesEarned = statsRes.rows[0].quizzes_passed;
+        }
       }
 
       res.json({
         upcoming: upcoming.map(s => ({
           id: s.id,
-          title: s.module_name,
-          date: new Date(s.date).toLocaleDateString(),
-          time: s.start_time,
-          location: s.location,
-          trainer: 'AAYWA Trainer'
+          title: s.title || 'Training Session',
+          date: new Date(s.date).toISOString().split('T')[0],
+          time: s.time || '09:00 AM',
+          location: s.location || 'Training Center',
+          trainer: s.trainer_name || 'AAYWA Trainer',
+          description: s.notes || 'Training session'
         })),
         completed: completed.map(s => ({
           id: s.id,
-          title: s.module_name,
+          title: s.title || 'Training Session',
           date: new Date(s.date).toLocaleDateString(),
-          badge: 'Completed',
-          attended: true // Mock for now unless we check attendance
+          badge: 'Verified',
+          attended: true,
+          trainer: s.trainer_name || 'AAYWA Trainer'
         })),
-        badges_earned: 3, // Mock
-        total_attendance: 12 // Mock
+        badges_earned: badgesEarned,
+        total_attendance: totalAttendance
       });
 
     } catch (error) {
@@ -232,6 +258,22 @@ const trainingController = {
     } catch (error) {
       console.error('Create quiz error:', error);
       res.status(500).json({ error: 'Failed to create quiz' });
+    }
+  },
+
+  // Get all quizzes
+  getAllQuizzes: async (req, res) => {
+    try {
+      const filters = {
+        session_id: req.query.session_id,
+        category: req.query.category
+      };
+
+      const quizzes = await Training.getAllQuizzes(filters);
+      res.json(quizzes);
+    } catch (error) {
+      console.error('Get quizzes error:', error);
+      res.status(500).json({ error: 'Failed to fetch quizzes' });
     }
   },
 

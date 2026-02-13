@@ -34,7 +34,7 @@ class User {
    * @returns {Promise<object|undefined>} User object with password_hash
    */
   static async findByEmail(email) {
-    const query = 'SELECT * FROM users WHERE email = $1 AND is_active = true';
+    const query = 'SELECT * FROM users WHERE email = $1';
     const result = await pool.query(query, [email]);
     return result.rows[0];
   }
@@ -45,7 +45,7 @@ class User {
    * @returns {Promise<object|undefined>} User object with password_hash
    */
   static async findByPhone(phone) {
-    const query = 'SELECT * FROM users WHERE phone = $1 AND is_active = true';
+    const query = 'SELECT * FROM users WHERE phone = $1';
     const result = await pool.query(query, [phone]);
     return result.rows[0];
   }
@@ -57,7 +57,7 @@ class User {
    */
   static async findById(id) {
     const query = `
-      SELECT id, phone, full_name, email, role, language, preferences, is_active, created_at, last_login 
+      SELECT id, phone, full_name, email, role, language, location, preferences, is_active, created_at, last_login 
       FROM users 
       WHERE id = $1 AND is_active = true
     `;
@@ -72,7 +72,7 @@ class User {
    */
   static async getAll(filters = {}) {
     let query = `
-      SELECT id, phone, full_name, email, role, language, is_active, created_at, last_login
+      SELECT id, phone, full_name, email, role, language, location, is_active, created_at, last_login
       FROM users
       WHERE 1=1
     `;
@@ -100,11 +100,11 @@ class User {
   /**
    * Update user profile data
    * @param {number} id - User ID
-   * @param {object} updateData - Fields to update {full_name, email, language, role}
+   * @param {object} updateData - Fields to update {full_name, email, language, role, phone, location}
    * @returns {Promise<object|null>} Updated user or null if not found
    */
   static async update(id, updateData) {
-    const allowedFields = ['full_name', 'email', 'language', 'role', 'preferences'];
+    const allowedFields = ['full_name', 'email', 'language', 'role', 'phone', 'location', 'preferences'];
     const fields = [];
     const values = [];
     let paramIndex = 1;
@@ -123,7 +123,7 @@ class User {
       UPDATE users 
       SET ${fields.join(', ')} 
       WHERE id = $${paramIndex} AND is_active = true
-      RETURNING id, phone, full_name, email, role, language, created_at
+      RETURNING id, phone, full_name, email, role, language, location, created_at
     `;
     values.push(id);
 

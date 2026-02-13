@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as ll;
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../services/database_service.dart';
 import '../../theme/design_system.dart';
-import '../../widgets/common/aaywa_button.dart';
-import '../../widgets/common/aaywa_card.dart';
-import 'package:aaywa_mobile/screens/inputs/input_invoice_screen.dart';
-import '../../widgets/kpi_metric_card.dart';
+import 'package:aaywa_mobile/screens/mapping/farm_map_screen.dart';
+import '../../widgets/common/mini_map_preview.dart';
 
 class FarmerProfileScreen extends StatefulWidget {
   const FarmerProfileScreen({super.key});
@@ -21,6 +22,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
   bool _isLoading = true;
   Map<String, dynamic> _profileData = {};
   List<Map<String, dynamic>> _inputInvoices = [];
+  List<Polygon> _polygons = [];
+  ll.LatLng _mapCenter = const ll.LatLng(-1.9441, 30.0619); // Rwanda center
 
   @override
   void initState() {
@@ -41,26 +44,55 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
     try {
       final apiService = ApiService();
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      // Use farmer_id if available, otherwise fall back to id but check role
-      final farmerId = auth.user?['farmer_id'] ?? auth.user?['id'];
 
-      // If no valid farmer context (e.g. admin without farmer profile), show empty or mock
-      if (farmerId == null) {
-        setState(() {
-          _isLoading = false;
-          // Set dummy data for preview/admin
-          _profileData = {
-            'name': auth.user?['name'],
-            'role': auth.user?['role'],
-            'vsla_balance': 0,
-            'input_debt': 0,
-            'total_sales': 0,
-          };
-        });
+      // Determine the correct ID to fetch.
+      // 1. Check for farmer_id in user object (champion/farmer role)
+      // 2. Fallback to user id (might fail if not in farmers table, handle 404)
+      final idToFetch = auth.user?['farmer_id'] ?? auth.user?['id'];
+
+      if (idToFetch == null) {
+        setState(() => _isLoading = false);
         return;
       }
 
-      final response = await apiService.get('/farmers/$farmerId/profile');
+      // Fetch comprehensive profile from backend
+      final response = await apiService.get('/farmers/$idToFetch/profile');
+
+      // Load local boundary from Drift if available (for offline proof)
+      if (!mounted) return;
+      final db = Provider.of<DatabaseService>(context, listen: false);
+      final localBoundary =
+          await db.getPlotBoundariesByFarmer(idToFetch.toString());
+
+      if (localBoundary.isNotEmpty) {
+        final points = localBoundary
+            .map((p) => ll.LatLng(
+                p.read<double>('latitude'), p.read<double>('longitude')))
+            .toList();
+        _polygons = [
+          Polygon(
+            points: points,
+            color: AppColors.primaryGreen.withValues(alpha: 0.15),
+            borderColor: AppColors.primaryGreen,
+            borderStrokeWidth: 3,
+            isFilled: true,
+          )
+        ];
+        // Calculate center for map
+        double sumLat = 0;
+        double sumLng = 0;
+        for (var p in points) {
+          sumLat += p.latitude;
+          sumLng += p.longitude;
+        }
+        _mapCenter = ll.LatLng(sumLat / points.length, sumLng / points.length);
+      } else if (response['location_coordinates'] != null) {
+        // Fallback to coordinates from API if no local boundary
+        final coords = response['location_coordinates'];
+        if (coords is Map && coords['lat'] != null && coords['lng'] != null) {
+          _mapCenter = ll.LatLng(coords['lat'], coords['lng']);
+        }
+      }
 
       setState(() {
         _profileData = response;
@@ -70,7 +102,11 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      debugPrint('[PROFILE] Error loading data: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        // Show subtle error or keep default values
+      }
     }
   }
 
@@ -83,65 +119,150 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
+              physics: const BouncingScrollPhysics(),
               slivers: [
-                // Profile Header
+                // Premium Profile Header with Glassmorphism feel
                 SliverAppBar(
-                  expandedHeight: 240,
+                  expandedHeight: 300,
                   pinned: true,
+                  stretch: true,
                   backgroundColor: AppColors.primaryGreen,
                   flexibleSpace: FlexibleSpaceBar(
-                    background: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppColors.primaryGreen,
-                            AppColors.secondaryGreen,
-                          ],
+                    stretchModes: const [
+                      StretchMode.zoomBackground,
+                      StretchMode.blurBackground
+                    ],
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Background Gradient with richer colors
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFF1B5E20), // Darker Green
+                                AppColors.primaryGreen,
+                                Color(0xFF43A047), // Lighter Green
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      child: SafeArea(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: AppSpacing.xxl),
-                            // Avatar
-                            CircleAvatar(
-                              radius: 50,
-                              backgroundColor: Colors.white,
-                              child: Text(
-                                (auth.user?['name'] ?? 'F')[0].toUpperCase(),
-                                style: AppTypography.h1.copyWith(
-                                  color: AppColors.primaryGreen,
+                        // Soft Glow Effect
+                        Positioned(
+                          top: -50,
+                          right: -50,
+                          child: Container(
+                            width: 200,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                        ),
+                        // Profile Content
+                        SafeArea(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(height: AppSpacing.md),
+                                // Hero Avatar with Glow and Border
+                                Hero(
+                                  tag: 'profile_avatar',
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.2),
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.2),
+                                          blurRadius: 20,
+                                          spreadRadius: 5,
+                                        )
+                                      ],
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 55,
+                                      backgroundColor: Colors.white,
+                                      child: CircleAvatar(
+                                        radius: 52,
+                                        backgroundImage:
+                                            auth.user?['profile_url'] != null
+                                                ? NetworkImage(
+                                                    auth.user?['profile_url'])
+                                                : null,
+                                        backgroundColor: AppColors.accentGreen,
+                                        child: auth.user?['profile_url'] == null
+                                            ? Text(
+                                                (auth.user?['full_name'] ??
+                                                        auth.user?['name'] ??
+                                                        'F')[0]
+                                                    .toUpperCase(),
+                                                style:
+                                                    AppTypography.h1.copyWith(
+                                                  color: AppColors.primaryGreen,
+                                                  fontSize: 44,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: AppSpacing.lg),
+                                // Name & Verified Badge
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      auth.user?['full_name'] ??
+                                          auth.user?['name'] ??
+                                          'Farmer',
+                                      style: AppTypography.h2.copyWith(
+                                        color: Colors.white,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.xs),
+                                    const Icon(Icons.verified,
+                                        color: AppColors.accentGreen, size: 24),
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
+                                // Role & Location Tag
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${auth.user?['role']?.toString().toUpperCase() ?? 'FARMER'} • ${_profileData['location_name'] ?? 'Kigali, Rwanda'}',
+                                    style: AppTypography.overline.copyWith(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.9),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            // Name
-                            Text(
-                              auth.user?['name'] ?? 'Farmer',
-                              style: AppTypography.h3.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            // Cohort & Phone
-                            Text(
-                              'Cohort ${auth.user?['cohort'] ?? 'N/A'} • ${auth.user?['phone'] ?? ''}',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: Colors.white.withValues(alpha: 0.9),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
 
-                // Tab Bar
+                // Premium Tab Bar with custom look
                 SliverPersistentHeader(
                   pinned: true,
                   delegate: _SliverTabBarDelegate(
@@ -150,16 +271,21 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                       labelColor: AppColors.primaryGreen,
                       unselectedLabelColor: AppColors.textMedium,
                       indicatorColor: AppColors.primaryGreen,
+                      indicatorWeight: 4,
+                      indicatorSize: TabBarIndicatorSize.label,
+                      labelStyle: AppTypography.labelLarge
+                          .copyWith(fontWeight: FontWeight.bold),
+                      unselectedLabelStyle: AppTypography.labelMedium,
                       tabs: const [
                         Tab(text: 'Overview'),
-                        Tab(text: 'Input Debt'),
-                        Tab(text: 'Farm Info'),
+                        Tab(text: 'Finances'),
+                        Tab(text: 'Farm Map'),
                       ],
                     ),
                   ),
                 ),
 
-                // Tab Views
+                // Content Tabs
                 SliverFillRemaining(
                   child: TabBarView(
                     controller: _tabController,
@@ -177,104 +303,180 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
 
   Widget _buildOverviewTab() {
     return ListView(
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        // Financial Summary
-        Text(
-          'FINANCIAL SUMMARY',
-          style: AppTypography.overline.copyWith(
-            color: AppColors.textMedium,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          mainAxisSpacing: AppSpacing.md,
-          crossAxisSpacing: AppSpacing.md,
-          childAspectRatio: 1.2,
+        // Trust Score & Performance Cards
+        Row(
           children: [
-            CompactKPICard(
-              label: 'VSLA Balance',
-              value:
-                  '${(_profileData['vsla_balance'] ?? 0).toStringAsFixed(0)} RWF',
-              icon: Icons.account_balance_wallet,
-              color: AppColors.primaryGreen,
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceWhite,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  boxShadow: const [AppShadows.sm],
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.stars, color: Colors.orange, size: 32),
+                    const SizedBox(height: 8),
+                    Text('${(_profileData['trust_score'] ?? 85)}',
+                        style: AppTypography.h2
+                            .copyWith(color: AppColors.textDark)),
+                    const Text('Trust Score', style: AppTypography.caption),
+                  ],
+                ),
+              ),
             ),
-            CompactKPICard(
-              label: 'Input Debt',
-              value:
-                  '${(_profileData['input_debt'] ?? 0).toStringAsFixed(0)} RWF',
-              icon: Icons.receipt_long,
-              color: AppColors.warning,
-            ),
-            CompactKPICard(
-              label: 'Total Sales',
-              value:
-                  '${(_profileData['total_sales'] ?? 0).toStringAsFixed(0)} RWF',
-              icon: Icons.trending_up,
-              color: AppColors.success,
-            ),
-            CompactKPICard(
-              label: 'Trust Score',
-              value:
-                  '${(_profileData['trust_score'] ?? 0).toStringAsFixed(0)}/100',
-              icon: Icons.stars,
-              color: AppColors.indigo,
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceWhite,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  boxShadow: const [AppShadows.sm],
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.workspace_premium,
+                        color: AppColors.blue, size: 32),
+                    const SizedBox(height: 8),
+                    Text('${_profileData['completed_trainings']?.length ?? 0}',
+                        style: AppTypography.h2
+                            .copyWith(color: AppColors.textDark)),
+                    const Text('Courses Done', style: AppTypography.caption),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
+        const SizedBox(height: AppSpacing.lg),
 
-        const SizedBox(height: AppSpacing.xl),
+        // Quick Actions with modern icons
+        Text('QUICK ACTIONS',
+            style:
+                AppTypography.overline.copyWith(color: AppColors.textMedium)),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildActionCircle('Add Sale', Icons.eco, AppColors.primaryGreen),
+            _buildActionCircle(
+                'Payment', Icons.account_balance, AppColors.indigo),
+            _buildActionCircle('Weather', Icons.cloudy_snowing, AppColors.blue),
+            _buildActionCircle('Support', Icons.headset_mic, AppColors.orange),
+          ],
+        ),
 
-        // Recent Activity
-        Text(
-          'RECENT ACTIVITY',
-          style: AppTypography.overline.copyWith(
-            color: AppColors.textMedium,
-          ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Recent Activity Feed
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('REFENT ACTIVITY',
+                style: AppTypography.overline
+                    .copyWith(color: AppColors.textMedium)),
+            Text('See All',
+                style: AppTypography.labelSmall
+                    .copyWith(color: AppColors.primaryGreen)),
+          ],
         ),
         const SizedBox(height: AppSpacing.sm),
-
-        AaywaCard(
-          child: _profileData['recent_activities'] == null ||
-                  (_profileData['recent_activities'] as List).isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.all(AppSpacing.md),
-                  child: Center(
-                      child: Text('No recent activities',
-                          style: AppTypography.bodySmall)),
-                )
-              : Column(
-                  children: List.generate(
-                      (_profileData['recent_activities'] as List).length,
-                      (index) {
-                    final activity = _profileData['recent_activities'][index];
-                    final isSale = activity['type'] == 'sale';
-                    return Column(
-                      children: [
-                        _buildActivityItem(
-                          isSale ? 'Sale' : 'Input Purchase',
-                          '${activity['amount'].toStringAsFixed(0)} RWF ${activity['description']}',
-                          _getRelativeTime(activity['date']),
-                          isSale ? Icons.shopping_bag : Icons.payment,
-                          isSale ? AppColors.primaryGreen : AppColors.warning,
-                        ),
-                        if (index <
-                            (_profileData['recent_activities'] as List).length -
-                                1)
-                          const Divider(),
-                      ],
-                    );
-                  }),
-                ),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            boxShadow: const [AppShadows.sm],
+          ),
+          child: Column(
+            children: _profileData['recent_activities'] == null ||
+                    (_profileData['recent_activities'] as List).isEmpty
+                ? [
+                    const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Text('No recent activity recorded.',
+                          style: AppTypography.bodySmall),
+                    )
+                  ]
+                : (_profileData['recent_activities'] as List)
+                    .take(3)
+                    .map((activity) {
+                    return _buildActivityTile(activity);
+                  }).toList(),
+          ),
         ),
-
-        const SizedBox(height: AppSpacing.xxl),
       ],
     );
+  }
+
+  Widget _buildActionCircle(String label, IconData icon, Color color) {
+    return Column(
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 28),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: AppTypography.labelSmall),
+      ],
+    );
+  }
+
+  Widget _buildActivityTile(Map<String, dynamic> activity) {
+    final type = activity['type']?.toString().toLowerCase() ?? 'info';
+    IconData icon = Icons.info_outline;
+    Color color = AppColors.textMedium;
+
+    if (type == 'sale') {
+      icon = Icons.shopping_cart_checkout;
+      color = AppColors.success;
+    } else if (type == 'invoice') {
+      icon = Icons.receipt_long;
+      color = AppColors.warning;
+    } else if (type == 'training') {
+      icon = Icons.school;
+      color = AppColors.blue;
+    }
+
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      title: Text(activity['description'] ?? 'Activity Update',
+          style: AppTypography.labelMedium),
+      subtitle: Text(
+        activity['date'] != null ? _formatDate(activity['date']) : 'Just now',
+        style: AppTypography.caption,
+      ),
+      trailing: activity['amount'] != null && activity['amount'] > 0
+          ? Text('${activity['amount'].toStringAsFixed(0)} RWF',
+              style: AppTypography.labelMedium
+                  .copyWith(fontWeight: FontWeight.bold))
+          : const Icon(Icons.chevron_right, size: 16),
+    );
+  }
+
+  String _formatDate(dynamic dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return 'Recent';
+    }
   }
 
   Widget _buildInputDebtTab() {
@@ -286,108 +488,120 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        // Total Debt Card
-        AaywaCard(
-          hasAccentTop: true,
-          accentColor: AppColors.warning,
+        // Total Debt Card with Gradient
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE57373), Color(0xFFC62828)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            boxShadow: const [AppShadows.md],
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'TOTAL OUTSTANDING DEBT',
-                style: AppTypography.overline.copyWith(
-                  color: AppColors.textMedium,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
+              Text('OUTSTANDING INPUT DEBT',
+                  style:
+                      AppTypography.overline.copyWith(color: Colors.white70)),
+              const SizedBox(height: 8),
               Text(
                 '${totalDebt.toStringAsFixed(0)} RWF',
-                style: AppTypography.h1.copyWith(
-                  color: AppColors.warning,
-                ),
+                style: AppTypography.h1
+                    .copyWith(color: Colors.white, fontSize: 36),
               ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: AppColors.textMedium,
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Expanded(
-                    child: Text(
-                      'Automatically deducted from sales revenue',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textMedium,
-                      ),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 16),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text('PAYMENT DUE: MARCH 15',
+                    style: AppTypography.labelSmall),
               ),
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.lg),
 
-        const SizedBox(height: AppSpacing.xl),
-
-        // Invoice List
-        Text(
-          'INPUT INVOICES',
-          style: AppTypography.overline.copyWith(
-            color: AppColors.textMedium,
-          ),
+        // Financial Stats Grid
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: AppSpacing.md,
+          crossAxisSpacing: AppSpacing.md,
+          childAspectRatio: 2.5,
+          children: [
+            _buildSmallStatCard(
+                'Total Sales',
+                '${(_profileData['total_sales'] ?? 0).toStringAsFixed(0)} RWF',
+                AppColors.success),
+            _buildSmallStatCard(
+                'VSLA Saved',
+                '${(_profileData['vsla_balance'] ?? 0).toStringAsFixed(0)} RWF',
+                AppColors.blue),
+          ],
         ),
+        const SizedBox(height: AppSpacing.lg),
+
+        Text('INVOICE HISTORY',
+            style:
+                AppTypography.overline.copyWith(color: AppColors.textMedium)),
         const SizedBox(height: AppSpacing.sm),
-
         if (_inputInvoices.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xxl),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.receipt_long_outlined,
-                    size: 64,
-                    color: AppColors.textLight.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'No input invoices',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
+          const Center(
+              child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Text('No active invoices recorded.')))
         else
-          ...List.generate(_inputInvoices.length, (index) {
-            final invoice = _inputInvoices[index];
-            return _buildInvoiceCard(invoice);
-          }),
-
-        const SizedBox(height: AppSpacing.md),
-
-        // Add Invoice Button
-        AaywaButton(
-          label: 'Record New Input Purchase',
-          icon: Icons.add_circle_outline,
-          type: ButtonType.secondary,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const InputInvoiceEntryScreen(),
-              ),
-            );
-          },
-          fullWidth: true,
-        ),
-
-        const SizedBox(height: AppSpacing.xxl),
+          ..._inputInvoices.map((inv) => _buildModernInvoiceCard(inv)),
       ],
+    );
+  }
+
+  Widget _buildSmallStatCard(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: const [AppShadows.sm],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(label, style: AppTypography.caption),
+          Text(value,
+              style: AppTypography.labelLarge
+                  .copyWith(color: color, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernInvoiceCard(Map<String, dynamic> invoice) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: ListTile(
+        title: Text(invoice['supplier'] ?? 'Input Hub',
+            style: AppTypography.labelLarge),
+        subtitle: Text(invoice['date'] ?? 'Invoice Date',
+            style: AppTypography.caption),
+        trailing: Text(
+            '${(invoice['remaining_balance'] ?? 0).toStringAsFixed(0)} RWF',
+            style: AppTypography.labelLarge
+                .copyWith(color: AppColors.error, fontWeight: FontWeight.bold)),
+      ),
     );
   }
 
@@ -395,341 +609,149 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        AaywaCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'FARM DETAILS',
-                style: AppTypography.overline.copyWith(
-                  color: AppColors.textMedium,
+        // Farm Map with Glass Action Overlay
+        Stack(
+          children: [
+            SizedBox(
+              height: 250,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                child: MiniMapPreview(
+                  polygons: _polygons,
+                  center: _mapCenter,
+                  title: '',
+                  subtitle: '',
+                  onActionPressed: () {},
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              _buildInfoRow('Farm Size',
-                  '${_profileData['plot_size_hectares'] ?? 0} hectares'),
-              const Divider(),
-              _buildInfoRow(
-                  'Primary Crop', _profileData['primary_crop'] ?? 'Not set'),
-              const Divider(),
-              _buildInfoRow(
-                  'Secondary Crops', _profileData['secondary_crops'] ?? 'None'),
-              const Divider(),
-              _buildInfoRow(
-                  'Location', _profileData['location_name'] ?? 'Not set'),
-              const Divider(),
-              _buildInfoRow('Years Farming',
-                  '${_profileData['years_farming'] ?? 0} years'),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        AaywaCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'TRAINING COMPLETED',
-                style: AppTypography.overline.copyWith(
-                  color: AppColors.textMedium,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              if (_profileData['completed_trainings'] == null ||
-                  (_profileData['completed_trainings'] as List).isEmpty)
-                const Text('No training records found',
-                    style: AppTypography.bodySmall)
-              else
-                ...(_profileData['completed_trainings'] as List).map((t) =>
-                    _buildTrainingItem(
-                        t['title'] ?? 'Training', t['status'] ?? 'Completed')),
-              const SizedBox(height: AppSpacing.sm),
-              AaywaButton(
-                label: 'View All Trainings',
-                type: ButtonType.text,
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xxl),
-      ],
-    );
-  }
-
-  String _getRelativeTime(dynamic dateStr) {
-    if (dateStr == null) return 'N/A';
-    try {
-      final date = DateTime.parse(dateStr.toString());
-      final now = DateTime.now();
-      final diff = now.difference(date);
-
-      if (diff.inDays > 365) return '${(diff.inDays / 365).floor()}y ago';
-      if (diff.inDays > 30) return '${(diff.inDays / 30).floor()}mo ago';
-      if (diff.inDays > 0) return '${diff.inDays}d ago';
-      if (diff.inHours > 0) return '${diff.inHours}h ago';
-      if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
-      return 'Just now';
-    } catch (e) {
-      return dateStr.toString();
-    }
-  }
-
-  Widget _buildActivityItem(
-    String title,
-    String subtitle,
-    String time,
-    IconData icon,
-    Color color,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  subtitle,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textMedium,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            time,
-            style: AppTypography.caption.copyWith(
-              color: AppColors.textLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInvoiceCard(Map<String, dynamic> invoice) {
-    final supplier = invoice['supplier'] ?? 'Input Supplier';
-    final amount = invoice['total_amount'] ?? 0.0;
-    final remaining = invoice['remaining_balance'] ?? 0.0;
-    final date = invoice['date'] ?? 'Recently';
-    final paid = amount - remaining;
-    final progress = amount > 0 ? paid / amount : 0.0;
-
-    return AaywaCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      elevated: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      supplier,
-                      style: AppTypography.labelLarge.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('FARM BOUNDARY MAP',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold)),
+                        Text(
+                            'Size: ${_profileData['plot_size_hectares'] ?? '0.0'} Hectares',
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 12)),
+                      ],
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      date,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textMedium,
+                    ElevatedButton(
+                      onPressed: () => _openMapScreen(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                       ),
+                      child: Text(_polygons.isEmpty ? 'MAP NOW' : 'RE-MAP'),
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: remaining > 0
-                      ? AppColors.warning.withValues(alpha: 0.1)
-                      : AppColors.success.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                ),
-                child: Text(
-                  remaining > 0 ? 'Pending' : 'Paid',
-                  style: AppTypography.labelSmall.copyWith(
-                    color:
-                        remaining > 0 ? AppColors.warning : AppColors.success,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Agricultural Stats
+        Text('AGRICULTURAL DETAILS',
+            style:
+                AppTypography.overline.copyWith(color: AppColors.textMedium)),
+        const SizedBox(height: AppSpacing.sm),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            boxShadow: const [AppShadows.sm],
           ),
-          const SizedBox(height: AppSpacing.md),
-          // Amounts
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textMedium,
-                    ),
-                  ),
-                  Text(
-                    '${amount.toStringAsFixed(0)} RWF',
-                    style: AppTypography.labelLarge,
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Paid',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textMedium,
-                    ),
-                  ),
-                  Text(
-                    '${paid.toStringAsFixed(0)} RWF',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.success,
-                    ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Remaining',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textMedium,
-                    ),
-                  ),
-                  Text(
-                    '${remaining.toStringAsFixed(0)} RWF',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.warning,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
+              _buildModernInfoRow('Primary Crop',
+                  _profileData['primary_crop'] ?? 'Maize', Icons.grass),
+              _buildModernInfoRow(
+                  'Experience',
+                  '${_profileData['years_farming'] ?? '8'} Years',
+                  Icons.history_edu),
+              _buildModernInfoRow('Soil Type',
+                  _profileData['soil_type'] ?? 'Loamy', Icons.layers),
+              _buildModernInfoRow(
+                  'Cropping System',
+                  _profileData['cropping_system'] ?? 'Intercropping',
+                  Icons.grid_view_rounded),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          // Progress bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.full),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 6,
-              backgroundColor: AppColors.divider,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.success),
-            ),
-          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+      ],
+    );
+  }
+
+  Widget _buildModernInfoRow(String label, String value, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.primaryGreen, size: 20),
+          const SizedBox(width: 16),
+          Text(label,
+              style: AppTypography.bodyMedium
+                  .copyWith(color: AppColors.textMedium)),
+          const Spacer(),
+          Text(value,
+              style: AppTypography.bodyMedium
+                  .copyWith(fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textMedium,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTypography.bodyMedium.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+  void _openMapScreen() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final farmerId = auth.user?['farmer_id'] ?? auth.user?['id'];
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FarmMapScreen(
+          farmerId: farmerId?.toString(),
+          farmerName: auth.user?['full_name'] ?? auth.user?['name'],
+        ),
       ),
     );
-  }
-
-  Widget _buildTrainingItem(String title, String status) {
-    final isCompleted = status == 'Completed';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        children: [
-          Icon(
-            isCompleted ? Icons.check_circle : Icons.schedule,
-            size: 20,
-            color: isCompleted ? AppColors.success : AppColors.warning,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              title,
-              style: AppTypography.bodyMedium,
-            ),
-          ),
-          Text(
-            status,
-            style: AppTypography.labelSmall.copyWith(
-              color: isCompleted ? AppColors.success : AppColors.warning,
-            ),
-          ),
-        ],
-      ),
-    );
+    if (mounted) {
+      _loadProfileData();
+    }
   }
 }
 
-// Custom SliverTabBarDelegate
 class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   final TabBar _tabBar;
-
   _SliverTabBarDelegate(this._tabBar);
 
   @override
   double get minExtent => _tabBar.preferredSize.height;
-
   @override
   double get maxExtent => _tabBar.preferredSize.height;
 
   @override
   Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: AppColors.surfaceWhite,
       child: _tabBar,

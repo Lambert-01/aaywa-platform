@@ -21,6 +21,7 @@ router.get('/my-badges', trainingController.getFarmerBadges);
 
 // ==================== QUIZZES ====================
 router.post('/quizzes', authorizeRoles('field_facilitator', 'project_manager'), trainingController.createQuiz);
+router.get('/quizzes', trainingController.getAllQuizzes);
 router.post('/quizzes/questions', authorizeRoles('field_facilitator', 'project_manager'), trainingController.addQuizQuestion);
 router.post('/quizzes/results', trainingController.submitQuizResult);
 router.get('/quizzes/results/farmer/:farmerId', trainingController.getQuizResultsByFarmer);

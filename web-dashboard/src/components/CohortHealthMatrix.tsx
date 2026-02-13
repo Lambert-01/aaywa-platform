@@ -9,6 +9,8 @@ interface CohortStat {
     farmer_count: number;
     training_count: number;
     total_revenue: number;
+    attendance_rate?: number;
+    vsla_balance?: number;
 }
 
 const CohortHealthMatrix: React.FC = () => {
@@ -37,11 +39,6 @@ const CohortHealthMatrix: React.FC = () => {
         }
     };
 
-    const getStatus = (farmerCount: number): 'Active' | 'Warning' | 'At Risk' => {
-        if (farmerCount >= 20) return 'Active';
-        if (farmerCount >= 15) return 'Warning';
-        return 'At Risk';
-    };
 
     if (loading) {
         return (
@@ -85,19 +82,18 @@ const CohortHealthMatrix: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {cohorts.map((cohort, index) => {
-                                // Mock data for demo purposes if not in API
-                                const attendance = 85 + (index * 2) % 15;
-                                const yieldTrend = index % 3 === 0 ? 'up' : index % 3 === 1 ? 'down' : 'stable';
-                                const vslaBalance = 150000 + (index * 50000);
-                                const status = attendance < 80 ? 'Warning' : 'Active';
+                            {cohorts.map((cohort) => {
+                                const attendance = cohort.attendance_rate || 0;
+                                const vslaBalance = cohort.vsla_balance || 0;
+                                const status = attendance < 70 ? 'Warning' : 'Active';
+                                const yieldTrend: string = 'stable'; // Placeholder for now or could be calculated
 
                                 return (
                                     <tr key={cohort.id} className="hover:bg-slate-50/80 transition-colors duration-150">
                                         <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">{cohort.name}</td>
                                         <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-600">
                                             <span className={`px-2 py-1 rounded text-xs font-medium ${cohort.cropping_system.includes('Avocado') ? 'bg-green-100 text-green-700' :
-                                                    cohort.cropping_system.includes('Macadamia') ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+                                                cohort.cropping_system.includes('Macadamia') ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {cohort.cropping_system}
                                             </span>

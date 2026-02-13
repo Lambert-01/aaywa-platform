@@ -53,6 +53,52 @@ const farmerController = {
     }
   },
 
+  // Create batch farmers
+  createBatchFarmers: async (req, res) => {
+    try {
+      const { farmers } = req.body;
+      if (!Array.isArray(farmers)) {
+        return res.status(400).json({ error: 'Farmers must be an array' });
+      }
+
+      const results = [];
+      const errors = [];
+
+      for (const farmerData of farmers) {
+        try {
+          // Map fields from mobile sync if necessary
+          const mappedData = {
+            full_name: farmerData.name || farmerData.full_name,
+            phone: farmerData.phone,
+            plot_size_hectares: farmerData.land_size || farmerData.plot_size_hectares,
+            // national_id is in the sync spec but not specifically in Farmer.js create? 
+            // It might be in the schema as 'national_id' or 'phone' is used.
+            // Let's assume for now we only map what's in the model.
+            cohort_id: farmerData.cohort_id,
+            vsla_id: farmerData.vsla_id,
+          };
+
+          const farmer = await Farmer.create(mappedData);
+          results.push(farmer);
+        } catch (e) {
+          console.error('Batch farmer item error:', e.message);
+          errors.push({ data: farmerData, error: e.message });
+        }
+      }
+
+      res.status(207).json({
+        message: 'Batch farmers processing complete',
+        processedCount: results.length,
+        failedCount: errors.length,
+        results,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error) {
+      console.error('Create batch farmers error:', error);
+      res.status(500).json({ error: 'Failed to process batch farmers' });
+    }
+  },
+
   // Get all farmers
   getAllFarmers: async (req, res) => {
     try {
@@ -161,6 +207,11 @@ const farmerController = {
         UNION ALL
         (SELECT 'invoice' as type, total_cost as amount, created_at as date, input_type as description 
          FROM input_invoices WHERE farmer_id = $1)
+        UNION ALL
+        (SELECT 'training' as type, 0 as amount, date, title as description
+         FROM training_sessions ts
+         JOIN training_attendance ta ON ts.id = ta.session_id
+         WHERE ta.farmer_id = $1 AND ta.status = 'Attended')
         ORDER BY date DESC LIMIT 5
       `;
       const activityRes = await db.query(activityQuery, [id]);
@@ -172,7 +223,17 @@ const farmerController = {
         description: a.description
       }));
 
-      // 4. Combine everything
+      // 4. Get real training history
+      const trainingQuery = `
+        SELECT ts.title, ta.status, ts.date
+        FROM training_attendance ta
+        JOIN training_sessions ts ON ta.session_id = ts.id
+        WHERE ta.farmer_id = $1
+        ORDER BY ts.date DESC
+      `;
+      const trainingRes = await db.query(trainingQuery, [id]);
+
+      // 5. Combine everything
       res.json({
         ...farmer,
         vsla_balance,
@@ -180,11 +241,7 @@ const farmerController = {
         total_sales,
         trust_score: parseFloat(farmer.trust_score || 85),
         recent_activities,
-        // Mocking training for now as it needs a bridge table check
-        completed_trainings: [
-          { title: 'Organic Compost Basics', status: 'Completed' },
-          { title: 'Coffee Pruning', status: 'Completed' }
-        ]
+        completed_trainings: trainingRes.rows
       });
     } catch (error) {
       console.error('Get farmer profile error:', error);

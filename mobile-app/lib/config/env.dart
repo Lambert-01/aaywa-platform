@@ -12,10 +12,11 @@ class Environment {
         defaultValue: 'http://localhost:5000/api',
       );
     } else {
-      // Android emulator or physical device
+      // Use your computer's local IP address for physical devices
+      // Android emulator can also use this, or 10.0.2.2
       return const String.fromEnvironment(
         'API_URL',
-        defaultValue: 'http://10.0.2.2:5000/api',
+        defaultValue: 'http://192.168.1.88:5000/api',
       );
     }
   }

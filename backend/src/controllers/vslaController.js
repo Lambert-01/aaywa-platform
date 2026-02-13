@@ -330,6 +330,40 @@ const vslaController = {
     }
   },
 
+  // Create batch transactions
+  createBatchTransactions: async (req, res) => {
+    try {
+      const { transactions } = req.body;
+      if (!Array.isArray(transactions)) {
+        return res.status(400).json({ error: 'Transactions must be an array' });
+      }
+
+      const results = [];
+      const errors = [];
+
+      for (const txnData of transactions) {
+        try {
+          const transaction = await VSLA.createTransaction(txnData);
+          results.push(transaction);
+        } catch (e) {
+          console.error('Batch transaction item error:', e.message);
+          errors.push({ data: txnData, error: e.message });
+        }
+      }
+
+      res.status(207).json({
+        message: 'Batch processing complete',
+        processedCount: results.length,
+        failedCount: errors.length,
+        results,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error) {
+      console.error('Create batch transactions error:', error);
+      res.status(500).json({ error: 'Failed to process batch transactions' });
+    }
+  },
+
   // Get transactions
   getTransactions: async (req, res) => {
     try {

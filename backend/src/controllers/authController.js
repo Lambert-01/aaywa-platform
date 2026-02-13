@@ -91,21 +91,42 @@ const authController = {
         try {
             const { email, password } = req.body;
 
-            // Verify credentials (method checks email first)
-            const user = await User.verifyPassword(email, password);
+            // 1. Find the user first
+            let user = await User.findByEmail(email);
+            if (!user) {
+                user = await User.findByPhone(email);
+            }
 
             if (!user) {
-                // Generic error message for security
                 return res.status(401).json({
                     error: 'Authentication failed',
                     message: 'Invalid email or password'
                 });
             }
 
+            // 2. Check registration status
+            if (user.registration_status === 'pending') {
+                return res.status(403).json({
+                    error: 'Pending Approval',
+                    message: 'Your registration request is still pending approval. Please try again later.'
+                });
+            }
+
+            // 3. Check if active
             if (!user.is_active) {
                 return res.status(403).json({
                     error: 'Account disabled',
                     message: 'Your account has been deactivated. Please contact an administrator.'
+                });
+            }
+
+            // 4. Verify credentials
+            const bcrypt = require('bcryptjs');
+            const isValid = await bcrypt.compare(password, user.password_hash);
+            if (!isValid) {
+                return res.status(401).json({
+                    error: 'Authentication failed',
+                    message: 'Invalid email or password'
                 });
             }
 
@@ -171,8 +192,11 @@ const authController = {
         try {
             const { email, password } = req.body;
 
-            // Verify credentials
-            const user = await User.verifyPassword(email, password);
+            // 1. Find user
+            let user = await User.findByEmail(email);
+            if (!user) {
+                user = await User.findByPhone(email);
+            }
 
             if (!user) {
                 console.warn(`[SECURITY] Mobile login failed: Invalid credentials for ${email}`);
@@ -182,11 +206,32 @@ const authController = {
                 });
             }
 
+            // 2. Check status
+            if (user.registration_status === 'pending') {
+                console.warn(`[SECURITY] Mobile login blocked: Pending approval for ${email}`);
+                return res.status(403).json({
+                    error: 'Pending Approval',
+                    message: 'Your registration request is still pending approval. Please try again later.'
+                });
+            }
+
+            // 3. Check active
             if (!user.is_active) {
                 console.warn(`[SECURITY] Mobile login blocked: Account inactive for ${email}`);
                 return res.status(403).json({
                     error: 'Account disabled',
                     message: 'Your account has been deactivated. Please contact an administrator.'
+                });
+            }
+
+            // 4. Verify password
+            const bcrypt = require('bcryptjs');
+            const isValid = await bcrypt.compare(password, user.password_hash);
+            if (!isValid) {
+                console.warn(`[SECURITY] Mobile login failed: Invalid password for ${email}`);
+                return res.status(401).json({
+                    error: 'Authentication failed',
+                    message: 'Invalid email or password'
                 });
             }
 

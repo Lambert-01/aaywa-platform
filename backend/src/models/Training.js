@@ -226,6 +226,34 @@ class Training {
     return result.rows[0];
   }
 
+  static async getAllQuizzes(filters = {}) {
+    let query = `
+      SELECT q.*, ts.title as session_title 
+      FROM quizzes q
+      LEFT JOIN training_sessions ts ON q.session_id = ts.id
+      WHERE 1=1
+    `;
+    const values = [];
+    let paramIndex = 1;
+
+    if (filters.session_id) {
+      query += ` AND q.session_id = $${paramIndex}`;
+      values.push(filters.session_id);
+      paramIndex++;
+    }
+
+    if (filters.category) {
+      query += ` AND q.category = $${paramIndex}`;
+      values.push(filters.category);
+      paramIndex++;
+    }
+
+    query += ' ORDER BY q.created_at DESC';
+
+    const result = await pool.query(query, values);
+    return result.rows;
+  }
+
   static async addQuizQuestion(questionData) {
     const { quiz_id, question_text, options, correct_answer, points, explanation } = questionData;
 
@@ -394,6 +422,15 @@ class Training {
 
     const result = await pool.query(query);
     const stats = result.rows[0];
+
+    // Get session type breakdown
+    const typeQuery = `
+      SELECT session_type as type, COUNT(*) as count 
+      FROM training_sessions 
+      GROUP BY session_type
+    `;
+    const typeResult = await pool.query(typeQuery);
+    stats.session_types = typeResult.rows;
 
     // Get champion count
     const championsQuery = `SELECT COUNT(*) as champions_trained FROM champions WHERE status = $1`;

@@ -11,6 +11,7 @@ router.get('/me', authorizeRoles('farmer', 'champion'), farmerController.getMyPr
 
 // CRUD operations
 // CRUD operations
+router.post('/batch', authorizeRoles('project_manager', 'agronomist', 'field_facilitator'), farmerController.createBatchFarmers);
 router.post('/', authorizeRoles('project_manager', 'agronomist', 'field_facilitator'), farmerController.createFarmer);
 router.get('/', authorizeRoles('project_manager', 'agronomist', 'field_facilitator'), farmerController.getAllFarmers);
 router.get('/cohort/:cohortId', authorizeRoles('project_manager', 'agronomist'), farmerController.getFarmersByCohort);

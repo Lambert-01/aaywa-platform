@@ -3,12 +3,22 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart'; // For QueryRow
 import 'database_service.dart';
+import '../config/env.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SyncService {
-  final String baseUrl = 'https://api.aaywa.com'; // Replace with actual API URL
   final DatabaseService _databaseService;
 
   SyncService(this._databaseService);
+
+  Future<Map<String, String>> _getHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
   Future<void> syncData() async {
     try {
@@ -100,26 +110,26 @@ class SyncService {
   Future<void> _sendFarmersToServer(List<Farmer> farmers) async {
     final farmersMap = farmers
         .map((f) => {
-              'id': f.remoteId,
-              'name': '${f.firstName} ${f.lastName}',
-              'national_id': f.nationalId,
-              'land_size': f.landSizeHa,
-              'location': f.locationStr
+              'full_name': '${f.firstName} ${f.lastName}',
+              'phone': f.phone,
+              'plot_size_hectares': f.landSizeHa,
+              'cohort_id': f.cohortId,
+              'vsla_id': f.vslaId,
             })
         .toList();
 
     final response = await http.post(
-      Uri.parse('$baseUrl/api/farmers/batch'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('${Environment.apiBaseUrl}/farmers/batch'),
+      headers: await _getHeaders(),
       body: jsonEncode({'farmers': farmersMap}),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 207) {
       // Mark as synced using local IDs
       await _databaseService
           .markFarmersAsSynced(farmers.map((f) => f.id).toList());
     } else {
-      throw Exception('Failed to sync farmers');
+      throw Exception('Failed to sync farmers: ${response.body}');
     }
   }
 
@@ -136,15 +146,15 @@ class SyncService {
         .toList();
 
     final response = await http.post(
-      Uri.parse('$baseUrl/api/sales/batch'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('${Environment.apiBaseUrl}/sales/batch'),
+      headers: await _getHeaders(),
       body: jsonEncode({'sales': salesMap}),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 207) {
       await _databaseService.markSalesAsSynced(sales.map((s) => s.id).toList());
     } else {
-      throw Exception('Failed to sync sales');
+      throw Exception('Failed to sync sales: ${response.body}');
     }
   }
 
@@ -152,25 +162,25 @@ class SyncService {
       List<VSLATransaction> transactions) async {
     final transactionsMap = transactions
         .map((t) => {
-              'farmer_id': t.farmerId,
+              'member_id': t.farmerId,
               'amount': t.amount,
               'type': t.type,
               'date': t.transactionDate.toIso8601String(),
-              'notes': t.notes // Added notes
+              'notes': t.notes
             })
         .toList();
 
     final response = await http.post(
-      Uri.parse('$baseUrl/api/vsla/transactions/batch'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('${Environment.apiBaseUrl}/vsla/transactions/batch'),
+      headers: await _getHeaders(),
       body: jsonEncode({'transactions': transactionsMap}),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 207) {
       await _databaseService
           .markVSLATransactionsAsSynced(transactions.map((t) => t.id).toList());
     } else {
-      throw Exception('Failed to sync VSLA transactions');
+      throw Exception('Failed to sync VSLA transactions: ${response.body}');
     }
   }
 
@@ -190,24 +200,21 @@ class SyncService {
         .toList();
 
     final response = await http.post(
-      Uri.parse('$baseUrl/api/inputs/invoices/batch'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('${Environment.apiBaseUrl}/inputs/invoices/batch'),
+      headers: await _getHeaders(),
       body: jsonEncode({'invoices': invoicesMap}),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 207) {
       await _databaseService
           .markInputInvoicesAsSynced(invoices.map((i) => i.id).toList());
     } else {
-      throw Exception('Failed to sync input invoices');
+      throw Exception('Failed to sync input invoices: ${response.body}');
     }
   }
 
   Future<void> _sendAttendanceToServer(
       List<AttendanceData> attendanceList) async {
-    // Group by VSLA or just batch send? API supports batch?
-    // Current backend route is per-VSLA: POST /:id/attendance
-    // We need to group by relatedId (VSLA ID)
     final grouped = <String, List<AttendanceData>>{};
     for (var a in attendanceList) {
       if (a.type == 'VSLA_MEETING' && a.relatedId != null) {
@@ -218,17 +225,16 @@ class SyncService {
       }
     }
 
+    final headers = await _getHeaders();
     for (var vslaId in grouped.keys) {
       final list = grouped[vslaId]!;
       for (var item in list) {
-        // Current API is single item per request
         final response = await http.post(
-          Uri.parse('$baseUrl/api/vsla/$vslaId/attendance'),
-          headers: {'Content-Type': 'application/json'},
+          Uri.parse('${Environment.apiBaseUrl}/vsla/$vslaId/attendance'),
+          headers: headers,
           body: jsonEncode({
             'farmer_id': item.farmerId,
-            'status':
-                'present', // We only save present ones in mobile app currently
+            'status': 'present',
             'date': item.timestamp.toIso8601String(),
           }),
         );
@@ -253,11 +259,9 @@ class SyncService {
             })
         .toList();
 
-    // Assuming we have an endpoint for this
-    // POST /api/farmers/:id/boundary
     final response = await http.post(
-      Uri.parse('$baseUrl/api/farmers/$farmerId/boundary'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('${Environment.apiBaseUrl}/farmers/$farmerId/boundary'),
+      headers: await _getHeaders(),
       body: jsonEncode({'boundary': pointsMap}),
     );
 
@@ -271,71 +275,72 @@ class SyncService {
   Future<List<Map<String, dynamic>>> _fetchFarmersFromServer(
       DateTime? lastSync) async {
     final url = lastSync != null
-        ? '$baseUrl/api/farmers?since=${lastSync.toIso8601String()}'
-        : '$baseUrl/api/farmers';
+        ? '${Environment.apiBaseUrl}/farmers?since=${lastSync.toIso8601String()}'
+        : '${Environment.apiBaseUrl}/farmers';
 
-    final response = await http.get(Uri.parse(url));
+    final response =
+        await http.get(Uri.parse(url), headers: await _getHeaders());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(data['farmers']);
+      return List<Map<String, dynamic>>.from(data['farmers'] ?? data);
     } else {
-      throw Exception('Failed to fetch farmers');
+      throw Exception('Failed to fetch farmers: ${response.body}');
     }
   }
 
   Future<List<Map<String, dynamic>>> _fetchSalesFromServer(
       DateTime? lastSync) async {
     final url = lastSync != null
-        ? '$baseUrl/api/sales?since=${lastSync.toIso8601String()}'
-        : '$baseUrl/api/sales';
+        ? '${Environment.apiBaseUrl}/sales?since=${lastSync.toIso8601String()}'
+        : '${Environment.apiBaseUrl}/sales';
 
-    final response = await http.get(Uri.parse(url));
+    final response =
+        await http.get(Uri.parse(url), headers: await _getHeaders());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(data['sales']);
+      return List<Map<String, dynamic>>.from(data['sales'] ?? data);
     } else {
-      throw Exception('Failed to fetch sales');
+      throw Exception('Failed to fetch sales: ${response.body}');
     }
   }
 
   Future<List<Map<String, dynamic>>> _fetchVSLATransactionsFromServer(
       DateTime? lastSync) async {
     final url = lastSync != null
-        ? '$baseUrl/api/vsla/transactions?since=${lastSync.toIso8601String()}'
-        : '$baseUrl/api/vsla/transactions';
+        ? '${Environment.apiBaseUrl}/vsla/transactions?since=${lastSync.toIso8601String()}'
+        : '${Environment.apiBaseUrl}/vsla/transactions';
 
-    final response = await http.get(Uri.parse(url));
+    final response =
+        await http.get(Uri.parse(url), headers: await _getHeaders());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(data['transactions']);
+      return List<Map<String, dynamic>>.from(data['transactions'] ?? data);
     } else {
-      throw Exception('Failed to fetch VSLA transactions');
+      throw Exception('Failed to fetch VSLA transactions: ${response.body}');
     }
   }
 
   Future<List<Map<String, dynamic>>> _fetchInputInvoicesFromServer(
       DateTime? lastSync) async {
     final url = lastSync != null
-        ? '$baseUrl/api/inputs/invoices?since=${lastSync.toIso8601String()}'
-        : '$baseUrl/api/inputs/invoices';
+        ? '${Environment.apiBaseUrl}/inputs/invoices?since=${lastSync.toIso8601String()}'
+        : '${Environment.apiBaseUrl}/inputs/invoices';
 
-    final response = await http.get(Uri.parse(url));
+    final response =
+        await http.get(Uri.parse(url), headers: await _getHeaders());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(data['invoices']);
+      return List<Map<String, dynamic>>.from(data['invoices'] ?? data);
     } else {
-      throw Exception('Failed to fetch input invoices');
+      throw Exception('Failed to fetch input invoices: ${response.body}');
     }
   }
 
-  // Conflict resolution: server timestamp takes precedence for financial data
   Future<void> resolveConflicts() async {
     // Implementation for conflict resolution
-    // For financial data, server version wins
-    // For other data, user can choose or merge
   }
 }

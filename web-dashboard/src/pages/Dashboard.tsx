@@ -455,28 +455,24 @@ const Dashboard = () => {
                 <KPICard
                     title={t('dashboard.active_farmers')}
                     value={kpiData?.farmers.toString() || '0'}
-                    subtitle="+4% this week"
                     icon={<UserGroupIcon />}
                     color="blue"
                 />
                 <KPICard
                     title={t('dashboard.active_cohorts')}
                     value={kpiData?.cohorts.toString() || '0'}
-                    subtitle="100% Operational"
                     icon={<ChartBarIcon />}
                     color="purple"
                 />
                 <KPICard
                     title={t('dashboard.vsla_savings')}
                     value={`RWF ${((kpiData?.vslaSavings || 0) / 1000).toFixed(0)}K`}
-                    subtitle="↑ 12% vs last month"
                     icon={<CurrencyDollarIcon />}
                     color="green"
                 />
                 <KPICard
                     title={t('dashboard.compost_produced')}
                     value={((kpiData?.compostProduced || 0)).toString()}
-                    subtitle="850kg Sold"
                     icon={<GlobeAltIcon />}
                     color="amber"
                 />
@@ -489,8 +485,8 @@ const Dashboard = () => {
                 />
                 <KPICard
                     title={t('dashboard.attendance')}
-                    value={`${((kpiData?.trainingSessions || 0) % 20) + 80}%`}
-                    subtitle="Avg Rate"
+                    value={`${kpiData?.trainingSessions || 0}`}
+                    subtitle="Total Sessions"
                     icon={<AcademicCapIcon />}
                     color="indigo"
                 />

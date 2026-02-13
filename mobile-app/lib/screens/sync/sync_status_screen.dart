@@ -67,47 +67,56 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
       final apiService = ApiService();
       int syncedItemsCount = 0;
 
-      // Sync pending sales
+      // Sync pending sales in batch
       final pendingSales = await dbService.getUnsyncedSales();
-      for (var sale in pendingSales) {
+      if (pendingSales.isNotEmpty) {
         try {
-          final saleMap = {
-            'farmer_id': sale.farmerId,
-            'crop_type': sale.cropType,
-            'quantity_kg': sale.quantityKg,
-            'price_per_kg': sale.pricePerKg,
-            'total_amount': sale.grossAmount,
-            'date': sale.transactionDate.toIso8601String(),
-          };
-          await apiService.post('/sales', saleMap);
-          await dbService.markSalesAsSynced([sale.id]);
-          syncedItemsCount++;
+          final salesBatch = pendingSales
+              .map((sale) => {
+                    'farmer_id': sale.farmerId,
+                    'crop_type': sale.cropType,
+                    'quantity_kg': sale.quantityKg,
+                    'price_per_kg': sale.pricePerKg,
+                    'total_amount': sale.grossAmount,
+                    'date': sale.transactionDate.toIso8601String(),
+                  })
+              .toList();
+
+          await apiService.post('/sales/batch', {'sales': salesBatch});
+          await dbService
+              .markSalesAsSynced(pendingSales.map((s) => s.id).toList());
+          syncedItemsCount += pendingSales.length;
         } catch (e) {
-          debugPrint('[SYNC] Failed to sync sale: $e');
+          debugPrint('[SYNC] Failed to sync sales batch: $e');
         }
       }
 
-      // Sync pending transactions
+      // Sync pending VSLA transactions in batch
       final pendingTransactions = await dbService.getUnsyncedVSLATransactions();
-      for (var transaction in pendingTransactions) {
+      if (pendingTransactions.isNotEmpty) {
         try {
-          final txMap = {
-            'farmer_id': transaction.farmerId,
-            'amount': transaction.amount,
-            'transaction_type': transaction.type,
-            'transaction_date': transaction.transactionDate.toIso8601String(),
-          };
           if (!mounted) return;
           final auth = Provider.of<AuthProvider>(context, listen: false);
           final vslaId = auth.user?['vsla_id'];
 
-          if (vslaId == null) continue;
+          final txBatch = pendingTransactions
+              .map((transaction) => {
+                    'vsla_id': vslaId,
+                    'member_id': transaction.farmerId,
+                    'amount': transaction.amount,
+                    'type': transaction.type,
+                    'date': transaction.transactionDate.toIso8601String(),
+                    'notes': transaction.notes,
+                  })
+              .toList();
 
-          await apiService.post('/vsla/$vslaId/transactions', txMap);
-          await dbService.markVSLATransactionsAsSynced([transaction.id]);
-          syncedItemsCount++;
+          await apiService
+              .post('/vsla/transactions/batch', {'transactions': txBatch});
+          await dbService.markVSLATransactionsAsSynced(
+              pendingTransactions.map((t) => t.id).toList());
+          syncedItemsCount += pendingTransactions.length;
         } catch (e) {
-          debugPrint('[SYNC] Failed to sync transaction: $e');
+          debugPrint('[SYNC] Failed to sync transactions batch: $e');
         }
       }
 
