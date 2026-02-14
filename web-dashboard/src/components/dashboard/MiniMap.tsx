@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polygon } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
+import { GlobeAltIcon } from '@heroicons/react/24/outline';
 
 // Fix for default marker icon in React Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -23,6 +24,11 @@ const MiniMap = ({ cohorts = [], warehouses = [] }: MapDataProps) => {
     // Default center (Rwanda)
     const center: [number, number] = [-1.9441, 30.0619];
 
+    // Count valid data
+    const validCohorts = cohorts.filter(c => c.boundary_coordinates && Array.isArray(c.boundary_coordinates) && c.boundary_coordinates.length >= 3);
+    const validWarehouses = warehouses.filter(w => w.location_lat && w.location_lng);
+    const hasData = validCohorts.length > 0 || validWarehouses.length > 0;
+
     return (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
@@ -36,6 +42,15 @@ const MiniMap = ({ cohorts = [], warehouses = [] }: MapDataProps) => {
             </div>
 
             <div className="flex-1 min-h-[300px] rounded-xl overflow-hidden relative z-0">
+                {!hasData && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-10">
+                        <div className="text-center">
+                            <GlobeAltIcon className="w-12 h-12 text-slate-300 mx-auto mb-2" />
+                            <p className="text-sm text-slate-500">No map data available</p>
+                            <p className="text-xs text-slate-400 mt-1">Add cohorts or warehouses with GPS coordinates</p>
+                        </div>
+                    </div>
+                )}
                 <MapContainer center={center} zoom={8} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

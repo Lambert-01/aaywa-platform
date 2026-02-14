@@ -336,8 +336,27 @@ const getMobileDashboard = async (req, res) => {
             });
         }
 
-        // 1. Get Farmer Profile
-        const farmerRes = await db.query('SELECT * FROM farmers WHERE user_id = $1', [userId]);
+        // 1. Get Farmer Profile with Cohort Name
+        let farmerRes;
+        const farmerQuery = `
+            SELECT f.*, c.name as cohort_name 
+            FROM farmers f
+            LEFT JOIN cohorts c ON f.cohort_id = c.id
+            WHERE f.id = $1
+        `;
+
+        const farmerByUserIdQuery = `
+            SELECT f.*, c.name as cohort_name 
+            FROM farmers f
+            LEFT JOIN cohorts c ON f.cohort_id = c.id
+            WHERE f.user_id = $1
+        `;
+
+        if (req.user.farmer_id) {
+            farmerRes = await db.query(farmerQuery, [req.user.farmer_id]);
+        } else {
+            farmerRes = await db.query(farmerByUserIdQuery, [userId]);
+        }
 
         // Default empty stats if no farmer profile
         if (farmerRes.rows.length === 0) {
@@ -423,6 +442,29 @@ const getMobileDashboard = async (req, res) => {
             LIMIT 5
         `, [farmerId]);
 
+        // 4. Pending Trainings (Upcoming sessions for farmer's cohort)
+        let pendingTrainings = [];
+        try {
+            const trainingRes = await db.query(`
+                SELECT ts.id, ts.title, ts.date, ts.location, ts.session_type
+                FROM training_sessions ts
+                WHERE ts.cohort_id = $1
+                AND ts.date > NOW()
+                AND ts.status = 'scheduled'
+                ORDER BY ts.date ASC
+                LIMIT 5
+            `, [farmer.cohort_id]);
+            pendingTrainings = trainingRes.rows.map(t => ({
+                id: t.id,
+                title: t.title,
+                date: t.date,
+                location: t.location,
+                type: t.session_type
+            }));
+        } catch (e) {
+            console.warn('Pending trainings query failed:', e.message);
+        }
+
         res.json({
             farmers: 1, // Self
             sales: salesCount,
@@ -438,7 +480,15 @@ const getMobileDashboard = async (req, res) => {
                 subtitle: a.subtitle,
                 time: a.created_at, // Frontend will format
                 status: a.status
-            }))
+            })),
+            pendingTrainings: pendingTrainings,
+            // Profile Data for Mobile Parity
+            location: farmer.location_coordinates,
+            cohortName: farmer.cohort_name,
+            householdType: farmer.household_type,
+            crops: farmer.crops,
+            photoUrl: farmer.photo_url,
+            status: farmer.status ? 'Active' : 'Inactive'
         });
 
     } catch (error) {

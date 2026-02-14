@@ -16,7 +16,8 @@ import {
   ChevronDownIcon,
   ShoppingCartIcon,
   ArrowRightOnRectangleIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  ExclamationCircleIcon // Changed from ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 const Layout: React.FC = () => {
@@ -42,6 +43,7 @@ const Layout: React.FC = () => {
     { name: t('nav.orders'), href: '/dashboard/orders', icon: ShoppingCartIcon, roles: ['all'] },
     { name: t('nav.compost'), href: '/dashboard/compost', icon: RecycleIcon, roles: ['project_manager', 'agronomist'] },
     { name: t('nav.training'), href: '/dashboard/training', icon: AcademicCapIcon, roles: ['project_manager', 'field_facilitator'] },
+    { name: 'Issues', href: '/dashboard/issues', icon: ExclamationCircleIcon, roles: ['project_manager'] }, // Added
     { name: 'Warehouse', href: '/dashboard/warehouse', icon: BuildingStorefrontIcon, roles: ['project_manager', 'agronomist'] },
     { name: t('nav.maps'), href: '/dashboard/maps', icon: GlobeAltIcon, roles: ['project_manager', 'agronomist'] },
   ];

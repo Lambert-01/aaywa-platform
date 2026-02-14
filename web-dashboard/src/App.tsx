@@ -14,6 +14,7 @@ import InputsSalesPage from './pages/InputsSalesPage';
 import CohortsPage from './pages/CohortsPage';
 import CompostPage from './pages/CompostPage';
 import TrainingPage from './pages/TrainingPage';
+import IssueManagementPage from './pages/IssueManagementPage'; // Added
 import MapsPage from './pages/MapsPage';
 import OrdersPage from './pages/OrdersPage';
 import UsersPage from './pages/UsersPage';
@@ -110,6 +111,13 @@ function App() {
             <Route path="users" element={
               <ProtectedRoute allowedRoles={['project_manager']}>
                 <UsersPage />
+              </ProtectedRoute>
+            } />
+
+            {/* Issue Management - project_manager ONLY */}
+            <Route path="issues" element={
+              <ProtectedRoute allowedRoles={['project_manager']}>
+                <IssueManagementPage />
               </ProtectedRoute>
             } />
 

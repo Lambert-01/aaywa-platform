@@ -4542,6 +4542,707 @@ class PlotBoundariesCompanion extends UpdateCompanion<PlotBoundary> {
   }
 }
 
+class $FarmerIssuesTable extends FarmerIssues
+    with TableInfo<$FarmerIssuesTable, FarmerIssue> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FarmerIssuesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _remoteIdMeta =
+      const VerificationMeta('remoteId');
+  @override
+  late final GeneratedColumn<String> remoteId = GeneratedColumn<String>(
+      'remote_id', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _farmerIdMeta =
+      const VerificationMeta('farmerId');
+  @override
+  late final GeneratedColumn<String> farmerId = GeneratedColumn<String>(
+      'farmer_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryIdMeta =
+      const VerificationMeta('categoryId');
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+      'category_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _descriptionMeta =
+      const VerificationMeta('description');
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+      'description', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _urgencyMeta =
+      const VerificationMeta('urgency');
+  @override
+  late final GeneratedColumn<String> urgency = GeneratedColumn<String>(
+      'urgency', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _photoPathMeta =
+      const VerificationMeta('photoPath');
+  @override
+  late final GeneratedColumn<String> photoPath = GeneratedColumn<String>(
+      'photo_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _gpsLatMeta = const VerificationMeta('gpsLat');
+  @override
+  late final GeneratedColumn<double> gpsLat = GeneratedColumn<double>(
+      'gps_lat', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _gpsLngMeta = const VerificationMeta('gpsLng');
+  @override
+  late final GeneratedColumn<double> gpsLng = GeneratedColumn<double>(
+      'gps_lng', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Open'));
+  static const VerificationMeta _dateReportedMeta =
+      const VerificationMeta('dateReported');
+  @override
+  late final GeneratedColumn<DateTime> dateReported = GeneratedColumn<DateTime>(
+      'date_reported', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumnWithTypeConverter<SyncStatus, int> syncStatus =
+      GeneratedColumn<int>('sync_status', aliasedName, false,
+              type: DriftSqlType.int,
+              requiredDuringInsert: false,
+              defaultValue: const Constant(1))
+          .withConverter<SyncStatus>($FarmerIssuesTable.$convertersyncStatus);
+  static const VerificationMeta _localUpdatedAtMeta =
+      const VerificationMeta('localUpdatedAt');
+  @override
+  late final GeneratedColumn<DateTime> localUpdatedAt =
+      GeneratedColumn<DateTime>('local_updated_at', aliasedName, false,
+          type: DriftSqlType.dateTime,
+          requiredDuringInsert: false,
+          defaultValue: currentDateAndTime);
+  static const VerificationMeta _serverUpdatedAtMeta =
+      const VerificationMeta('serverUpdatedAt');
+  @override
+  late final GeneratedColumn<DateTime> serverUpdatedAt =
+      GeneratedColumn<DateTime>('server_updated_at', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _lastFailureReasonMeta =
+      const VerificationMeta('lastFailureReason');
+  @override
+  late final GeneratedColumn<String> lastFailureReason =
+      GeneratedColumn<String>('last_failure_reason', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        remoteId,
+        farmerId,
+        categoryId,
+        description,
+        urgency,
+        photoPath,
+        gpsLat,
+        gpsLng,
+        status,
+        dateReported,
+        syncStatus,
+        localUpdatedAt,
+        serverUpdatedAt,
+        lastFailureReason
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'farmer_issues';
+  @override
+  VerificationContext validateIntegrity(Insertable<FarmerIssue> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('remote_id')) {
+      context.handle(_remoteIdMeta,
+          remoteId.isAcceptableOrUnknown(data['remote_id']!, _remoteIdMeta));
+    }
+    if (data.containsKey('farmer_id')) {
+      context.handle(_farmerIdMeta,
+          farmerId.isAcceptableOrUnknown(data['farmer_id']!, _farmerIdMeta));
+    } else if (isInserting) {
+      context.missing(_farmerIdMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+          _categoryIdMeta,
+          categoryId.isAcceptableOrUnknown(
+              data['category_id']!, _categoryIdMeta));
+    } else if (isInserting) {
+      context.missing(_categoryIdMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+          _descriptionMeta,
+          description.isAcceptableOrUnknown(
+              data['description']!, _descriptionMeta));
+    } else if (isInserting) {
+      context.missing(_descriptionMeta);
+    }
+    if (data.containsKey('urgency')) {
+      context.handle(_urgencyMeta,
+          urgency.isAcceptableOrUnknown(data['urgency']!, _urgencyMeta));
+    } else if (isInserting) {
+      context.missing(_urgencyMeta);
+    }
+    if (data.containsKey('photo_path')) {
+      context.handle(_photoPathMeta,
+          photoPath.isAcceptableOrUnknown(data['photo_path']!, _photoPathMeta));
+    }
+    if (data.containsKey('gps_lat')) {
+      context.handle(_gpsLatMeta,
+          gpsLat.isAcceptableOrUnknown(data['gps_lat']!, _gpsLatMeta));
+    }
+    if (data.containsKey('gps_lng')) {
+      context.handle(_gpsLngMeta,
+          gpsLng.isAcceptableOrUnknown(data['gps_lng']!, _gpsLngMeta));
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('date_reported')) {
+      context.handle(
+          _dateReportedMeta,
+          dateReported.isAcceptableOrUnknown(
+              data['date_reported']!, _dateReportedMeta));
+    }
+    context.handle(_syncStatusMeta, const VerificationResult.success());
+    if (data.containsKey('local_updated_at')) {
+      context.handle(
+          _localUpdatedAtMeta,
+          localUpdatedAt.isAcceptableOrUnknown(
+              data['local_updated_at']!, _localUpdatedAtMeta));
+    }
+    if (data.containsKey('server_updated_at')) {
+      context.handle(
+          _serverUpdatedAtMeta,
+          serverUpdatedAt.isAcceptableOrUnknown(
+              data['server_updated_at']!, _serverUpdatedAtMeta));
+    }
+    if (data.containsKey('last_failure_reason')) {
+      context.handle(
+          _lastFailureReasonMeta,
+          lastFailureReason.isAcceptableOrUnknown(
+              data['last_failure_reason']!, _lastFailureReasonMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FarmerIssue map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FarmerIssue(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      remoteId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}remote_id']),
+      farmerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}farmer_id'])!,
+      categoryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category_id'])!,
+      description: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
+      urgency: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}urgency'])!,
+      photoPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}photo_path']),
+      gpsLat: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}gps_lat']),
+      gpsLng: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}gps_lng']),
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      dateReported: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}date_reported'])!,
+      syncStatus: $FarmerIssuesTable.$convertersyncStatus.fromSql(
+          attachedDatabase.typeMapping
+              .read(DriftSqlType.int, data['${effectivePrefix}sync_status'])!),
+      localUpdatedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}local_updated_at'])!,
+      serverUpdatedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}server_updated_at']),
+      lastFailureReason: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}last_failure_reason']),
+    );
+  }
+
+  @override
+  $FarmerIssuesTable createAlias(String alias) {
+    return $FarmerIssuesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<SyncStatus, int> $convertersyncStatus =
+      const SyncStatusConverter();
+}
+
+class FarmerIssue extends DataClass implements Insertable<FarmerIssue> {
+  final int id;
+  final String? remoteId;
+  final String farmerId;
+  final String categoryId;
+  final String description;
+  final String urgency;
+  final String? photoPath;
+  final double? gpsLat;
+  final double? gpsLng;
+  final String status;
+  final DateTime dateReported;
+  final SyncStatus syncStatus;
+  final DateTime localUpdatedAt;
+  final DateTime? serverUpdatedAt;
+  final String? lastFailureReason;
+  const FarmerIssue(
+      {required this.id,
+      this.remoteId,
+      required this.farmerId,
+      required this.categoryId,
+      required this.description,
+      required this.urgency,
+      this.photoPath,
+      this.gpsLat,
+      this.gpsLng,
+      required this.status,
+      required this.dateReported,
+      required this.syncStatus,
+      required this.localUpdatedAt,
+      this.serverUpdatedAt,
+      this.lastFailureReason});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || remoteId != null) {
+      map['remote_id'] = Variable<String>(remoteId);
+    }
+    map['farmer_id'] = Variable<String>(farmerId);
+    map['category_id'] = Variable<String>(categoryId);
+    map['description'] = Variable<String>(description);
+    map['urgency'] = Variable<String>(urgency);
+    if (!nullToAbsent || photoPath != null) {
+      map['photo_path'] = Variable<String>(photoPath);
+    }
+    if (!nullToAbsent || gpsLat != null) {
+      map['gps_lat'] = Variable<double>(gpsLat);
+    }
+    if (!nullToAbsent || gpsLng != null) {
+      map['gps_lng'] = Variable<double>(gpsLng);
+    }
+    map['status'] = Variable<String>(status);
+    map['date_reported'] = Variable<DateTime>(dateReported);
+    {
+      map['sync_status'] = Variable<int>(
+          $FarmerIssuesTable.$convertersyncStatus.toSql(syncStatus));
+    }
+    map['local_updated_at'] = Variable<DateTime>(localUpdatedAt);
+    if (!nullToAbsent || serverUpdatedAt != null) {
+      map['server_updated_at'] = Variable<DateTime>(serverUpdatedAt);
+    }
+    if (!nullToAbsent || lastFailureReason != null) {
+      map['last_failure_reason'] = Variable<String>(lastFailureReason);
+    }
+    return map;
+  }
+
+  FarmerIssuesCompanion toCompanion(bool nullToAbsent) {
+    return FarmerIssuesCompanion(
+      id: Value(id),
+      remoteId: remoteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteId),
+      farmerId: Value(farmerId),
+      categoryId: Value(categoryId),
+      description: Value(description),
+      urgency: Value(urgency),
+      photoPath: photoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photoPath),
+      gpsLat:
+          gpsLat == null && nullToAbsent ? const Value.absent() : Value(gpsLat),
+      gpsLng:
+          gpsLng == null && nullToAbsent ? const Value.absent() : Value(gpsLng),
+      status: Value(status),
+      dateReported: Value(dateReported),
+      syncStatus: Value(syncStatus),
+      localUpdatedAt: Value(localUpdatedAt),
+      serverUpdatedAt: serverUpdatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverUpdatedAt),
+      lastFailureReason: lastFailureReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastFailureReason),
+    );
+  }
+
+  factory FarmerIssue.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FarmerIssue(
+      id: serializer.fromJson<int>(json['id']),
+      remoteId: serializer.fromJson<String?>(json['remoteId']),
+      farmerId: serializer.fromJson<String>(json['farmerId']),
+      categoryId: serializer.fromJson<String>(json['categoryId']),
+      description: serializer.fromJson<String>(json['description']),
+      urgency: serializer.fromJson<String>(json['urgency']),
+      photoPath: serializer.fromJson<String?>(json['photoPath']),
+      gpsLat: serializer.fromJson<double?>(json['gpsLat']),
+      gpsLng: serializer.fromJson<double?>(json['gpsLng']),
+      status: serializer.fromJson<String>(json['status']),
+      dateReported: serializer.fromJson<DateTime>(json['dateReported']),
+      syncStatus: serializer.fromJson<SyncStatus>(json['syncStatus']),
+      localUpdatedAt: serializer.fromJson<DateTime>(json['localUpdatedAt']),
+      serverUpdatedAt: serializer.fromJson<DateTime?>(json['serverUpdatedAt']),
+      lastFailureReason:
+          serializer.fromJson<String?>(json['lastFailureReason']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'remoteId': serializer.toJson<String?>(remoteId),
+      'farmerId': serializer.toJson<String>(farmerId),
+      'categoryId': serializer.toJson<String>(categoryId),
+      'description': serializer.toJson<String>(description),
+      'urgency': serializer.toJson<String>(urgency),
+      'photoPath': serializer.toJson<String?>(photoPath),
+      'gpsLat': serializer.toJson<double?>(gpsLat),
+      'gpsLng': serializer.toJson<double?>(gpsLng),
+      'status': serializer.toJson<String>(status),
+      'dateReported': serializer.toJson<DateTime>(dateReported),
+      'syncStatus': serializer.toJson<SyncStatus>(syncStatus),
+      'localUpdatedAt': serializer.toJson<DateTime>(localUpdatedAt),
+      'serverUpdatedAt': serializer.toJson<DateTime?>(serverUpdatedAt),
+      'lastFailureReason': serializer.toJson<String?>(lastFailureReason),
+    };
+  }
+
+  FarmerIssue copyWith(
+          {int? id,
+          Value<String?> remoteId = const Value.absent(),
+          String? farmerId,
+          String? categoryId,
+          String? description,
+          String? urgency,
+          Value<String?> photoPath = const Value.absent(),
+          Value<double?> gpsLat = const Value.absent(),
+          Value<double?> gpsLng = const Value.absent(),
+          String? status,
+          DateTime? dateReported,
+          SyncStatus? syncStatus,
+          DateTime? localUpdatedAt,
+          Value<DateTime?> serverUpdatedAt = const Value.absent(),
+          Value<String?> lastFailureReason = const Value.absent()}) =>
+      FarmerIssue(
+        id: id ?? this.id,
+        remoteId: remoteId.present ? remoteId.value : this.remoteId,
+        farmerId: farmerId ?? this.farmerId,
+        categoryId: categoryId ?? this.categoryId,
+        description: description ?? this.description,
+        urgency: urgency ?? this.urgency,
+        photoPath: photoPath.present ? photoPath.value : this.photoPath,
+        gpsLat: gpsLat.present ? gpsLat.value : this.gpsLat,
+        gpsLng: gpsLng.present ? gpsLng.value : this.gpsLng,
+        status: status ?? this.status,
+        dateReported: dateReported ?? this.dateReported,
+        syncStatus: syncStatus ?? this.syncStatus,
+        localUpdatedAt: localUpdatedAt ?? this.localUpdatedAt,
+        serverUpdatedAt: serverUpdatedAt.present
+            ? serverUpdatedAt.value
+            : this.serverUpdatedAt,
+        lastFailureReason: lastFailureReason.present
+            ? lastFailureReason.value
+            : this.lastFailureReason,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('FarmerIssue(')
+          ..write('id: $id, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('farmerId: $farmerId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('description: $description, ')
+          ..write('urgency: $urgency, ')
+          ..write('photoPath: $photoPath, ')
+          ..write('gpsLat: $gpsLat, ')
+          ..write('gpsLng: $gpsLng, ')
+          ..write('status: $status, ')
+          ..write('dateReported: $dateReported, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('localUpdatedAt: $localUpdatedAt, ')
+          ..write('serverUpdatedAt: $serverUpdatedAt, ')
+          ..write('lastFailureReason: $lastFailureReason')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      remoteId,
+      farmerId,
+      categoryId,
+      description,
+      urgency,
+      photoPath,
+      gpsLat,
+      gpsLng,
+      status,
+      dateReported,
+      syncStatus,
+      localUpdatedAt,
+      serverUpdatedAt,
+      lastFailureReason);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FarmerIssue &&
+          other.id == this.id &&
+          other.remoteId == this.remoteId &&
+          other.farmerId == this.farmerId &&
+          other.categoryId == this.categoryId &&
+          other.description == this.description &&
+          other.urgency == this.urgency &&
+          other.photoPath == this.photoPath &&
+          other.gpsLat == this.gpsLat &&
+          other.gpsLng == this.gpsLng &&
+          other.status == this.status &&
+          other.dateReported == this.dateReported &&
+          other.syncStatus == this.syncStatus &&
+          other.localUpdatedAt == this.localUpdatedAt &&
+          other.serverUpdatedAt == this.serverUpdatedAt &&
+          other.lastFailureReason == this.lastFailureReason);
+}
+
+class FarmerIssuesCompanion extends UpdateCompanion<FarmerIssue> {
+  final Value<int> id;
+  final Value<String?> remoteId;
+  final Value<String> farmerId;
+  final Value<String> categoryId;
+  final Value<String> description;
+  final Value<String> urgency;
+  final Value<String?> photoPath;
+  final Value<double?> gpsLat;
+  final Value<double?> gpsLng;
+  final Value<String> status;
+  final Value<DateTime> dateReported;
+  final Value<SyncStatus> syncStatus;
+  final Value<DateTime> localUpdatedAt;
+  final Value<DateTime?> serverUpdatedAt;
+  final Value<String?> lastFailureReason;
+  const FarmerIssuesCompanion({
+    this.id = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.farmerId = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.description = const Value.absent(),
+    this.urgency = const Value.absent(),
+    this.photoPath = const Value.absent(),
+    this.gpsLat = const Value.absent(),
+    this.gpsLng = const Value.absent(),
+    this.status = const Value.absent(),
+    this.dateReported = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.localUpdatedAt = const Value.absent(),
+    this.serverUpdatedAt = const Value.absent(),
+    this.lastFailureReason = const Value.absent(),
+  });
+  FarmerIssuesCompanion.insert({
+    this.id = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    required String farmerId,
+    required String categoryId,
+    required String description,
+    required String urgency,
+    this.photoPath = const Value.absent(),
+    this.gpsLat = const Value.absent(),
+    this.gpsLng = const Value.absent(),
+    this.status = const Value.absent(),
+    this.dateReported = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.localUpdatedAt = const Value.absent(),
+    this.serverUpdatedAt = const Value.absent(),
+    this.lastFailureReason = const Value.absent(),
+  })  : farmerId = Value(farmerId),
+        categoryId = Value(categoryId),
+        description = Value(description),
+        urgency = Value(urgency);
+  static Insertable<FarmerIssue> custom({
+    Expression<int>? id,
+    Expression<String>? remoteId,
+    Expression<String>? farmerId,
+    Expression<String>? categoryId,
+    Expression<String>? description,
+    Expression<String>? urgency,
+    Expression<String>? photoPath,
+    Expression<double>? gpsLat,
+    Expression<double>? gpsLng,
+    Expression<String>? status,
+    Expression<DateTime>? dateReported,
+    Expression<int>? syncStatus,
+    Expression<DateTime>? localUpdatedAt,
+    Expression<DateTime>? serverUpdatedAt,
+    Expression<String>? lastFailureReason,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (remoteId != null) 'remote_id': remoteId,
+      if (farmerId != null) 'farmer_id': farmerId,
+      if (categoryId != null) 'category_id': categoryId,
+      if (description != null) 'description': description,
+      if (urgency != null) 'urgency': urgency,
+      if (photoPath != null) 'photo_path': photoPath,
+      if (gpsLat != null) 'gps_lat': gpsLat,
+      if (gpsLng != null) 'gps_lng': gpsLng,
+      if (status != null) 'status': status,
+      if (dateReported != null) 'date_reported': dateReported,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (localUpdatedAt != null) 'local_updated_at': localUpdatedAt,
+      if (serverUpdatedAt != null) 'server_updated_at': serverUpdatedAt,
+      if (lastFailureReason != null) 'last_failure_reason': lastFailureReason,
+    });
+  }
+
+  FarmerIssuesCompanion copyWith(
+      {Value<int>? id,
+      Value<String?>? remoteId,
+      Value<String>? farmerId,
+      Value<String>? categoryId,
+      Value<String>? description,
+      Value<String>? urgency,
+      Value<String?>? photoPath,
+      Value<double?>? gpsLat,
+      Value<double?>? gpsLng,
+      Value<String>? status,
+      Value<DateTime>? dateReported,
+      Value<SyncStatus>? syncStatus,
+      Value<DateTime>? localUpdatedAt,
+      Value<DateTime?>? serverUpdatedAt,
+      Value<String?>? lastFailureReason}) {
+    return FarmerIssuesCompanion(
+      id: id ?? this.id,
+      remoteId: remoteId ?? this.remoteId,
+      farmerId: farmerId ?? this.farmerId,
+      categoryId: categoryId ?? this.categoryId,
+      description: description ?? this.description,
+      urgency: urgency ?? this.urgency,
+      photoPath: photoPath ?? this.photoPath,
+      gpsLat: gpsLat ?? this.gpsLat,
+      gpsLng: gpsLng ?? this.gpsLng,
+      status: status ?? this.status,
+      dateReported: dateReported ?? this.dateReported,
+      syncStatus: syncStatus ?? this.syncStatus,
+      localUpdatedAt: localUpdatedAt ?? this.localUpdatedAt,
+      serverUpdatedAt: serverUpdatedAt ?? this.serverUpdatedAt,
+      lastFailureReason: lastFailureReason ?? this.lastFailureReason,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (remoteId.present) {
+      map['remote_id'] = Variable<String>(remoteId.value);
+    }
+    if (farmerId.present) {
+      map['farmer_id'] = Variable<String>(farmerId.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (urgency.present) {
+      map['urgency'] = Variable<String>(urgency.value);
+    }
+    if (photoPath.present) {
+      map['photo_path'] = Variable<String>(photoPath.value);
+    }
+    if (gpsLat.present) {
+      map['gps_lat'] = Variable<double>(gpsLat.value);
+    }
+    if (gpsLng.present) {
+      map['gps_lng'] = Variable<double>(gpsLng.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (dateReported.present) {
+      map['date_reported'] = Variable<DateTime>(dateReported.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<int>(
+          $FarmerIssuesTable.$convertersyncStatus.toSql(syncStatus.value));
+    }
+    if (localUpdatedAt.present) {
+      map['local_updated_at'] = Variable<DateTime>(localUpdatedAt.value);
+    }
+    if (serverUpdatedAt.present) {
+      map['server_updated_at'] = Variable<DateTime>(serverUpdatedAt.value);
+    }
+    if (lastFailureReason.present) {
+      map['last_failure_reason'] = Variable<String>(lastFailureReason.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FarmerIssuesCompanion(')
+          ..write('id: $id, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('farmerId: $farmerId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('description: $description, ')
+          ..write('urgency: $urgency, ')
+          ..write('photoPath: $photoPath, ')
+          ..write('gpsLat: $gpsLat, ')
+          ..write('gpsLng: $gpsLng, ')
+          ..write('status: $status, ')
+          ..write('dateReported: $dateReported, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('localUpdatedAt: $localUpdatedAt, ')
+          ..write('serverUpdatedAt: $serverUpdatedAt, ')
+          ..write('lastFailureReason: $lastFailureReason')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   late final $FarmersTable farmers = $FarmersTable(this);
@@ -4553,6 +5254,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TrainingsTable trainings = $TrainingsTable(this);
   late final $AttendanceTable attendance = $AttendanceTable(this);
   late final $PlotBoundariesTable plotBoundaries = $PlotBoundariesTable(this);
+  late final $FarmerIssuesTable farmerIssues = $FarmerIssuesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4565,6 +5267,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         syncQueue,
         trainings,
         attendance,
-        plotBoundaries
+        plotBoundaries,
+        farmerIssues
       ];
 }

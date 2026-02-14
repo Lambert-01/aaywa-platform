@@ -56,7 +56,7 @@ class KPIMetricCard extends StatelessWidget {
 
             // Main content
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -66,11 +66,12 @@ class KPIMetricCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Title
-                      Flexible(
+                      Expanded(
                         child: Text(
                           title.toUpperCase(),
                           style: AppTypography.overline.copyWith(
                             color: AppColors.textMedium,
+                            fontSize: 11, // Slightly smaller font to help fit
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -155,18 +156,24 @@ class KPIMetricCard extends StatelessWidget {
           color: trendColor,
         ),
         const SizedBox(width: AppSpacing.xs),
-        Text(
-          '${trendValue!.abs().toStringAsFixed(1)}%',
-          style: AppTypography.labelSmall.copyWith(
-            color: trendColor,
-            fontWeight: FontWeight.w600,
+        Flexible(
+          child: Text(
+            '${trendValue!.abs().toStringAsFixed(1)}%',
+            style: AppTypography.labelSmall.copyWith(
+              color: trendColor,
+              fontWeight: FontWeight.w600,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: AppSpacing.xs),
-        Text(
-          'vs last month',
-          style: AppTypography.caption.copyWith(
-            color: AppColors.textLight,
+        Flexible(
+          child: Text(
+            'vs last month',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textLight,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

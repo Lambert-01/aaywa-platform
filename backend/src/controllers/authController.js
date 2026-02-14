@@ -13,7 +13,11 @@ const generateToken = (user) => {
         {
             id: user.id,
             email: user.email,
-            role: user.role
+            role: user.role,
+            // Include farmer context if available
+            farmer_id: user.farmer_id,
+            cohort_id: user.cohort_id,
+            vsla_id: user.vsla_id
         },
         // Ensure we use a string even if env is missing (fallback)
         process.env.JWT_SECRET || 'fallback_secret_do_not_use_in_prod',
@@ -211,31 +215,27 @@ const authController = {
             // Update last login timestamp
             await User.updateLastLogin(user.id);
 
-            // Generate JWT tokens
-            const accessToken = generateToken(user);
+            // Fetch farmer details for token if applicable
+            let farmerDetails = {};
+            if (['farmer', 'champion', 'agronomist', 'field_facilitator'].includes(user.role)) {
+                try {
+                    const pool = require('../config/database');
+                    const farmerRes = await pool.query('SELECT id as farmer_id, cohort_id, vsla_id FROM farmers WHERE user_id = $1', [user.id]);
+                    if (farmerRes.rows.length > 0) {
+                        farmerDetails = farmerRes.rows[0];
+                    }
+                } catch (e) {
+                    console.warn('[AUTH] Failed to attach farmer context (login):', e.message);
+                }
+            }
+
+            // Generate JWT tokens - NOW passing farmerDetails into the user object so token has them
+            const userForToken = { ...user, ...farmerDetails };
+            const accessToken = generateToken(userForToken);
             const refreshToken = generateRefreshToken(user);
 
             // Log successful login
             console.log(`[SECURITY] Successful login: ${user.id} - ${user.email}`);
-
-            // Fetch farmer profile if role is farmer or champion
-            let farmerDetails = {};
-            if (['farmer', 'champion'].includes(user.role)) {
-                try {
-                    const pool = require('../config/database');
-                    const farmerRes = await pool.query('SELECT id, cohort_id, vsla_id FROM farmers WHERE user_id = $1', [user.id]);
-                    if (farmerRes.rows.length > 0) {
-                        const f = farmerRes.rows[0];
-                        farmerDetails = {
-                            farmer_id: f.id,
-                            cohort_id: f.cohort_id,
-                            vsla_id: f.vsla_id
-                        };
-                    }
-                } catch (e) {
-                    console.warn('Failed to fetch farmer details for login:', e.message);
-                }
-            }
 
             res.json({
                 success: true,
@@ -318,13 +318,6 @@ const authController = {
             // Update last login timestamp
             await User.updateLastLogin(user.id);
 
-            // Generate JWT tokens
-            const accessToken = generateToken(user);
-            const refreshToken = generateRefreshToken(user);
-
-            // Log successful mobile login
-            console.log(`[SECURITY] Successful mobile login: ${user.id} - ${user.email}`);
-
             // Fetch details (cohort, vsla) for mobile context
             let mobileProfile = {
                 id: user.id,
@@ -351,6 +344,13 @@ const authController = {
                     console.warn('[AUTH] Failed to attach farmer context:', e.message);
                 }
             }
+
+            // Generate JWT tokens - passing full profile with farmer_id
+            const accessToken = generateToken(mobileProfile);
+            const refreshToken = generateRefreshToken(user);
+
+            // Log successful mobile login
+            console.log(`[SECURITY] Successful mobile login: ${user.id} - ${user.email}`);
 
             res.json({
                 success: true,

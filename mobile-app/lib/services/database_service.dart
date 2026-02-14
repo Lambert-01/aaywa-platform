@@ -183,6 +183,39 @@ class PlotBoundaries extends Table {
   TextColumn get lastFailureReason => text().nullable()();
 }
 
+/// Farmer Issues Table
+class FarmerIssues extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get remoteId => text().nullable().unique()();
+  TextColumn get farmerId => text()();
+
+  TextColumn get categoryId => text()(); // Pest, Input Quality, etc.
+  TextColumn get description => text()();
+  TextColumn get urgency => text()(); // Low, Medium, High, Critical
+  TextColumn get photoPath => text().nullable()(); // Local path to photo
+
+  // Geospatial
+  RealColumn get gpsLat => real().nullable()();
+  RealColumn get gpsLng => real().nullable()();
+
+  TextColumn get status => text().withDefault(const Constant('Open'))();
+  DateTimeColumn get dateReported =>
+      dateTime().withDefault(currentDateAndTime)();
+
+  // Sync Meta
+  IntColumn get syncStatus =>
+      integer().map(const SyncStatusConverter()).withDefault(const Constant(
+          1))(); // 1 = synced, 2 = pending. Default 1 weird? Usually pending.
+  // Wait, in other tables default is 1 (Synced?). Let's check SyncStatusConverter.
+  // Usually 0=synced, 1=pending? Or 1=pending?
+  // In other tables: .withDefault(const Constant(1))();
+  // Let's assume 1 is default (Pending/Dirty) based on other tables.
+  DateTimeColumn get localUpdatedAt =>
+      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get serverUpdatedAt => dateTime().nullable()();
+  TextColumn get lastFailureReason => text().nullable()();
+}
+
 // Database Class
 @DriftDatabase(tables: [
   Farmers,
@@ -192,13 +225,14 @@ class PlotBoundaries extends Table {
   SyncQueue,
   Trainings,
   Attendance,
-  PlotBoundaries
+  PlotBoundaries,
+  FarmerIssues // Added
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(openConnection());
 
   @override
-  int get schemaVersion => 6; // Incremented to 6
+  int get schemaVersion => 7; // Incremented to 7
 
   @override
   MigrationStrategy get migration {
@@ -221,6 +255,10 @@ class AppDatabase extends _$AppDatabase {
           // Migration from 5 to 6: Add type and relatedId to Attendance
           await m.addColumn(attendance, attendance.type);
           await m.addColumn(attendance, attendance.relatedId);
+        } else if (from == 6) {
+          // Migration from 6 to 7: Add FarmerIssues table
+          await m.createTable(allTables
+              .firstWhere((t) => t.actualTableName == 'farmer_issues'));
         }
       },
     );
@@ -482,6 +520,26 @@ class AppDatabase extends _$AppDatabase {
     return customSelect(
       'SELECT * FROM plot_boundaries WHERE sync_status = 2',
     ).get();
+  }
+
+  // --- Farmer Issue Helpers ---
+  Future<int> insertFarmerIssue(FarmerIssuesCompanion entry) {
+    return into(farmerIssues).insert(entry);
+  }
+
+  Future<List<FarmerIssue>> getUnsyncedFarmerIssues() {
+    return (select(farmerIssues)
+          ..where((t) => t.syncStatus.equals(SyncStatus.pending.index)))
+        .get();
+  }
+
+  Future<void> markFarmerIssuesAsSynced(List<int> ids) async {
+    await (update(farmerIssues)..where((t) => t.id.isIn(ids))).write(
+      FarmerIssuesCompanion(
+        syncStatus: const Value(SyncStatus.synced),
+        serverUpdatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 }
 

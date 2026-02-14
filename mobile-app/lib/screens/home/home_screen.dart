@@ -1,27 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
+import '../../config/navigation_config.dart';
 import '../../theme/design_system.dart';
 import '../../widgets/common/aaywa_card.dart';
+import '../../widgets/dashboards/dashboard_factory.dart';
 
-import '../vsla/treasurer_screen.dart';
-import '../mapping/farm_map_screen.dart';
-import '../sales/sales_entry_screen.dart';
-import '../sales/sales_history_screen.dart';
 import '../settings/settings_screen.dart';
-import '../profile/farmer_profile_screen.dart';
-import '../training/training_screen.dart';
-import '../training/training_badges_screen.dart';
-import '../compost/compost_workday_screen.dart';
-import '../inputs/input_invoice_screen.dart';
-import '../vsla/meeting_mode_screen.dart';
-import '../sync/sync_status_screen.dart';
-
-import '../../widgets/dashboards/farmer_dashboard.dart';
-import '../../widgets/dashboards/staff_dashboard.dart';
-import '../../widgets/dashboards/manager_dashboard.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,11 +32,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final bottomTabs = NavigationConfig.getBottomNavItems(auth.userRole);
+
+    // Safety check: if role changed and index is out of bounds
+    if (_selectedIndex >= bottomTabs.length) {
+      _selectedIndex = 0;
+    }
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.backgroundGray,
       drawer: _buildDrawer(context),
-      body: _buildBody(),
+      body: _buildBody(bottomTabs),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
@@ -58,75 +52,65 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         backgroundColor: AppColors.surfaceWhite,
         indicatorColor: AppColors.accentGreen.withValues(alpha: 0.2),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: Icon(Icons.account_balance_wallet),
-            label: 'VSLA',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history),
-            label: 'Sales',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+        destinations: bottomTabs.map((item) {
+          return NavigationDestination(
+            icon: Icon(item.icon),
+            selectedIcon: Icon(item.selectedIcon),
+            label: item.label,
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildDashboard();
-      case 1:
-        return const VSLATreasurerScreen();
-      case 2:
-        return const SalesHistoryScreen();
-      case 3:
-        return const FarmerProfileScreen();
-      default:
-        return _buildDashboard();
+  Widget _buildBody(List<BottomNavItem> tabs) {
+    // If index 0 (Home), show Dashboard
+    if (_selectedIndex == 0) {
+      return _buildDashboard();
     }
+
+    // Otherwise use the builder from config
+    return tabs[_selectedIndex].screenBuilder();
   }
+
+  // ────────────────────────────────────────────────────────────
+  //  ROLE-AWARE DRAWER
+  // ────────────────────────────────────────────────────────────
 
   Widget _buildDrawer(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final user = auth.user;
+    final drawerItems = NavigationConfig.getDrawerItems(auth.userRole);
 
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
+          // ─── user header ──────────────────────────────────
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(
               color: AppColors.primaryGreen,
             ),
             accountName: Text(
-              user?['name'] ?? 'User Name',
+              user?['name'] ?? user?['full_name'] ?? 'User Name',
               style: AppTypography.h4.copyWith(color: Colors.white),
             ),
             accountEmail: Text(
-              user?['email'] ?? 'user@example.com',
+              '${auth.roleDisplayName}  •  ${user?['email'] ?? ''}',
               style: AppTypography.bodySmall.copyWith(color: Colors.white70),
             ),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
               child: Text(
-                (user?['name'] ?? 'U').substring(0, 1).toUpperCase(),
+                (user?['name'] ?? user?['full_name'] ?? 'U')
+                    .substring(0, 1)
+                    .toUpperCase(),
                 style: AppTypography.h3.copyWith(color: AppColors.primaryGreen),
               ),
             ),
           ),
+
+          // ─── dashboard link ─────────────────────────────
           _buildDrawerItem(
             icon: Icons.home_outlined,
             title: 'Dashboard',
@@ -136,89 +120,28 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             isSelected: _selectedIndex == 0,
           ),
-          _buildDrawerItem(
-            icon: Icons.school_outlined,
-            title: 'Training Center',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const TrainingScreen()),
-              );
-            },
-          ),
-          _buildDrawerItem(
-            icon: Icons.military_tech_outlined,
-            title: 'My Badges',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const TrainingBadgesScreen()),
-              );
-            },
-          ),
+
           const Divider(),
-          _buildDrawerItem(
-            icon: Icons.eco_outlined,
-            title: 'Compost Log',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CompostWorkdayScreen()),
-              );
-            },
-          ),
-          _buildDrawerItem(
-            icon: Icons.receipt_long_outlined,
-            title: 'Input Invoices',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const InputInvoiceEntryScreen()),
-              );
-            },
-          ),
-          if (!kIsWeb)
-            _buildDrawerItem(
-              icon: Icons.map_outlined,
-              title: 'Farm Map',
+
+          // ─── dynamic role-based items ────────────────────
+          ...drawerItems.map(
+            (item) => _buildDrawerItem(
+              icon: item.icon,
+              title: item.title,
+              subtitle: item.subtitle,
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const FarmMapScreen()),
+                  MaterialPageRoute(builder: (_) => item.screenBuilder()),
                 );
               },
             ),
-          const Divider(),
-          _buildDrawerItem(
-            icon: Icons.groups_outlined,
-            title: 'VSLA Meeting Mode',
-            subtitle: 'Officer Tool',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const VSLAMeetingScreen()),
-              );
-            },
           ),
-          _buildDrawerItem(
-            icon: Icons.sync_outlined,
-            title: 'Sync Status',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SyncStatusScreen()),
-              );
-            },
-          ),
+
           const Divider(),
+
+          // ─── Settings (everyone) ────────────────────────
           _buildDrawerItem(
             icon: Icons.settings_outlined,
             title: 'Settings',
@@ -230,6 +153,8 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+
+          // ─── Logout (everyone) ──────────────────────────
           _buildDrawerItem(
             icon: Icons.logout,
             title: 'Logout',
@@ -285,11 +210,96 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ────────────────────────────────────────────────────────────
+  //  DASHBOARD
+  // ────────────────────────────────────────────────────────────
+
   Widget _buildDashboard() {
     final auth = Provider.of<AuthProvider>(context);
     final dashboard = Provider.of<DashboardProvider>(context);
-    final userRole = auth.user?['role']?.toString().toLowerCase() ?? 'farmer';
 
+    // ────────────────────────────────────────────────────────────
+    //  FARMER LAYOUT (Unique)
+    // ────────────────────────────────────────────────────────────
+    if (auth.userRole == UserRole.farmer) {
+      return CustomScrollView(
+        slivers: [
+          // Standard App Bar
+          SliverAppBar(
+            floating: true,
+            snap: true,
+            backgroundColor: AppColors.surfaceWhite,
+            elevation: 0,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Muraho, ${auth.user?['name'] ?? auth.user?['full_name'] ?? 'Farmer'}',
+                  style: AppTypography.h3.copyWith(
+                    color: AppColors.textDark,
+                  ),
+                ),
+                Text(
+                  'Your Dashboard',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textMedium,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              if (dashboard.isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.sync),
+                  onPressed: () {
+                    dashboard.loadDashboardData();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Syncing data...'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
+
+          // Farmer Content - No generic headers
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  top: AppSpacing.md, bottom: AppSpacing.xxl),
+              child:
+                  DashboardFactory.getScreen(auth: auth, dashboard: dashboard),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // ────────────────────────────────────────────────────────────
+    //  STAFF LAYOUT (Generic)
+    // ────────────────────────────────────────────────────────────
     return CustomScrollView(
       slivers: [
         // App Bar
@@ -302,13 +312,13 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Muraho, ${auth.user?['name'] ?? 'User'}',
+                'Muraho, ${auth.user?['name'] ?? auth.user?['full_name'] ?? 'User'}',
                 style: AppTypography.h3.copyWith(
                   color: AppColors.textDark,
                 ),
               ),
               Text(
-                '${userRole.toUpperCase()} · Last sync: ${_getLastSyncTime()}',
+                '${auth.roleDisplayName} · Last sync: ${_getLastSyncTime()}',
                 style: AppTypography.caption.copyWith(
                   color: AppColors.textMedium,
                 ),
@@ -378,8 +388,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // Dynamic Dashboard based on Role
-              _getDashboardByRole(userRole, auth, dashboard),
+              // Dynamic Dashboard based on Role (factory)
+              DashboardFactory.getScreen(auth: auth, dashboard: dashboard),
 
               const SizedBox(height: AppSpacing.xl),
 
@@ -400,89 +410,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // Quick Actions Horizontal Scroll
-              SizedBox(
-                height: 120,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                  children: [
-                    _buildQuickActionCard(
-                      'Record Sale',
-                      Icons.add_shopping_cart,
-                      AppColors.primaryGreen,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SalesEntryScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildQuickActionCard(
-                      'VSLA Operations',
-                      Icons.account_balance_wallet,
-                      AppColors.blue,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const VSLATreasurerScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    if (!kIsWeb)
-                      _buildQuickActionCard(
-                        'Map Farm',
-                        Icons.map_outlined,
-                        AppColors.teal,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const FarmMapScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    _buildQuickActionCard(
-                      'View Invoices',
-                      Icons.receipt,
-                      AppColors.orange,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const InputInvoiceEntryScreen()),
-                        );
-                      },
-                    ),
-                    _buildQuickActionCard(
-                      'Training',
-                      Icons.school_outlined,
-                      AppColors.purple,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const TrainingScreen()),
-                        );
-                      },
-                    ),
-                    _buildQuickActionCard(
-                      'Sync Data',
-                      Icons.sync,
-                      AppColors.indigo,
-                      () {
-                        dashboard.loadDashboardData();
-                      },
-                    ),
-                  ],
-                ),
-              ),
+              // Role-filtered Quick Actions
+              _buildQuickActions(auth.userRole),
 
               const SizedBox(height: AppSpacing.xl),
 
@@ -511,6 +440,50 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  ROLE-FILTERED QUICK ACTIONS
+  // ────────────────────────────────────────────────────────────
+
+  Widget _buildQuickActions(UserRole role) {
+    final actions = NavigationConfig.getQuickActions(role);
+
+    // Always add a "Sync Data" card at the end (not a screen)
+    return SizedBox(
+      height: 120,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        itemCount: actions.length + 1, // +1 for Sync
+        itemBuilder: (context, index) {
+          if (index < actions.length) {
+            final action = actions[index];
+            return _buildQuickActionCard(
+              action.title,
+              action.icon,
+              action.color,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => action.screenBuilder()),
+                );
+              },
+            );
+          }
+          // Last item = Sync Data
+          return _buildQuickActionCard(
+            'Sync Data',
+            Icons.sync,
+            AppColors.indigo,
+            () {
+              Provider.of<DashboardProvider>(context, listen: false)
+                  .loadDashboardData();
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -556,6 +529,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  // ────────────────────────────────────────────────────────────
+  //  ACTIVITY FEED
+  // ────────────────────────────────────────────────────────────
 
   Widget _buildActivityFeed(DashboardProvider dashboard) {
     final activities = _getRecentActivities(dashboard);
@@ -637,17 +614,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
-  }
-
-  Widget _getDashboardByRole(
-      String role, AuthProvider auth, DashboardProvider dashboard) {
-    if (['agronomist', 'field_facilitator'].contains(role)) {
-      return StaffDashboard(auth: auth, dashboard: dashboard);
-    } else if (['project_manager', 'admin'].contains(role)) {
-      return ManagerDashboard(auth: auth, dashboard: dashboard);
-    } else {
-      return FarmerDashboard(auth: auth, dashboard: dashboard);
-    }
   }
 
   String _getLastSyncTime() {

@@ -1,0 +1,36 @@
+name: Mobile App CI
+
+on:
+  push:
+    paths:
+      - 'mobile-app/**'
+  pull_request:
+    paths:
+      - 'mobile-app/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./mobile-app
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate Code (Drift)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run Tests
+        run: flutter test
+
+      - name: Build APK (Debug)
+        run: flutter build apk --debug

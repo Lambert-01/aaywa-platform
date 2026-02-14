@@ -8,9 +8,9 @@ router.use(authenticateToken);
 
 // ==================== TRAINING SESSIONS ====================
 router.post('/sessions', authorizeRoles('field_facilitator', 'project_manager'), trainingController.createSession);
-router.get('/sessions', trainingController.getAllSessions);
-router.get('/schedule', trainingController.getSchedule);
-router.get('/sessions/:id', trainingController.getSessionById);
+router.get('/sessions', authorizeRoles('field_facilitator', 'project_manager', 'farmer', 'champion'), trainingController.getAllSessions);
+router.get('/schedule', authorizeRoles('field_facilitator', 'project_manager', 'farmer', 'champion'), trainingController.getSchedule);
+router.get('/sessions/:id', authorizeRoles('field_facilitator', 'project_manager', 'farmer', 'champion'), trainingController.getSessionById);
 router.put('/sessions/:id', authorizeRoles('field_facilitator', 'project_manager'), trainingController.updateSession);
 router.delete('/sessions/:id', authorizeRoles('project_manager'), trainingController.deleteSession);
 
@@ -28,7 +28,7 @@ router.get('/quizzes/results/farmer/:farmerId', trainingController.getQuizResult
 
 // ==================== LEARNING MATERIALS ====================
 router.post('/materials', authorizeRoles('field_facilitator', 'project_manager'), trainingController.createMaterial);
-router.get('/materials', trainingController.getAllMaterials);
+router.get('/materials', authorizeRoles('field_facilitator', 'project_manager', 'farmer', 'champion'), trainingController.getAllMaterials);
 router.put('/materials/:id/download', trainingController.incrementDownloadCount);
 router.delete('/materials/:id', authorizeRoles('project_manager'), trainingController.deleteMaterial);
 

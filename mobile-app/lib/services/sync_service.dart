@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -74,6 +75,16 @@ class SyncService {
 
     // CRITICAL: Authentication and user data
     // (Nothing to sync here, but would be highest priority)
+
+    // HIGH PRIORITY: Farmer Issues (Urgent feedback)
+    final unsyncedIssues = await _databaseService.getUnsyncedFarmerIssues();
+    if (unsyncedIssues.isNotEmpty) {
+      _syncQueue.add(SyncTask(
+        name: 'Issues (${unsyncedIssues.length})',
+        priority: SyncPriority.critical, // Urgent!
+        execute: () => _sendIssuesToServer(unsyncedIssues),
+      ));
+    }
 
     // HIGH PRIORITY: Core business data
     final unsyncedFarmers = await _databaseService.getUnsyncedFarmers();
@@ -519,5 +530,50 @@ class SyncService {
       'queue_size': _syncQueue.length,
       'queued_tasks': _syncQueue.map((t) => t.name).toList(),
     };
+  }
+
+  Future<void> _sendIssuesToServer(List<FarmerIssue> issues) async {
+    for (var issue in issues) {
+      await ErrorHandler.handleSyncOperation(
+        () => _sendSingleIssue(issue),
+        'Issue Sync ${issue.id}',
+      );
+    }
+  }
+
+  Future<void> _sendSingleIssue(FarmerIssue issue) async {
+    final uri = Uri.parse('${Environment.apiBaseUrl}/farmer-issues');
+    final request = http.MultipartRequest('POST', uri);
+
+    final headers = await _getHeaders();
+    request.headers.addAll(headers);
+    // Content-Type is set automatically by MultipartRequest
+
+    request.fields['farmer_id'] = issue.farmerId;
+    request.fields['category'] = issue.categoryId;
+    request.fields['description'] = issue.description;
+    request.fields['urgency'] = issue.urgency;
+    request.fields['gps_lat'] = issue.gpsLat?.toString() ?? '';
+    request.fields['gps_lng'] = issue.gpsLng?.toString() ?? '';
+    request.fields['date_reported'] = issue.dateReported.toIso8601String();
+
+    if (issue.photoPath != null && issue.photoPath!.isNotEmpty) {
+      final file = File(issue.photoPath!);
+      if (await file.exists()) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'photo',
+          issue.photoPath!,
+        ));
+      }
+    }
+
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      await _databaseService.markFarmerIssuesAsSynced([issue.id]);
+    } else {
+      throw Exception('Failed to sync issue ${issue.id}: $responseBody');
+    }
   }
 }

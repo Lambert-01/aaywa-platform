@@ -106,14 +106,16 @@ const FarmersPage: React.FC = () => {
             });
 
             if (response.ok) {
+                const result = await response.json();
                 setIsFormOpen(false);
                 setEditingFarmer(null);
-                fetchFarmers();
-                // Update selected farmer if viewed
+                
+                // Refresh farmers list to show updated data
+                await fetchFarmers();
+                
+                // Update selected farmer if detail view is open
                 if (selectedFarmer && selectedFarmer.id === editingFarmer.id) {
-                    // refresh selected
-                    const updated = await response.json();
-                    setSelectedFarmer(updated.farmer);
+                    setSelectedFarmer(result.farmer);
                 }
             }
         } catch (error) {
@@ -265,25 +267,50 @@ const FarmersPage: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_cohort')}</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_household')}</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_crops')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_status')}</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('farmers.table_actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
-                                <tr><td colSpan={6} className="p-8 text-center text-gray-500">{t('farmers.loading')}</td></tr>
+                                <tr><td colSpan={7} className="p-8 text-center text-gray-500">{t('farmers.loading')}</td></tr>
                             ) : filteredFarmers.length === 0 ? (
-                                <tr><td colSpan={6} className="p-8 text-center text-gray-500">{t('farmers.none_found')}</td></tr>
+                                <tr><td colSpan={7} className="p-8 text-center text-gray-500">{t('farmers.none_found')}</td></tr>
                             ) : (
-                                filteredFarmers.map((farmer) => (
-                                    <tr key={farmer.id} className="hover:bg-blue-50/50 transition-colors group">
+                                filteredFarmers.map((farmer) => {
+                                    // Parse location coordinates
+                                    let locationDisplay = 'Not set';
+                                    if (farmer.location_coordinates) {
+                                        try {
+                                            const coords = typeof farmer.location_coordinates === 'string' 
+                                                ? JSON.parse(farmer.location_coordinates) 
+                                                : farmer.location_coordinates;
+                                            if (coords.lat && coords.lng) {
+                                                locationDisplay = `${parseFloat(coords.lat).toFixed(4)}, ${parseFloat(coords.lng).toFixed(4)}`;
+                                            }
+                                        } catch (e) {
+                                            locationDisplay = 'Invalid';
+                                        }
+                                    }
+                                    
+                                    return (
+                                        <tr key={farmer.id} className="hover:bg-blue-50/50 transition-colors group">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="h-10 w-10 flex-shrink-0">
                                                     <img
                                                         className="h-10 w-10 rounded-full object-cover border border-gray-200"
-                                                        src={farmer.photo_url || '/images/default-avatar.png'}
+                                                        src={farmer.photo_url ? 
+                                                            (farmer.photo_url.startsWith('http') ? 
+                                                                farmer.photo_url : 
+                                                                `${API_URL}/${farmer.photo_url}`) : 
+                                                            '/images/default-avatar.svg'
+                                                        }
                                                         alt=""
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = '/images/default-avatar.svg';
+                                                        }}
                                                     />
                                                 </div>
                                                 <div className="ml-4">
@@ -308,6 +335,9 @@ const FarmersPage: React.FC = () => {
                                                 {(farmer.crops?.split(',').length || 0) > 2 && <span className="text-xs text-gray-400">+{farmer.crops!.split(',').length - 2}</span>}
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">
+                                            {locationDisplay}
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <StatusBadge status={farmer.status ? 'Active' : 'Inactive'} size="sm" />
                                         </td>
@@ -326,7 +356,8 @@ const FarmersPage: React.FC = () => {
                                             </button>
                                         </td>
                                     </tr>
-                                ))
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

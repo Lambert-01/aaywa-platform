@@ -221,11 +221,18 @@ class MarketPrice {
   factory MarketPrice.fromJson(Map<String, dynamic> json) {
     return MarketPrice(
       qualityGrade: json['quality_grade'] ?? '',
-      pricePerKg: (json['price_per_kg'] ?? 0).toDouble(),
+      pricePerKg: _parseDouble(json['price_per_kg']),
       marketLocation: json['market_location'],
       trend: json['trend'],
       demandLevel: json['demand_level'],
     );
+  }
+
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
   }
 }
 

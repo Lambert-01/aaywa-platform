@@ -16,15 +16,28 @@ const saleController = {
       } = req.body;
 
       // Calculate profit shares
-      const inputCost = input_invoice_id ?
-        await InputInvoice.getOutstandingBalance(farmer_id) : 0;
+      // Auto-detect outstanding input invoice if not provided
+      let invoiceIdToDeduct = input_invoice_id;
+      let calculatedInputCost = 0;
 
-      const calculation = ProfitShareCalculator.calculate(quantity, unit_price, inputCost);
+      if (!invoiceIdToDeduct) {
+        // Find oldest outstanding invoice
+        const outstandingInvoices = await InputInvoice.getByFarmer(farmer_id, 'pending');
+        if (outstandingInvoices && outstandingInvoices.length > 0) {
+          invoiceIdToDeduct = outstandingInvoices[0].id; // Deduct from oldest
+        }
+      }
+
+      if (invoiceIdToDeduct) {
+        calculatedInputCost = await InputInvoice.getOutstandingBalance(farmer_id);
+      }
+
+      const calculation = ProfitShareCalculator.calculate(quantity, unit_price, calculatedInputCost);
 
       // Create sale record
       const sale = await Sale.create({
         farmer_id,
-        input_invoice_id,
+        input_invoice_id: invoiceIdToDeduct,
         crop_type,
         quantity,
         unit_price,
@@ -37,8 +50,8 @@ const saleController = {
       });
 
       // Update input invoice status if fully repaid
-      if (input_invoice_id && calculation.inputCost > 0) {
-        await InputInvoice.updateStatus(input_invoice_id, 'repaid');
+      if (invoiceIdToDeduct && calculation.inputCost > 0) {
+        await InputInvoice.updateStatus(invoiceIdToDeduct, 'repaid');
       }
 
       res.status(201).json({

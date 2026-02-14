@@ -49,6 +49,16 @@ class ApiService {
     }
   }
 
+  Future<dynamic> patch(String endpoint, Map<String, dynamic> data) async {
+    try {
+      final response = await _client.patch(endpoint, data: data);
+      return response.data;
+    } catch (e) {
+      debugPrint('[API] PATCH error: $e');
+      rethrow;
+    }
+  }
+
   // Farmers
   Future<List<dynamic>> getFarmers() async {
     final response = await _client.get('/farmers');

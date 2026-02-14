@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { formatCurrency, safeFormatDate, formatPhone } from '../../utils/formatters';
+import { API_URL } from '../../api/config';
 // ...
 // usage:
 // {safeFormatDate(farmer.created_at)}
@@ -70,9 +71,17 @@ const FarmerDetails: React.FC<FarmerDetailsProps> = ({ farmer, onEdit, onClose }
             <div className="relative h-48 bg-brand-blue-600">
                 <div className="absolute -bottom-16 left-8">
                     <img
-                        src={farmer.photo_url || '/images/default-avatar.png'}
+                        src={farmer.photo_url ? 
+                            (farmer.photo_url.startsWith('http') ? 
+                                farmer.photo_url : 
+                                `${API_URL}/${farmer.photo_url}`) : 
+                            '/images/default-avatar.svg'
+                        }
                         alt={farmer.full_name}
                         className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg bg-white"
+                        onError={(e) => {
+                            e.currentTarget.src = '/images/default-avatar.svg';
+                        }}
                     />
                 </div>
             </div>

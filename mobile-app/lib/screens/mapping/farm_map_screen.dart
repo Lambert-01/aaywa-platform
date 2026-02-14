@@ -12,11 +12,17 @@ import '../../theme/design_system.dart';
 class FarmMapScreen extends StatefulWidget {
   final String? farmerId;
   final String? farmerName;
+  final bool viewOnly;
+  final ll.LatLng? initialCenter;
+  final List<ll.LatLng>? initialPolygon;
 
   const FarmMapScreen({
     super.key,
     this.farmerId,
     this.farmerName,
+    this.viewOnly = false,
+    this.initialCenter,
+    this.initialPolygon,
   });
 
   @override
@@ -26,7 +32,7 @@ class FarmMapScreen extends StatefulWidget {
 class _FarmMapScreenState extends State<FarmMapScreen> {
   final MapController _mapController = MapController();
   final List<ll.LatLng> _polygonPoints = [];
-  final ll.LatLng _currentCenter = const ll.LatLng(-1.9441, 30.0619);
+  ll.LatLng _currentCenter = const ll.LatLng(-1.9441, 30.0619);
 
   bool _isRecording = false;
   bool _isDigitizing = false;
@@ -44,7 +50,23 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.farmerId != null) {
+    
+    debugPrint('[MAP] Initializing - viewOnly: ${widget.viewOnly}');
+    debugPrint('[MAP] initialCenter: ${widget.initialCenter}');
+    debugPrint('[MAP] initialPolygon length: ${widget.initialPolygon?.length ?? 0}');
+    
+    // Set initial center if provided
+    if (widget.initialCenter != null) {
+      _currentCenter = widget.initialCenter!;
+      debugPrint('[MAP] Set center to: ${_currentCenter.latitude}, ${_currentCenter.longitude}');
+    }
+    
+    // Set initial polygon if provided
+    if (widget.initialPolygon != null && widget.initialPolygon!.isNotEmpty) {
+      _polygonPoints.addAll(widget.initialPolygon!);
+      _calculateArea();
+      debugPrint('[MAP] Loaded ${_polygonPoints.length} polygon points');
+    } else if (widget.farmerId != null && !widget.viewOnly) {
       _loadExistingBoundary();
     }
   }
@@ -107,7 +129,7 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
   }
 
   void _onMapTap(TapPosition tapPosition, ll.LatLng point) {
-    if (!_isDigitizing) return;
+    if (!_isDigitizing || widget.viewOnly) return;
 
     setState(() {
       _polygonPoints.add(point);
@@ -268,13 +290,13 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
             ? 'Map: ${widget.farmerName}'
             : 'Farm Boundary'),
         actions: [
-          if (_polygonPoints.isNotEmpty)
+          if (_polygonPoints.isNotEmpty && !widget.viewOnly)
             IconButton(
               icon: const Icon(Icons.undo),
               onPressed: _undoPoint,
               tooltip: 'Remove last point',
             ),
-          if (_polygonPoints.length >= 3)
+          if (_polygonPoints.length >= 3 && !widget.viewOnly)
             IconButton(
               icon: const Icon(Icons.check),
               onPressed: _saveFarm,
@@ -290,6 +312,11 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
               initialCenter: _currentCenter,
               initialZoom: 14.5,
               onTap: _onMapTap,
+              interactionOptions: InteractionOptions(
+                flags: widget.viewOnly 
+                  ? InteractiveFlag.drag 
+                  : InteractiveFlag.all,
+              ),
             ),
             children: [
               TileLayer(
@@ -309,26 +336,40 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
                   ],
                 ),
               MarkerLayer(
-                markers: _polygonPoints.asMap().entries.map((entry) {
-                  return Marker(
-                    point: entry.value,
-                    width: 12,
-                    height: 12,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.primaryGreen,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 4,
-                            spreadRadius: 1,
-                          )
-                        ],
+                markers: [
+                  ..._polygonPoints.asMap().entries.map((entry) {
+                    return Marker(
+                      point: entry.value,
+                      width: 12,
+                      height: 12,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryGreen,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            )
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  // Show center marker in view-only mode if no polygon
+                  if (widget.viewOnly && _polygonPoints.isEmpty)
+                    Marker(
+                      point: _currentCenter,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        Icons.location_on,
+                        color: AppColors.error,
+                        size: 40,
                       ),
                     ),
-                  );
-                }).toList(),
+                ],
               ),
             ],
           ),
@@ -450,7 +491,7 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
             ),
 
           // Instruction Overlay
-          if (_polygonPoints.length < 3)
+          if (_polygonPoints.length < 3 && !widget.viewOnly)
             Positioned(
               bottom: 100,
               left: 16,
@@ -473,24 +514,25 @@ class _FarmMapScreenState extends State<FarmMapScreen> {
               ),
             ),
 
-          // My Location Button
-          Positioned(
-            bottom: 100,
-            right: 16,
-            child: FloatingActionButton(
-              mini: true,
-              backgroundColor: Colors.white,
-              onPressed: () async {
-                final pos = await Geolocator.getCurrentPosition();
-                _mapController.move(ll.LatLng(pos.latitude, pos.longitude), 16);
-              },
-              child:
-                  const Icon(Icons.my_location, color: AppColors.primaryGreen),
+          // My Location Button (hide in view-only mode)
+          if (!widget.viewOnly)
+            Positioned(
+              bottom: 100,
+              right: 16,
+              child: FloatingActionButton(
+                mini: true,
+                backgroundColor: Colors.white,
+                onPressed: () async {
+                  final pos = await Geolocator.getCurrentPosition();
+                  _mapController.move(ll.LatLng(pos.latitude, pos.longitude), 16);
+                },
+                child:
+                    const Icon(Icons.my_location, color: AppColors.primaryGreen),
+              ),
             ),
-          ),
         ],
       ),
-      bottomNavigationBar: BottomAppBar(
+      bottomNavigationBar: widget.viewOnly ? null : BottomAppBar(
         child: Row(
           children: [
             Expanded(

@@ -31,21 +31,21 @@ class MiniMapPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(title,
-            style:
-                AppTypography.overline.copyWith(color: AppColors.textMedium)),
-        const SizedBox(height: AppSpacing.sm),
+        if (title.isNotEmpty) ...[
+          Text(title,
+              style:
+                  AppTypography.overline.copyWith(color: AppColors.textMedium)),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         AaywaCard(
           padding: EdgeInsets.zero,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
+              SizedBox(
                 height: height,
-                decoration: const BoxDecoration(
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(AppRadius.md)),
-                ),
                 child: ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(AppRadius.md)),
@@ -53,28 +53,6 @@ class MiniMapPreview extends StatelessWidget {
                     children: [
                       if (isLoading)
                         const Center(child: CircularProgressIndicator())
-                      else if (polygons.isEmpty)
-                        Container(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.map_outlined,
-                                    color: AppColors.textLight
-                                        .withValues(alpha: 0.5),
-                                    size: 40),
-                                const SizedBox(height: AppSpacing.sm),
-                                Text(
-                                  'NO MAP DATA AVAILABLE',
-                                  style: AppTypography.labelSmall.copyWith(
-                                    color: AppColors.textMedium,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
                       else
                         FlutterMap(
                           options: MapOptions(
@@ -90,37 +68,57 @@ class MiniMapPreview extends StatelessWidget {
                                   'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                               userAgentPackageName: 'com.example.aaywa_mobile',
                             ),
-                            PolygonLayer(
-                              polygons: polygons,
-                            ),
+                            if (polygons.isNotEmpty)
+                              PolygonLayer(
+                                polygons: polygons,
+                              ),
+                            // Show marker at center if no polygons
+                            if (polygons.isEmpty)
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
+                                    point: center,
+                                    width: 40,
+                                    height: 40,
+                                    child: const Icon(
+                                      Icons.location_on,
+                                      color: AppColors.error,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ],
+                              ),
                           ],
                         ),
                     ],
                   ),
                 ),
               ),
-              if (subtitle != null || actionLabel != null)
+              if ((subtitle != null && subtitle!.isNotEmpty) ||
+                  actionLabel != null)
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      if (subtitle != null)
+                      if (subtitle != null && subtitle!.isNotEmpty)
                         Expanded(
                           child: Text(
                             subtitle!,
                             style: AppTypography.bodySmall
                                 .copyWith(color: AppColors.textMedium),
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      if (actionLabel != null)
+                      if (actionLabel != null) ...[
+                        const SizedBox(width: AppSpacing.sm),
                         AaywaButton(
                           label: actionLabel!,
                           size: ButtonSize.small,
                           onPressed: onActionPressed,
                         ),
+                      ],
                     ],
                   ),
                 ),

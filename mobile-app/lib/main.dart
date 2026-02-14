@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'services/database_service.dart';
+import 'services/background_sync_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/sync_provider.dart';
@@ -18,6 +19,18 @@ void main() async {
 
   // Initialize database
   final databaseService = DatabaseService();
+
+  // Initialize Background Sync
+  // Wrapped in try-catch to prevent app crash if workmanager fails (e.g. on Windows)
+  try {
+    // Check platform possibly, but workmanager claims support.
+    // However, on Windows workmanager might no-op or throw.
+    // Given user is on Windows dev machine but deploying for mobile (Android/iOS).
+    // I'll add the import and call.
+    await BackgroundSyncService.initialize();
+  } catch (e) {
+    debugPrint('Background Sync Init Failed (Expected on Windows Desktop): $e');
+  }
 
   runApp(
     MultiProvider(

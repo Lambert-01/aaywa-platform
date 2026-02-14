@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { PhotoIcon, MapPinIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { apiGet } from '../../utils/api';
+import { API_URL } from '../../api/config';
 
 interface FarmerFormProps {
     initialData?: any;
@@ -110,8 +111,33 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ initialData, onSubmit, onCancel
         setFormData(prev => ({ ...prev, photo: null, photo_preview: '' }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        let finalPhotoUrl = formData.photo_preview;
+
+        // If there's a new file to upload
+        if (formData.photo) {
+            try {
+                const token = localStorage.getItem('aaywa_token');
+                const uploadFormData = new FormData();
+                uploadFormData.append('photo', formData.photo);
+
+                const uploadRes = await fetch(`${API_URL}/api/farmers/upload-photo?type=farmers`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: uploadFormData
+                });
+
+                if (uploadRes.ok) {
+                    const uploadData = await uploadRes.json();
+                    finalPhotoUrl = uploadData.url;
+                }
+            } catch (error) {
+                console.error('Photo upload failed', error);
+                // Continue anyway or show error
+            }
+        }
 
         // Prepare submission data - EXCLUDE photo and photo_preview, then add photo_url
         const { photo, photo_preview, ...rest } = formData;
@@ -123,7 +149,7 @@ const FarmerForm: React.FC<FarmerFormProps> = ({ initialData, onSubmit, onCancel
             plot_size_hectares: parseFloat(formData.plot_size_hectares) || null,
             cohort_id: parseInt(formData.cohort_id) || null,
             vsla_id: formData.vsla_id && formData.vsla_id.trim() ? parseInt(formData.vsla_id) : null,
-            photo_url: photo_preview || null  // Rename to photo_url
+            photo_url: finalPhotoUrl || null  // Use the uploaded URL
         };
 
         onSubmit(submissionData);

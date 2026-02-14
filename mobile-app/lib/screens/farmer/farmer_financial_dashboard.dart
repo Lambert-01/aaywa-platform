@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:math' as math;
 import '../../services/trust_score_service.dart';
 import '../../providers/auth_provider.dart';
@@ -34,14 +35,14 @@ class _FarmerFinancialDashboardState extends State<FarmerFinancialDashboard>
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
     );
-    _loadData();
+    // Defer loading to allow context to be available
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final authProvider = AuthProvider();
-      await authProvider.checkAuthStatus();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
 
       if (token != null) {
@@ -453,8 +454,8 @@ class _FarmerFinancialDashboardState extends State<FarmerFinancialDashboard>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: const Text(
+          padding: EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
             'Program Eligibility',
             style: TextStyle(
               fontSize: 24,

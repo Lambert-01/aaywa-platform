@@ -28,6 +28,7 @@ class AppColors {
   // Additional Accent Colors (for variety)
   static const Color purple = Color(0xFF8B5CF6);
   static const Color orange = Color(0xFFF97316);
+  static const Color secondaryOrange = Color(0xFFEA580C);
   static const Color blue = Color(0xFF3B82F6);
   static const Color teal = Color(0xFF14B8A6);
   static const Color indigo = Color(0xFF6366F1);
@@ -212,6 +213,12 @@ class AppShadows {
     color: AppColors.shadowLight,
     blurRadius: 4,
     offset: Offset(0, 1),
+  );
+
+  static const BoxShadow card = BoxShadow(
+    color: AppColors.shadowLight,
+    blurRadius: 8,
+    offset: Offset(0, 2),
   );
 
   static const BoxShadow md = BoxShadow(

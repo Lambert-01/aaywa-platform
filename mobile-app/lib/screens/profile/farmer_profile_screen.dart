@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
+import 'dart:convert';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/database_service.dart';
 import '../../theme/design_system.dart';
+import '../../config/env.dart';
 import 'package:aaywa_mobile/screens/mapping/farm_map_screen.dart';
 import '../../widgets/common/mini_map_preview.dart';
 
@@ -33,6 +35,13 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload profile data when screen becomes visible again
+    _loadProfileData();
+  }
+
+  @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
@@ -45,53 +54,29 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
       final apiService = ApiService();
       final auth = Provider.of<AuthProvider>(context, listen: false);
 
-      // Determine the correct ID to fetch.
-      // 1. Check for farmer_id in user object (champion/farmer role)
-      // 2. Fallback to user id (might fail if not in farmers table, handle 404)
-      final idToFetch = auth.user?['farmer_id'] ?? auth.user?['id'];
+      dynamic response;
+      // Define idToFetch in outer scope so it can be used for boundary loading
+      String? idToFetch;
 
-      if (idToFetch == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
+      if (auth.userRole == UserRole.farmer ||
+          auth.userRole == UserRole.champion) {
+        // Use the dedicated /me endpoint for farmers/champions which is authorized
+        response = await apiService.get('/farmers/me');
+        // For farmers, the ID is in the response or we use the auth user's farmer_id
+        idToFetch =
+            response['id']?.toString() ?? auth.user?['farmer_id']?.toString();
+      } else {
+        // Determine the correct ID to fetch for others (or fallbacks)
+        idToFetch =
+            auth.user?['farmer_id']?.toString() ?? auth.user?['id']?.toString();
 
-      // Fetch comprehensive profile from backend
-      final response = await apiService.get('/farmers/$idToFetch/profile');
-
-      // Load local boundary from Drift if available (for offline proof)
-      if (!mounted) return;
-      final db = Provider.of<DatabaseService>(context, listen: false);
-      final localBoundary =
-          await db.getPlotBoundariesByFarmer(idToFetch.toString());
-
-      if (localBoundary.isNotEmpty) {
-        final points = localBoundary
-            .map((p) => ll.LatLng(
-                p.read<double>('latitude'), p.read<double>('longitude')))
-            .toList();
-        _polygons = [
-          Polygon(
-            points: points,
-            color: AppColors.primaryGreen.withValues(alpha: 0.15),
-            borderColor: AppColors.primaryGreen,
-            borderStrokeWidth: 3,
-            isFilled: true,
-          )
-        ];
-        // Calculate center for map
-        double sumLat = 0;
-        double sumLng = 0;
-        for (var p in points) {
-          sumLat += p.latitude;
-          sumLng += p.longitude;
+        if (idToFetch == null) {
+          setState(() => _isLoading = false);
+          return;
         }
-        _mapCenter = ll.LatLng(sumLat / points.length, sumLng / points.length);
-      } else if (response['location_coordinates'] != null) {
-        // Fallback to coordinates from API if no local boundary
-        final coords = response['location_coordinates'];
-        if (coords is Map && coords['lat'] != null && coords['lng'] != null) {
-          _mapCenter = ll.LatLng(coords['lat'], coords['lng']);
-        }
+
+        // Fetch comprehensive profile from backend
+        response = await apiService.get('/farmers/$idToFetch/profile');
       }
 
       setState(() {
@@ -99,13 +84,97 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
         _inputInvoices = List<Map<String, dynamic>>.from(
           response['input_invoices'] ?? [],
         );
+        
+        // Parse location coordinates from API
+        final coords = response['location_coordinates'];
+        bool hasLocation = false;
+        
+        debugPrint('[PROFILE] Raw location_coordinates: $coords');
+        
+        if (coords != null) {
+          try {
+            // Handle both string and map formats
+            Map<String, dynamic> coordsMap;
+            if (coords is String) {
+              debugPrint('[PROFILE] Parsing string coordinates');
+              coordsMap = json.decode(coords);
+            } else if (coords is Map) {
+              debugPrint('[PROFILE] Using map coordinates');
+              coordsMap = Map<String, dynamic>.from(coords);
+            } else {
+              debugPrint('[PROFILE] Unknown coordinate format: ${coords.runtimeType}');
+              coordsMap = {};
+            }
+            
+            debugPrint('[PROFILE] Parsed coordsMap: $coordsMap');
+            
+            if (coordsMap['lat'] != null && coordsMap['lng'] != null) {
+              final lat = double.tryParse(coordsMap['lat'].toString());
+              final lng = double.tryParse(coordsMap['lng'].toString());
+              
+              if (lat != null && lng != null) {
+                _mapCenter = ll.LatLng(lat, lng);
+                hasLocation = true;
+                debugPrint('[PROFILE] ✓ Location set: $lat, $lng');
+              } else {
+                debugPrint('[PROFILE] ✗ Failed to parse lat/lng to double');
+              }
+            } else {
+              debugPrint('[PROFILE] ✗ Missing lat or lng in coordsMap');
+            }
+          } catch (e) {
+            debugPrint('[PROFILE] ✗ Error parsing coordinates: $e');
+          }
+        } else {
+          debugPrint('[PROFILE] ✗ No location_coordinates in response');
+        }
+        
+        debugPrint('[PROFILE] Final map center: ${_mapCenter.latitude}, ${_mapCenter.longitude}');
         _isLoading = false;
       });
+
+      // Load local boundary from Drift in a separate try-catch to be robust
+      try {
+        if (!mounted) return;
+        final db = Provider.of<DatabaseService>(context, listen: false);
+        final localBoundary =
+            await db.getPlotBoundariesByFarmer(idToFetch.toString());
+
+        if (localBoundary.isNotEmpty) {
+          final points = localBoundary
+              .map((p) => ll.LatLng(
+                  p.read<double>('latitude'), p.read<double>('longitude')))
+              .toList();
+          setState(() {
+            _polygons = [
+              Polygon(
+                points: points,
+                color: AppColors.primaryGreen.withValues(alpha: 0.15),
+                borderColor: AppColors.primaryGreen,
+                borderStrokeWidth: 3,
+                isFilled: true,
+              )
+            ];
+            // Calculate center for map if points exist
+            double sumLat = 0;
+            double sumLng = 0;
+            for (var p in points) {
+              sumLat += p.latitude;
+              sumLng += p.longitude;
+            }
+            _mapCenter =
+                ll.LatLng(sumLat / points.length, sumLng / points.length);
+          });
+        }
+      } catch (dbError) {
+        // Log DB/WASM error but don't crash the profile
+        debugPrint(
+            '[PROFILE] Database error (expected if WASM missing): $dbError');
+      }
     } catch (e) {
-      debugPrint('[PROFILE] Error loading data: $e');
+      debugPrint('[PROFILE] Global loading error: $e');
       if (mounted) {
         setState(() => _isLoading = false);
-        // Show subtle error or keep default values
       }
     }
   }
@@ -170,52 +239,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                               children: [
                                 const SizedBox(height: AppSpacing.md),
                                 // Hero Avatar with Glow and Border
-                                Hero(
-                                  tag: 'profile_avatar',
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.2),
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.2),
-                                          blurRadius: 20,
-                                          spreadRadius: 5,
-                                        )
-                                      ],
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 55,
-                                      backgroundColor: Colors.white,
-                                      child: CircleAvatar(
-                                        radius: 52,
-                                        backgroundImage:
-                                            auth.user?['profile_url'] != null
-                                                ? NetworkImage(
-                                                    auth.user?['profile_url'])
-                                                : null,
-                                        backgroundColor: AppColors.accentGreen,
-                                        child: auth.user?['profile_url'] == null
-                                            ? Text(
-                                                (auth.user?['full_name'] ??
-                                                        auth.user?['name'] ??
-                                                        'F')[0]
-                                                    .toUpperCase(),
-                                                style:
-                                                    AppTypography.h1.copyWith(
-                                                  color: AppColors.primaryGreen,
-                                                  fontSize: 44,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                _buildProfilePhoto(),
                                 const SizedBox(height: AppSpacing.lg),
                                 // Name & Verified Badge
                                 Row(
@@ -291,8 +315,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                     controller: _tabController,
                     children: [
                       _buildOverviewTab(),
-                      _buildInputDebtTab(),
-                      _buildFarmInfoTab(),
+                      _buildFinancesTab(), // Renamed for clarity
+                      _buildFarmMapTab(), // Renamed for clarity
                     ],
                   ),
                 ),
@@ -301,9 +325,75 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
     );
   }
 
+  // --- REFINED HEADER WIDGETS ---
+
+  Widget _buildProfilePhoto() {
+    final photoUrl = _profileData['photo_url'] ?? _profileData['profile_url'];
+    
+    // Build full URL if it's a relative path
+    String? fullPhotoUrl;
+    if (photoUrl != null && photoUrl.toString().isNotEmpty) {
+      final photoStr = photoUrl.toString();
+      if (photoStr.startsWith('http://') || photoStr.startsWith('https://')) {
+        fullPhotoUrl = photoStr;
+      } else {
+        // Remove /api from base URL and ensure proper path
+        final baseUrl = Environment.apiBaseUrl.replaceAll('/api', '');
+        // Remove leading slash from photoUrl if present
+        final cleanPath = photoStr.startsWith('/') ? photoStr.substring(1) : photoStr;
+        fullPhotoUrl = '$baseUrl/$cleanPath';
+      }
+      debugPrint('[PROFILE] Photo URL: $fullPhotoUrl');
+    }
+
+    return Hero(
+      tag: 'profile_avatar',
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 20,
+              spreadRadius: 5,
+            )
+          ],
+        ),
+        child: CircleAvatar(
+          radius: 55,
+          backgroundColor: Colors.white,
+          child: CircleAvatar(
+            radius: 52,
+            backgroundImage: fullPhotoUrl != null
+                ? NetworkImage(fullPhotoUrl)
+                : null,
+            backgroundColor: AppColors.accentGreen,
+            onBackgroundImageError: fullPhotoUrl != null
+                ? (exception, stackTrace) {
+                    debugPrint('[PROFILE] Image load error: $exception');
+                  }
+                : null,
+            child: fullPhotoUrl == null
+                ? Text(
+                    (_profileData['full_name'] ?? 'U')[0].toUpperCase(),
+                    style: AppTypography.h1.copyWith(
+                      color: AppColors.primaryGreen,
+                      fontSize: 44,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOverviewTab() {
     return ListView(
-      physics: const NeverScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         // Trust Score & Performance Cards
@@ -321,7 +411,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                   children: [
                     const Icon(Icons.stars, color: Colors.orange, size: 32),
                     const SizedBox(height: 8),
-                    Text('${(_profileData['trust_score'] ?? 85)}',
+                    Text('${(_profileData['trust_score'] ?? 0)}',
                         style: AppTypography.h2
                             .copyWith(color: AppColors.textDark)),
                     const Text('Trust Score', style: AppTypography.caption),
@@ -355,10 +445,41 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
         ),
         const SizedBox(height: AppSpacing.lg),
 
+        // Farmer Details Card (PARITY WITH WEB)
+        _buildSectionTitle('FARMER DETAILS'),
+        const SizedBox(height: AppSpacing.sm),
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            boxShadow: const [AppShadows.sm],
+          ),
+          child: Column(
+            children: [
+              _buildModernInfoRow(
+                  'Cohort',
+                  _profileData['cohort_name'] ?? 'Unassigned',
+                  Icons.group_work),
+              _buildModernInfoRow(
+                  'Household',
+                  (_profileData['household_type'] ?? 'Not Set')
+                      .toString()
+                      .replaceAll('_', ' ')
+                      .toUpperCase(),
+                  Icons.home),
+              _buildModernInfoRow(
+                  'Crops', _profileData['crops'] ?? 'Not Set', Icons.eco),
+              _buildModernInfoRow('Phone',
+                  _profileData['phone'] ?? 'Update Phone', Icons.phone),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: AppSpacing.lg),
+
         // Quick Actions with modern icons
-        Text('QUICK ACTIONS',
-            style:
-                AppTypography.overline.copyWith(color: AppColors.textMedium)),
+        _buildSectionTitle('QUICK ACTIONS'),
         const SizedBox(height: AppSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -377,9 +498,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('REFENT ACTIVITY',
-                style: AppTypography.overline
-                    .copyWith(color: AppColors.textMedium)),
+            _buildSectionTitle('RECENT ACTIVITY'),
             Text('See All',
                 style: AppTypography.labelSmall
                     .copyWith(color: AppColors.primaryGreen)),
@@ -409,9 +528,25 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                   }).toList(),
           ),
         ),
+        const SizedBox(height: 24),
       ],
     );
   }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(title,
+        style: AppTypography.overline.copyWith(
+          color: AppColors.textMedium,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+        ));
+  }
+
+  Widget _buildFinancesTab() {
+    return _buildInputDebtTab();
+  }
+
+  // _buildFarmMapTab is implemented below at line 669
 
   Widget _buildActionCircle(String label, IconData icon, Color color) {
     return Column(
@@ -605,11 +740,16 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
     );
   }
 
-  Widget _buildFarmInfoTab() {
+  Widget _buildFarmMapTab() {
     return ListView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         // Farm Map with Glass Action Overlay
+        Text('FARM GLOBAL LOCATION',
+            style:
+                AppTypography.overline.copyWith(color: AppColors.textMedium)),
+        const SizedBox(height: AppSpacing.sm),
         Stack(
           children: [
             SizedBox(
@@ -621,7 +761,6 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                   center: _mapCenter,
                   title: '',
                   subtitle: '',
-                  onActionPressed: () {},
                 ),
               ),
             ),
@@ -633,34 +772,51 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Colors.black.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: Colors.white24),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('FARM BOUNDARY MAP',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold)),
-                        Text(
-                            'Size: ${_profileData['plot_size_hectares'] ?? '0.0'} Hectares',
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 12)),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              _mapCenter.latitude != -1.9441 || _mapCenter.longitude != 30.0619
+                                  ? 'LOCATION SET'
+                                  : 'NO LOCATION',
+                              style: TextStyle(
+                                  color: _mapCenter.latitude != -1.9441 || _mapCenter.longitude != 30.0619
+                                      ? AppColors.accentGreen
+                                      : Colors.orange,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold)),
+                          Text(
+                              _mapCenter.latitude != -1.9441 || _mapCenter.longitude != 30.0619
+                                  ? 'Lat: ${_mapCenter.latitude.toStringAsFixed(4)}, Lng: ${_mapCenter.longitude.toStringAsFixed(4)}'
+                                  : 'Size: ${_profileData['plot_size_hectares'] ?? '0.0'} Hectares',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500)),
+                        ],
+                      ),
                     ),
                     ElevatedButton(
                       onPressed: () => _openMapScreen(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: Text(_polygons.isEmpty ? 'MAP NOW' : 'RE-MAP'),
+                      child: Text(
+                          _mapCenter.latitude != -1.9441 || _mapCenter.longitude != 30.0619
+                              ? 'VIEW MAP'
+                              : 'SET LOCATION'),
                     ),
                   ],
                 ),
@@ -671,9 +827,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
         const SizedBox(height: AppSpacing.lg),
 
         // Agricultural Stats
-        Text('AGRICULTURAL DETAILS',
-            style:
-                AppTypography.overline.copyWith(color: AppColors.textMedium)),
+        _buildSectionTitle('AGRICULTURAL DETAILS'),
         const SizedBox(height: AppSpacing.sm),
         Container(
           decoration: BoxDecoration(
@@ -683,18 +837,13 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
           ),
           child: Column(
             children: [
-              _buildModernInfoRow('Primary Crop',
-                  _profileData['primary_crop'] ?? 'Maize', Icons.grass),
-              _buildModernInfoRow(
-                  'Experience',
-                  '${_profileData['years_farming'] ?? '8'} Years',
-                  Icons.history_edu),
               _buildModernInfoRow('Soil Type',
-                  _profileData['soil_type'] ?? 'Loamy', Icons.layers),
+                  _profileData['soil_type'] ?? 'Loamy Clay', Icons.layers),
               _buildModernInfoRow(
                   'Cropping System',
-                  _profileData['cropping_system'] ?? 'Intercropping',
+                  _profileData['cropping_system'] ?? 'Mono-cropping',
                   Icons.grid_view_rounded),
+              _buildModernInfoRow('Terrain', 'Hillside Flat', Icons.landscape),
             ],
           ),
         ),
@@ -725,12 +874,22 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
   void _openMapScreen() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final farmerId = auth.user?['farmer_id'] ?? auth.user?['id'];
+    
+    // Check if location is set (not default Rwanda center)
+    final hasLocation = _mapCenter.latitude != -1.9441 || _mapCenter.longitude != 30.0619;
+    
+    debugPrint('[PROFILE] Opening map - hasLocation: $hasLocation, center: ${_mapCenter.latitude}, ${_mapCenter.longitude}');
+    debugPrint('[PROFILE] Polygons count: ${_polygons.length}');
+    
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => FarmMapScreen(
           farmerId: farmerId?.toString(),
           farmerName: auth.user?['full_name'] ?? auth.user?['name'],
+          viewOnly: hasLocation,
+          initialCenter: hasLocation ? _mapCenter : null,
+          initialPolygon: _polygons.isNotEmpty ? _polygons[0].points : null,
         ),
       ),
     );

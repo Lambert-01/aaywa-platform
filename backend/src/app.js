@@ -20,6 +20,7 @@ const alertRoutes = require('./routes/alerts.routes');
 const unifiedRoutes = require('./routes/unified.routes');
 const searchRoutes = require('./routes/search.routes');
 const adminRoutes = require('./routes/admin.routes');
+const farmerIssuesRoutes = require('./routes/farmerIssues.routes'); // Added
 
 const app = express();
 
@@ -121,6 +122,7 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/unified', unifiedRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/farmer-issues', farmerIssuesRoutes); // Added
 
 // Static file serving for uploads
 // Static file serving for uploads

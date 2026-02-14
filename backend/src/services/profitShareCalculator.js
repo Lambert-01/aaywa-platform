@@ -1,6 +1,6 @@
 /**
  * Profit Share Calculator Service
- * Implements 50/50 profit sharing logic between farmer and Sanza Alkebulan
+ * Implements 70/30 profit sharing logic between farmer and Sanza Alkebulan
  * Automatically deducts outstanding input costs before splitting
  */
 
@@ -14,9 +14,9 @@ class ProfitShareCalculator {
   static calculateShare(grossRevenue, inputCostsDeducted = 0) {
     const netRevenue = grossRevenue - inputCostsDeducted;
 
-    // 50/50 split after input costs
-    const farmerShare = netRevenue / 2;
-    const sanzaShare = netRevenue / 2;
+    // 70/30 split after input costs (70% to Farmer, 30% to SANZA)
+    const farmerShare = netRevenue * 0.70;
+    const sanzaShare = netRevenue * 0.30;
 
     return {
       grossRevenue,
@@ -24,7 +24,7 @@ class ProfitShareCalculator {
       netRevenue,
       farmerShare,
       sanzaShare,
-      splitPercentage: 50
+      splitPercentage: 70
     };
   }
 
